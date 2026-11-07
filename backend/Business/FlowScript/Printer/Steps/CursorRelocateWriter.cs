@@ -12,7 +12,7 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Move  to point <[ X ]> | to <[ step ]> | to nowhere
+            // Move  to point <[ X ]> | to <[ step ]>
             WriteKeyword(FlowStepTypeEnum.CURSOR_RELOCATE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
             WriteKeyword(ScriptSymbolEnum.TO);

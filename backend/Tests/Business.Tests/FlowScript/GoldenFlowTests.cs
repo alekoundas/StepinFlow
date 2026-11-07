@@ -54,11 +54,9 @@ namespace Business.Tests.FlowScript
             ],
         };
 
-        // A line always says these, so no row is without one. A Break is here because of a bug: with no
-        // target it prints as out of <[  ]>, which does not read back. See TODO.md.
+        // A line always says these, so no row is without one.
         private static readonly Dictionary<FlowStepTypeEnum, string[]> AlwaysWritten = new Dictionary<FlowStepTypeEnum, string[]>
         {
-            [FlowStepTypeEnum.BREAK] = [nameof(FlowStep.FlowStepReferenceId)],
             [FlowStepTypeEnum.CURSOR_CLICK] = [nameof(FlowStep.CursorButtonType), nameof(FlowStep.CursorButtonActionType)],
             [FlowStepTypeEnum.CURSOR_SCROLL] = [nameof(FlowStep.CursorScrollDirectionType)],
             [FlowStepTypeEnum.KEYBOARD_INPUT] = [nameof(FlowStep.KeyboardInputType)],
@@ -318,7 +316,7 @@ namespace Business.Tests.FlowScript
             }
         }
 
-        // The start and the end are each a point, a step or nowhere.
+        // The start and the end are each a point, a step or nothing.
         [Fact]
         public async Task Every_drag_start_is_in_it_with_every_end()
         {
@@ -329,9 +327,9 @@ namespace Business.Tests.FlowScript
                 .Select(x => (TargetOf(x.FlowPointId, x.FlowStepReferenceId), TargetOf(x.FlowPointEndId, x.FlowStepReferenceEndId)))
                 .ToList();
 
-            foreach (string start in new[] { "point", "step", "nowhere" })
+            foreach (string start in new[] { "point", "step", "nothing" })
             {
-                foreach (string end in new[] { "point", "step", "nowhere" })
+                foreach (string end in new[] { "point", "step", "nothing" })
                     seen.ShouldContain((start, end));
             }
         }
@@ -361,6 +359,24 @@ namespace Business.Tests.FlowScript
                     && schema.Steps.Any(x => x.ParentFlowStep == step && x.FlowStepType == FlowStepTypeEnum.SUCCESS)
                     && schema.Steps.Any(x => x.ParentFlowStep == step && x.FlowStepType == FlowStepTypeEnum.FAILURE), type.ToString());
             }
+        }
+
+        [Fact]
+        public async Task Every_type_of_step_a_break_can_leave_and_a_notify_can_report_on_is_in_it()
+        {
+            ScriptRows rows = await LoadGoldenRowsAsync();
+
+            List<FlowStepTypeEnum> left = TargetTypesOf(rows, FlowStepTypeEnum.BREAK);
+            List<FlowStepTypeEnum> reported = TargetTypesOf(rows, FlowStepTypeEnum.NOTIFY);
+
+            foreach (FlowStepTypeEnum type in Enum.GetValues<FlowStepTypeEnum>().Where(TreeStepHelper.HasBranchChildren))
+            {
+                left.ShouldContain(type);
+                reported.ShouldContain(type);
+            }
+
+            left.ShouldContain(FlowStepTypeEnum.LOOP);
+            left.ShouldNotContain(FlowStepTypeEnum.END_EXECUTION);
         }
 
         [Fact]
@@ -401,7 +417,15 @@ namespace Business.Tests.FlowScript
             if (stepId != null)
                 return "step";
 
-            return "nowhere";
+            return "nothing";
+        }
+
+        private static List<FlowStepTypeEnum> TargetTypesOf(ScriptRows rows, FlowStepTypeEnum type)
+        {
+            return rows.Steps
+                .Where(x => x.FlowStepType == type && x.FlowStepReferenceId != null)
+                .Select(x => rows.Steps.Single(y => y.Id == x.FlowStepReferenceId).FlowStepType)
+                .ToList();
         }
 
         private FlowScriptExporter Exporter()

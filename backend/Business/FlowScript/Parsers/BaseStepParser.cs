@@ -25,7 +25,7 @@ namespace Business.FlowScript.Parsers
         // Protected methods
         // ================================================================
 
-        // point <[ X ]> | <[ a step ]> | nowhere - a step saved with neither, so both null.
+        // point <[ X ]> | <[ a step ]> | <[  ]> - a step saved with neither, so both null.
         protected (FlowPoint? Point, FlowStep? Reference) ExtractTarget()
         {
             if (ExpectOptionalKeyword(ScriptSymbolEnum.POINT))
@@ -38,21 +38,21 @@ namespace Business.FlowScript.Parsers
                 return (point, null);
             }
 
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.NOWHERE))
-                return (null, null);
-
             return (null, ExtractStepReference());
         }
 
-        // <[ a step ]>
+        // <[ a step ]>, or <[  ]> for one saved with none, which the validator reports.
         protected FlowStep? ExtractStepReference()
         {
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             ScriptToken at = CurrentToken;
-            FlowStep? reference = Scope.Step(ExtractText(), at);
+            string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            return reference;
+            if (name.Length == 0)
+                return null;
+
+            return Scope.Step(name, at);
         }
 
         // is <[ x ]>, between <[ 1 ]> and <[ 9 ]>, is empty, ...
@@ -81,18 +81,19 @@ namespace Business.FlowScript.Parsers
             }
         }
 
-        // <[ Browser ]>, the window area the step acts on, or nowhere - a step saved with none.
+        // <[ Browser ]>, the window area the step acts on, or <[  ]> for one saved with none, which the
+        // validator reports.
         protected FlowArea? ExtractWindowArea()
         {
-            if (ExpectOptionalKeyword(ScriptSymbolEnum.NOWHERE))
-                return null;
-
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             ScriptToken at = CurrentToken;
-            FlowArea? area = Scope.Area(ExtractText(), at);
+            string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            return area;
+            if (name.Length == 0)
+                return null;
+
+            return Scope.Area(name, at);
         }
 
         // in <[ area ]>, or null.
@@ -113,6 +114,16 @@ namespace Business.FlowScript.Parsers
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
             return area;
+        }
+
+        // <[ Focus window 2 ]>, the step's own name.
+        protected string ExtractName()
+        {
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
+            string name = ExtractText();
+            ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
+
+            return name;
         }
     }
 }

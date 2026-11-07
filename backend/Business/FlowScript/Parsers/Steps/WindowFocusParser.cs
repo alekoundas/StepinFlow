@@ -12,10 +12,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Focus Window  <[ Browser ]>
+            // Focus Window  <[ name ]>   <[ Browser ]>
             ExpectKeyword(FlowStepTypeEnum.WINDOW_FOCUS);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS };
 
+            step.Name = ExtractName();
             step.FlowArea = ExtractWindowArea();
 
             ExpectEnd();

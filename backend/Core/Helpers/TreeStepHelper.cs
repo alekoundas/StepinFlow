@@ -241,7 +241,8 @@ namespace Core.Helpers
 
         /// <summary>
         /// What a Break can leave, nearest first: the steps it sits inside, up to the top of its flow.
-        /// Never a Success or Failure row - leaving one is leaving its check.
+        /// Never a Success or Failure row - leaving one is leaving its check - and never an End
+        /// Execution, which has already stopped the flow, so there is nothing to carry on with after it.
         /// </summary>
         public static IEnumerable<StepChainNode> BreakTargets(IReadOnlyDictionary<int, StepChainNode> byId, int fromStepId)
         {
@@ -256,7 +257,7 @@ namespace Core.Helpers
                 if (!byId.TryGetValue(current.ParentFlowStepId.Value, out StepChainNode parent))
                     yield break;
 
-                if (!IsBranchChild(parent.FlowStepType))
+                if (!IsBranchChild(parent.FlowStepType) && parent.FlowStepType != FlowStepTypeEnum.END_EXECUTION)
                     yield return parent;
 
                 current = parent;

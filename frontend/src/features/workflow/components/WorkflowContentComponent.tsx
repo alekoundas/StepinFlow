@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 import DisabledTooltipComponent from "@/shared/components/DisabledTooltipComponent";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
@@ -48,9 +49,13 @@ export function WorkflowContentComponent() {
   // its value before the save counts as no change, and a cancelled edit stays on screen.
   const [formVersion, setFormVersion] = useState(0);
 
+  // Why the backend refused a step's save. The form stays open with what was typed.
+  const [saveError, setSaveError] = useState<string>();
+
   const startFormAgain = () => {
     setFormVersion((x) => x + 1);
     setFormMode(FormMode.VIEW);
+    setSaveError(undefined);
   };
 
   // Selecting a different row resets the mode: a placeholder row opens in ADD, a saved one in
@@ -59,6 +64,7 @@ export function WorkflowContentComponent() {
   if (modeNodeKey !== selectedTreeNode?.key) {
     setModeNodeKey(selectedTreeNode?.key);
     setFormMode(selectedTreeNode?.isNew ? FormMode.ADD : FormMode.VIEW);
+    setSaveError(undefined);
   }
 
   // ── React Query for Flow (when root node is selected) ──
@@ -107,6 +113,19 @@ export function WorkflowContentComponent() {
   };
 
   const handleSave = async (saveDto: FlowStepDto) => {
+    setSaveError(undefined);
+
+    try {
+      await saveFlowStep(saveDto);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
+      return;
+    }
+
+    startFormAgain();
+  };
+
+  const saveFlowStep = async (saveDto: FlowStepDto) => {
     if (formMode === FormMode.ADD) {
       const result = await createFlowStepMutation.mutateAsync(saveDto);
 
@@ -142,13 +161,19 @@ export function WorkflowContentComponent() {
         });
       }
     }
-
-    startFormAgain();
   };
 
   // ====================== RENDER ======================
 
   const panel = (children: React.ReactNode) => <div className=" ">{children}</div>;
+
+  const saveErrorMessage = saveError && (
+    <Message
+      severity="error"
+      text={saveError}
+      className="w-full justify-content-start mb-3"
+    />
+  );
 
   if (!selectedTreeNode) {
     return panel(
@@ -212,22 +237,26 @@ export function WorkflowContentComponent() {
     const StepForm = form.component;
 
     return panel(
-      <StepForm
-        formMode={formMode}
-        onSubmit={handleSave}
-        onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
-        onEdit={() => {}}
-        defaultValues={
-          new FlowStepDto({
-            flowId: selectedTreeNode.parentFlowId ?? undefined,
-            parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
-            orderNumber: selectedTreeNode.orderNumber,
-            rootId: rootFlowId,
-            flowStepType: selectedFlowStepTypeToAdd,
-            ...form.newStepValues(selectedFlowStepTypeToAdd),
-          })
-        }
-      />,
+      <>
+        {saveErrorMessage}
+
+        <StepForm
+          formMode={formMode}
+          onSubmit={handleSave}
+          onCancel={() => setSelectedFlowStepTypeToAdd(undefined)}
+          onEdit={() => {}}
+          defaultValues={
+            new FlowStepDto({
+              flowId: selectedTreeNode.parentFlowId ?? undefined,
+              parentFlowStepId: selectedTreeNode.parentFlowStepId ?? undefined,
+              orderNumber: selectedTreeNode.orderNumber,
+              rootId: rootFlowId,
+              flowStepType: selectedFlowStepTypeToAdd,
+              ...form.newStepValues(selectedFlowStepTypeToAdd),
+            })
+          }
+        />
+      </>,
     );
   }
 
@@ -341,6 +370,8 @@ export function WorkflowContentComponent() {
       )}
 
       <WorkflowIssueMessagesComponent issues={issues.filter((x) => x.flowStepId === stepId)} />
+
+      {saveErrorMessage}
 
       <StepForm
         key={`${stepId}-${formVersion}`}

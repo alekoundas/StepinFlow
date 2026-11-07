@@ -29,10 +29,11 @@ Each pass is labelled in the execution view, so a failure on pass 40 is distingu
 - Out of any other **check**, the rest of that branch is skipped.
 
 The step it leaves is picked in the form's **Break out of** dropdown, which offers the steps it sits
-inside, nearest first, up to the top of its flow. Never a step beside it, and never a Success or
-Failure row: leaving a branch is leaving its check. It defaults to the nearest loop. The validator
-reports anything else, and moving a Break out of the step it names clears the target, after saying
-so. A Break inside a sub-flow can only leave steps of that sub-flow.
+inside, nearest first, up to the top of its flow. Never a step beside it, never a Success or Failure
+row - leaving a branch is leaving its check - and never an End Execution, which has already stopped
+the flow. It defaults to the nearest loop. The validator reports anything else. Moving a Break out of
+the step it names clears the target, after saying so, and so does pasting it somewhere it no longer
+sits inside that step. A Break inside a sub-flow can only leave steps of that sub-flow.
 
 A retry is a loop with a count and a Break on success:
 

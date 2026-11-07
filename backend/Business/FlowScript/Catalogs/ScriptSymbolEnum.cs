@@ -56,7 +56,6 @@ namespace Business.FlowScript.Catalogs
         TO,
         OUT_OF,
         POINT,
-        NOWHERE,
         MATCH,
         TEMPLATE,
         ACCURACY,

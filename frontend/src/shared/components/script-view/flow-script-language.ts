@@ -59,7 +59,6 @@ const OPTIONS = [
   "to",
   "out of",
   "point",
-  "nowhere",
   "match",
   "template",
   "accuracy",

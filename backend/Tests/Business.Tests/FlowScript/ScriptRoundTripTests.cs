@@ -1,3 +1,4 @@
+using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
@@ -144,16 +145,17 @@ namespace Business.Tests.FlowScript
         [Fact]
         public void A_close_with_neither_a_timeout_nor_force_reads_and_prints_as_just_its_window()
         {
-            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Close Window    <[ App ]>");
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Close Window    <[ Close it ]>   <[ App ]>");
 
             schema.Diagnostics.ShouldBeEmpty();
             schema.Steps.Single().ShouldSatisfyAllConditions(
                 x => x.FlowStepType.ShouldBe(FlowStepTypeEnum.WINDOW_CLOSE),
+                x => x.Name.ShouldBe("Close it"),
                 x => x.FlowArea!.Name.ShouldBe("App"),
                 x => x.TimeoutMilliseconds.ShouldBe(0),
                 x => x.IsCloseForced.ShouldBeFalse());
             string printed = new Printer().Write(schema);
-            printed.ShouldContain("Close Window    <[ App ]>");
+            printed.ShouldContain("Close Window    <[ Close it ]>   <[ App ]>");
             printed.ShouldNotContain("timeout");
             printed.ShouldNotContain("then force");
         }
@@ -165,6 +167,10 @@ namespace Business.Tests.FlowScript
         [InlineData("Shell           KILL_PROCESS <[ app.exe ]>")]
         [InlineData("Shell           <[ cleanup.bat ]>")]
         [InlineData("Sub Flow        <[ Checkout ]>")]
+        [InlineData("Focus Window    <[ App ]>")]
+        [InlineData("Resize Window   <[ App ]>   size 1 2")]
+        [InlineData("Move Window     <[ App ]>   to <[  ]>")]
+        [InlineData("Close Window    <[ App ]>")]
         public void A_line_without_its_name_is_refused(string line)
         {
             new Scanner().Read(WithArea + line).Diagnostics.ShouldNotBeEmpty();
@@ -181,6 +187,173 @@ namespace Business.Tests.FlowScript
         private static string LanguageLine(string script)
         {
             return "Script Language: v1\n" + script;
+        }
+
+        // ================================================================
+        // Lines the forms can save, which refused the whole import when they did not read back
+        // ================================================================
+
+        private static FlowScriptSchema Saved(params FlowStep[] steps)
+        {
+            FlowScriptSchema source = new FlowScriptSchema
+            {
+                Flow = new Flow { Name = "Saved", PublicId = Guid.Parse("8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b121") },
+            };
+            source.Steps.AddRange(steps);
+
+            return source;
+        }
+
+        // Its form is a text area, and a quote ends with its line.
+        [Theory]
+        [InlineData("first\nsecond", "Notify          <[ first ]>  <[ second ]>")]
+        [InlineData("first\n\nthird", "Notify          <[ first ]>  <[  ]>  <[ third ]>")]
+        [InlineData("\nsecond", "Notify          <[  ]>  <[ second ]>")]
+        [InlineData("first\n", "Notify          <[ first ]>  <[  ]>")]
+        [InlineData("\n", "Notify          <[  ]>  <[  ]>")]
+        public void A_notify_of_several_lines_is_a_quote_for_each_and_comes_back_line_for_line(string message, string line)
+        {
+            string printed = new Printer().Write(Saved(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = message }));
+            FlowScriptSchema schema = new Scanner().Read(printed);
+
+            printed.ShouldContain(line);
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().Message.ShouldBe(message);
+        }
+
+        [Fact]
+        public void A_notify_saved_with_windows_line_endings_comes_back_with_one_kind()
+        {
+            FlowScriptSchema schema = new Scanner().Read(new Printer().Write(Saved(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "first\r\nsecond" })));
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().Message.ShouldBe("first\nsecond");
+        }
+
+        [Fact]
+        public void A_notify_of_several_lines_still_takes_a_reported_step()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Shell           <[ Read it ]>   <[ echo 1 ]>\n Success:\n  Notify          <[ first ]>  <[ second ]>   with result of <[ Read it ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            FlowStep notify = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY);
+            notify.Message.ShouldBe("first\nsecond");
+            notify.FlowStepReference.ShouldBeSameAs(schema.Steps.Single(x => x.Name == "Read it"));
+        }
+
+        // A step moved out from under what it broke out of loses the link, and the validator reports it.
+        [Fact]
+        public void A_break_with_no_target_comes_back_with_none()
+        {
+            string printed = new Printer().Write(Saved(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK }));
+            FlowScriptSchema schema = new Scanner().Read(printed);
+
+            printed.ShouldContain("Break           out of <[  ]>");
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().FlowStepReference.ShouldBeNull();
+        }
+
+        [Fact]
+        public void A_break_and_a_notify_reach_a_window_step_by_the_name_its_line_starts_with()
+        {
+            FlowStep focus = new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window 2" };
+            FlowStep success = new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS, ParentFlowStep = focus };
+            FlowStep notify = new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "m", ParentFlowStep = success, FlowStepReference = focus };
+            FlowStep leave = new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, ParentFlowStep = success, OrderNumber = 1, FlowStepReference = focus };
+
+            string printed = new Printer().Write(Saved(focus, success, notify, leave));
+            FlowScriptSchema schema = new Scanner().Read(printed);
+
+            printed.ShouldContain("Focus Window    <[ Focus window 2 ]>   <[  ]>");
+            schema.Diagnostics.ShouldBeEmpty();
+            FlowStep readFocus = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_FOCUS);
+            readFocus.Name.ShouldBe("Focus window 2");
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY).FlowStepReference.ShouldBeSameAs(readFocus);
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.BREAK).FlowStepReference.ShouldBeSameAs(readFocus);
+            new Printer().Write(schema).ShouldBe(printed);
+        }
+
+        [Fact]
+        public void A_disabled_window_step_starts_with_its_name_as_any_other()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Disabled Focus Window    <[ Bring it forward ]>   <[ App ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().ShouldSatisfyAllConditions(
+                x => x.IsDisabled.ShouldBeTrue(),
+                x => x.Name.ShouldBe("Bring it forward"),
+                x => x.FlowArea!.Name.ShouldBe("App"));
+        }
+
+        [Theory]
+        [InlineData("Focus Window    <[ Given ]>   <[ App ]>")]
+        [InlineData("Focus Window    <[ Given ]>   <[  ]>")]
+        [InlineData("Resize Window   <[ Given ]>   <[ App ]>   size 1 2")]
+        [InlineData("Move Window     <[ Given ]>   <[ App ]>   to <[  ]>")]
+        [InlineData("Close Window    <[ Given ]>   <[ App ]>")]
+        [InlineData("Close Window    <[ Given ]>   <[ App ]>   timeout 1ms   then force")]
+        public void A_window_step_reads_its_name_first(string line)
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + line);
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().Name.ShouldBe("Given");
+        }
+
+        // Nothing can point at one, so it has no use for a name.
+        [Theory]
+        [InlineData("End Execution   <[ Given ]>   passed")]
+        [InlineData("End Execution   passed   <[ Given ]>")]
+        [InlineData("End Execution   failed  <[ why ]>   <[ Given ]>")]
+        public void An_end_execution_line_takes_no_name(string line)
+        {
+            new Scanner().Read(LanguageLine(WithArea) + line).Diagnostics.ShouldNotBeEmpty();
+        }
+
+        [Fact]
+        public void A_window_steps_name_is_held_to_the_one_set_of_names()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Focus Window    <[ App ]>   <[ App ]>\n");
+
+            schema.Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.NAME_DUPLICATE);
+        }
+
+        // Saved with nothing picked, so null, and the validator reports it after the import.
+        [Theory]
+        [InlineData("Move            to <[  ]>")]
+        [InlineData("Move            to <[]>")]
+        [InlineData("Drag            at <[  ]> to <[  ]>")]
+        [InlineData("Break           out of <[  ]>")]
+        [InlineData("Focus Window    <[ Given ]>   <[  ]>")]
+        [InlineData("Move Window     <[ Given ]>   <[  ]>   to <[  ]>")]
+        public void An_empty_quote_is_a_reference_to_nothing_rather_than_a_mistake(string line)
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + line);
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.Steps.Single().ShouldSatisfyAllConditions(
+                x => x.FlowStepReference.ShouldBeNull(),
+                x => x.FlowStepReferenceEnd.ShouldBeNull(),
+                x => x.FlowPoint.ShouldBeNull(),
+                x => x.FlowPointEnd.ShouldBeNull());
+        }
+
+        [Theory]
+        [InlineData("Break           out of <[ Nobody ]>")]
+        [InlineData("Move            to <[ Nobody ]>")]
+        [InlineData("Focus Window    <[ Given ]>   <[ Nothing like this ]>")]
+        public void A_name_that_is_not_there_is_still_a_mistake(string line)
+        {
+            new Scanner().Read(LanguageLine(WithArea) + line).Diagnostics.ShouldHaveSingleItem().Code.ShouldBe(DiagnosticCodeEnum.NAME_UNKNOWN);
+        }
+
+        [Theory]
+        [InlineData("Move            to nowhere")]
+        [InlineData("Break           out of nowhere")]
+        [InlineData("Focus Window    <[ Given ]>   <[ App ]>   named <[ Other ]>")]
+        public void The_words_that_said_this_are_gone(string line)
+        {
+            new Scanner().Read(LanguageLine(WithArea) + line).Diagnostics.ShouldNotBeEmpty();
         }
 
         // ================================================================
@@ -229,7 +402,7 @@ namespace Business.Tests.FlowScript
             string script = new Printer().Write(source);
             FlowScriptSchema schema = new Scanner().Read(script);
 
-            script.ShouldContain("to nowhere");
+            script.ShouldContain("to <[  ]>");
             schema.Diagnostics.ShouldBeEmpty();
             FlowStep move = schema.Steps.Single();
             (move.FlowPoint, move.FlowStepReference).ShouldBe((null, null));

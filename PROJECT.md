@@ -643,7 +643,7 @@ so the name is reserved, with up to two steps the tester asks for, in this order
   by the program file of the process that owns the window now - quoted when it has a space, or a
   Steam game's link - so the window has to be open. A website's is its browser, which Launch opens
   at the address when no tab has it.
-- **A resize** (`Resize Window <[ main ]> size W H`), to a size typed or copied from one of the app's
+- **A resize** (`Resize Window <[ Resize window to WxH ]> <[ main ]> size W H`), to a size typed or copied from one of the app's
   open windows by "Measure its windows" - the whole window, as `GetWindowRect` measures it and
   `SetWindowPos` sets it, since the inside the area's Test reports would shrink the window a little on
   every execution. The setup sets the window to it there and then, and the session again at Start
@@ -1415,6 +1415,10 @@ directly below it is a line of its text, a blank line a bare `#`. It reuses the 
 rather than a quote, so it can run to many lines and hold `<[` and `]>` - a quote ends at its first
 `]>`. Each line is trimmed as a comment is, so indentation inside a description does not survive.
 
+**A `Notify` of several lines is a quote for each**, `<[ first ]>  <[ second ]>`, a blank line an
+empty one. A quote ends with its line, and the form is a text area, so a message with a line break
+used to print a line nothing could read and the whole import was refused.
+
 **The main area is a word on its area line**, `main`, after the name. A flag on the area rather than
 a key on the flow: the key it replaced, `Flow.AppUnderTestAreaId`, was `NoAction` to break a cascade
 cycle, so an import that deleted the old areas would have failed the moment one was set. Two are
@@ -1444,9 +1448,13 @@ loop naming a search has no count, so the validator refused it and it made one p
 loop was rejected: it would have touched the walker, the cache, the worker, two validator rules and
 the history to say one more thing, "once, when something was found, before the hits".
 
-**A move with no point is written `to nowhere`.** It is a step with an error, which the validator
-reports and Start refuses, but an import keeps a flow with errors - so the line has to read back as
-what it was, and the next import shows the same unfinished step.
+**A reference to nothing is an empty quote**: `Move to <[  ]>`, `Break out of <[  ]>`, `Focus Window
+<[ name ]> <[  ]>`. It is a step with an error, which the validator reports and Start refuses, but an
+import keeps a flow with errors - so the line has to read back as what it was, and the next import or
+branch switch shows the same unfinished step. Until 2026-11-07 these were the word `nowhere`, whose
+only job was telling the reader the empty value was on purpose, and an empty quote says that too. A
+name nothing above declares is still `NAME_UNKNOWN` and refuses the file, since importing it would
+erase what the line said.
 
 **A `Launch` with no area takes one command string**, not an executable plus arguments. The model
 stores one string; inventing a split it does not have would fail the round trip on the first export.
@@ -1541,8 +1549,9 @@ window the area cannot tell from the first. The `LaunchArguments` migration spli
 of an area the same way, and one starting another program than its area's keeps its command line
 and lets go of the area, rather than start something else unseen.
 
-**A window step names a window area**, since 2026-10-26: `Focus Window <[ Browser ]>`, `Resize Window
-<[ Browser ]> size 1280 720`, `Move Window <[ Browser ]> to point <[ X ]>`. The window is described
+**A window step names a window area**, since 2026-10-26: `Focus Window <[ name ]> <[ Browser ]>`,
+`Resize Window <[ name ]> <[ Browser ]> size 1280 720`, `Move Window <[ name ]> <[ Browser ]> to point
+<[ X ]>`. The window is described
 once, by the area, and the searches inside it and every step that places it follow when its title
 changes; several steps share one area. Before, each window step carried its own process, title and
 match mode, so the same window was described twice and a renamed title broke the steps but not the
@@ -1570,8 +1579,8 @@ dropped `TabMatchOn` - finding a tab by its title went, since a title changes wi
 count - and cleared the title patterns tab areas had. `tab title contains` is refused. Windows only: macOS has AppleScript for the same, and Linux
 AT-SPI, which browsers support unevenly.
 
-**`Close Window` closes the way the window's X does**, since 2026-11-03: `Close Window <[ Editor ]>
-[timeout 10000ms] [then force]`, `WINDOW_CLOSE` beside the other three window steps, with Success
+**`Close Window` closes the way the window's X does**, since 2026-11-03: `Close Window <[ name ]>
+<[ Editor ]> [timeout 10000ms] [then force]`, `WINDOW_CLOSE` beside the other three window steps, with Success
 and Failure. `IWindowService.CloseWindow` posts `WM_CLOSE`, so an application can save its session,
 let go of its profile lock and remove its own temp files, and `IsWindowOpen` - `IsWindow` and
 `IsWindowVisible` - says when it has gone, a window hidden in the tray counting as gone. The wait is
@@ -2160,14 +2169,24 @@ read: no saved flow used them when they went, on 2026-11-07.
 ### Every step a line can point at carries its name
 
 A line is named when anything can refer to its step, or when nothing about its settings would name
-it: searches, checks, loops, stage markers, `Launch` and `Shell` (a check or typed text reads what a
-command printed, `{{Read it}}`), and `Sub Flow`. A step named by its settings - a click, a wait, an
-`End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Shell` and `Sub Flow`
-always write theirs, an empty one as `<[  ]>`, and a line without it is refused. A recording names
+it: searches, checks, loops, stage markers, window steps, `Launch` and `Shell` (a check or typed text
+reads what a command printed, `{{Read it}}`), and `Sub Flow`. A step named by its settings - a click,
+a wait, an `End Execution`, a `Notify` - writes none, and is named on import. `Launch`, `Shell`, `Sub
+Flow` and the window steps always write theirs, an empty one as `<[  ]>`, and a line without it is
+refused. A recording names
 the ones it adds (`SubstituteDraftBuilder`), and the `NameUnnamedSteps` migration named the ones
 saved without one. Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
 file called that, and the file did not import back. `Notify` writes the step whose result it
 includes, `with result of <[ … ]>`; it did not before, and an export lost the pick.
+
+A window step can be pointed at, by a `Break` out of it or a `Notify` reporting it, so its name is
+the first thing on its line, read by its own parser as Image Search's is. The file cannot leave a
+reader to work it out: the number follows the order the steps were made in, so `Focus window 2` can
+sit above `Focus window`, and counting down the file would land the `Break` on the wrong window.
+Nothing can point at an `End Execution`: `TreeStepHelper.BreakTargets` leaves it out, because a `Break`
+out of one would only skip the rest of its cleanup, the walker having already dropped everything
+after it. The other steps named by their settings hold no steps. So none of them needs a name in the
+file, and a line that gives one is refused.
 
 ### A flow's name is a file name on all three systems
 
@@ -2391,15 +2410,32 @@ and the file cannot disagree. It also returns those names, which is how the sent
 sentence naming the check they belong to. Every step schema includes `CODE_COMMENT_SCHEMA`, for the
 reason the warning above gives.
 
-**Steps named by their settings.** A cursor, wait, keyboard, window, system action, break, end or
-notify step has no Name field, and no name on its script line. `FlowStepNameHelper` names it from its own settings - "Double right click", "Wait 2s",
-"Type {{email}}", "Focus window" - whenever it is saved, pasted, recorded or imported, and
-`FlowNameHelper.MakeUnique` numbers it like any name: "Click 2", or "Wait 2s (2)" when the name
-already ends in a number. Only the step's own settings, never the name of the point or step it goes
-to or the window area it acts on: those can be renamed, and keeping a copy of their name current
-would mean renaming steps nobody edited. The tree shows where a Move goes, and which window a window
-step acts on, beside its name instead. The form's header gets the name
-back with the script line, so it shows what the step will be called before it is saved.
+**Steps named by their settings.** A cursor, wait, keyboard, system action, break, end or notify step
+has no Name field, and no name on its script line. `FlowStepNameHelper` names it from its own settings
+- "Double right click", "Wait 2s", "Type {{email}}" - whenever it is saved, pasted, recorded or
+imported, and `FlowNameHelper.MakeUnique` numbers it like any name: "Click 2", or "Wait 2s (2)" when
+the name already ends in a number. Only the step's own settings, never the name of the point or step
+it goes to: those can be renamed, and keeping a copy of their name current would mean renaming steps
+nobody edited. The tree shows where a Move goes beside its name instead. The form's header gets the
+name back with the script line, so it shows what the step will be called before it is saved.
+
+**A window step's name follows its settings until someone types their own.** It can be pointed at, so
+it has a required Name field, first on its line. `windowStepName` in `window-modes.ts` fills it in
+with what `FlowStepNameHelper.NameOf` says - "Focus window", "Resize window to 1280x720" - and
+replaces it when the settings change, as long as it is still that name, empty, or that name with the
+number a clash gave it. A recording's resize comes with no name and takes the same one.
+
+**A duplicate name is refused on Save.** `FlowStepDataService.UpdateAsync` refuses a name someone typed
+that another step, area, point or input has, on every step that has a Name field, and the form shows
+why and stays open. A window step's filled-in name is numbered instead, since nobody chose it. Before,
+the save went through and the validator flagged it, but the exported file did not read back, because
+`ScriptScope` refuses a name declared twice. Creating a step still numbers a clash rather than
+refusing it, since a new step's default name, "Image Search", cannot be told from a typed one.
+
+**A paste lets go of what it cannot reach.** A reference between the copied steps follows the copy. One
+to a step outside it is kept when the new place can reach it and cleared when not, the same answer a
+drag gets from `TreeStepMoveHelper`, and the validator says the step needs one. It used to be kept,
+and a Break pasted above the step it names wrote a line that did not read back.
 
 **Testing a location.** Every Test of a location works it out with `AreaPointResolver`, the way an
 execution does: `FlowPoint.resolve` for the values on the location form, measured from the saved

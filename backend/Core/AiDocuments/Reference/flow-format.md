@@ -366,11 +366,15 @@ name declared twice is an error at the second.
 The recorder names steps from what it saw — `Find login button`, not `Check 7` — and falls back
 to a number only on a collision.
 
-**A cursor, wait, keyboard, window, system action, break, `End Execution` or `Notify` line carries
-no name.** The app names those steps from their own settings when they are saved or imported —
-`Click`, `Wait 2s`, `Type {{email}}`, `End as failed` — so the tree and the execution history can
-show them. No line declares that name, so nothing in a file can refer to one of those steps. Every
-other line starts with its step's name.
+**A cursor, wait, keyboard, system action, break, `End Execution` or `Notify` line carries no name.**
+The app names those steps from their own settings when they are saved or imported — `Click`,
+`Wait 2s`, `Type {{email}}`, `End as failed` — so the tree and the execution history can show them.
+Nothing refers to them, so a name on their lines is an error. Every other line starts with its step's
+name.
+
+**An empty quote is a reference to nothing.** A step saved with no target or no window is written
+`<[  ]>` where the name would be, and an import keeps it for the validator to report. A name that
+nothing above declares is still an error on its line.
 
 ### Comments and sections
 
@@ -523,7 +527,7 @@ Wait        800ms
 `Click` or `Wait 800ms`, numbered when the flow has two, and so are `End Execution` and `Notify`. A
 click and a scroll act where the cursor is, so the `Move` above them says where and the line itself
 says only what. `to` takes a name from the one namespace - a check's
-result or a point - and a move saved with neither is written `to nowhere`, which the validator
+result or a point - and a move saved with neither is written `to <[  ]>`, which the validator
 reports. A click is left and single unless it says otherwise: the button (`right`, `middle`) comes
 first, then what it does (`double`, `hold`, `release`). `Wait` is a fixed sleep and a last resort;
 prefer a `Wait For` check.
@@ -561,20 +565,22 @@ Shell    <[ Read it ]>          READ_CLIPBOARD <[  ]>
 **A `Launch` or `Shell` line starts with the step's name**, as a check does, because a check or typed
 text reads what a command printed by it: `<[ {{Read it}} ]>`. A line without its name is refused.
 
-**A window step names the area of the window it acts on.** `Focus Window`, `Resize Window`,
-`Move Window` and `Close Window` take the name of a `window` area from the header, so a window is
-described once, under Areas, and the searches in it and the steps that place it all follow when its
-title changes. Several window steps can name the same area. It has to be a window or a browser tab:
-a monitor or a region has nothing to focus, resize, move or close, which is `AREA_NOT_A_WINDOW`. A
-tab's window is the browser window holding it, with the tab brought to the front of it first. A
-step saved with no area is written `nowhere`, which the validator reports.
+**A window step starts with its name, then names the area of the window it acts on.** The name comes
+first, as a check's does, because a `Break` or a `Notify` under it refers to it by name, and a line
+without it is refused. `Focus Window`, `Resize Window`, `Move Window` and `Close Window` then take the
+name of a `window` area from the header, so a window is described once, under Areas, and the searches
+in it and the steps that place it all follow when its title changes. Several window steps can name
+the same area. It has to be a window or a browser tab: a monitor or a region has nothing to focus,
+resize, move or close, which is `AREA_NOT_A_WINDOW`. A tab's window is the browser window holding it,
+with the tab brought to the front of it first. A step saved with no area is written `<[  ]>` in its
+place, which the validator reports.
 
 ```
-Focus Window    <[ Browser ]>
-Resize Window   <[ Browser ]>   size 1280 720
-Move Window     <[ Browser ]>   to point <[ Left half ]>
-Close Window    <[ Editor ]>
-Close Window    <[ Editor ]>   timeout 10000ms   then force
+Focus Window    <[ Bring the browser up ]>   <[ Browser ]>
+Resize Window   <[ Resize window to 1280x720 ]>   <[ Browser ]>   size 1280 720
+Move Window     <[ Move window ]>   <[ Browser ]>   to point <[ Left half ]>
+Close Window    <[ Close window ]>   <[ Editor ]>
+Close Window    <[ Close window, forced ]>   <[ Editor ]>   timeout 10000ms   then force
 ```
 
 `Close Window` asks the window to close, as its X does, and waits 5 seconds for it to go, or its
@@ -622,9 +628,10 @@ Loop  <[ Retry sign in ]>   3 times
 
 `Break` leaves a step it sits inside and carries on with what follows that step: out of a loop, it
 does no more passes; out of a `Find All Images`, it works through no more hits; out of any other
-check, it skips the rest of that branch. It names a step it sits inside, never one beside it, and
-never a `Success:` or `Failure:` line - leaving a branch is leaving its check. So the name a `Break`
-uses is always written above it.
+check, it skips the rest of that branch. It names a step it sits inside, never one beside it, never
+a `Success:` or `Failure:` line - leaving a branch is leaving its check - and never an `End Execution`,
+which has already stopped the flow. So the name a `Break` uses is always written above it. A `Break`
+saved with no step to leave is written `out of <[  ]>`, which the validator reports.
 
 A retry is a loop with a count and a `Break` on success, as above: it gives up after the count
 rather than trying for ever, and the part that repeats is the part indented under the loop.
@@ -633,9 +640,11 @@ rather than trying for ever, and the part that repeats is the part indented unde
 
 ```
 Notify   <[ the total looks wrong ]>   with result of <[ Read the total ]>
+Notify   <[ the total looks wrong ]>  <[  ]>  <[ check the VPN first ]>
 ```
 
-Sends the message through the bot picked in the step's form, which the file does not carry.
+Sends the message through the bot picked in the step's form, which the file does not carry. A quote
+ends with its line, so a message of several lines is a quote for each, a blank line an empty one.
 `with result of` puts what a check or command found at the top of the message - the text read, the
 template and its accuracy, the exit code - and names one the `Notify` sits under, in its `Success:`
 or `Failure:`. One it does not sit under is `REPORTED_STEP_UNREACHABLE`.
@@ -681,7 +690,7 @@ do a teardown can do:
 
 ```
 End Execution  failed  <[ did not reach the products page ]>
- Close Window  <[ Browser ]>   then force
+ Close Window  <[ Close the browser ]>   <[ Browser ]>   then force
  Notify  <[ login smoke failed at {{width}}x{{height}} ]>
 ```
 

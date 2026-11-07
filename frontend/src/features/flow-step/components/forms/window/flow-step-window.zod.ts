@@ -20,6 +20,12 @@ export const FlowStepWindowSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name is required")
+      .max(120, "Name too long")
+      .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     // The window is a window area, described once on the Areas tab and shared with the searches.
     flowAreaId: z.number().int().nullish(),

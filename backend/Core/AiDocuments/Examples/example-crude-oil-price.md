@@ -38,7 +38,7 @@ Areas:
 Steps:
 
 Launch          <[ Launch tradingeconomics.com/commodity/crude-oil ]>   opens <[ tradingeconomics.com/commodity/crude-oil ]>
-Resize Window   <[ tradingeconomics.com/commodity/crude-oil ]>   size 1950 2100
+Resize Window   <[ Resize window to 1950x2100 ]>   <[ tradingeconomics.com/commodity/crude-oil ]>   size 1950 2100
 # recorded after a 0.0s wait
 Wait For Text   <[ Check 104.12 ]>   contains <[ 104.12 ]>   in <[ Check 104.12 area ]>   timeout 10000ms
  Failure:
@@ -82,7 +82,7 @@ Launch          <[ Open the crude oil page ]>   opens <[ Crude oil page ]>
  Success:
   # The price box is measured in pixels from the page's corner, so the page goes back to the size
   # it was measured at.
-  Resize Window   <[ Crude oil page ]>   size 1950 2100
+  Resize Window   <[ Resize to where the price box was measured ]>   <[ Crude oil page ]>   size 1950 2100
    Success:
     # The price changes from one execution to the next, so this takes whatever number is in the
     # box, never the one seen while recording.

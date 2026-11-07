@@ -98,10 +98,10 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.COMBINATION, KeyboardInputText = "Shift", KeyboardKeyActionType = KeyboardKeyActionTypeEnum.RELEASE }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_ACTION, SystemActionType = SystemActionTypeEnum.LOCK_WORKSTATION }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, FlowArea = browser, FlowPoint = origin }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, Name = "Resize window to 1280x720", FlowArea = browser, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, Name = "Move window", FlowArea = browser, FlowPoint = origin }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = gameClient }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowArea = gameClient }, null);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window", FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
 
             FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
@@ -112,7 +112,7 @@ namespace Business.Tests.FlowScript
 
             FlowStep end = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = false, Message = "did not reach the products page" }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Close the browser", ShellCommandMode = ShellCommandModeEnum.KILL_PROCESS, ShellCommandValue = "chrome.exe" }, end);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE, FlowArea = gameClient, TimeoutMilliseconds = 10000, IsCloseForced = true }, end);
+            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE, Name = "Close window, forced", FlowArea = gameClient, TimeoutMilliseconds = 10000, IsCloseForced = true }, end);
 
             return schema;
         }

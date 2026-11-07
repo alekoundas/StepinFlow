@@ -93,7 +93,6 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("to", ScriptSymbolEnum.TO),
             new ScriptKeyword("out of", ScriptSymbolEnum.OUT_OF),
             new ScriptKeyword("point", ScriptSymbolEnum.POINT),
-            new ScriptKeyword("nowhere", ScriptSymbolEnum.NOWHERE),
             new ScriptKeyword("match", ScriptSymbolEnum.MATCH),
             new ScriptKeyword("template", ScriptSymbolEnum.TEMPLATE),
             new ScriptKeyword("accuracy", ScriptSymbolEnum.ACCURACY),

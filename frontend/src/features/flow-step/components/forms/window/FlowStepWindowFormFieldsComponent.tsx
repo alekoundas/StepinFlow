@@ -1,8 +1,9 @@
 import type z from "zod";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 
+import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
@@ -12,6 +13,10 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import {
+  followsWindowStepName,
+  windowStepName,
+} from "@/features/flow-step/components/forms/window/window-modes";
 
 type WindowForm = z.infer<typeof FlowStepWindowSchema>;
 
@@ -30,11 +35,26 @@ export default function FlowStepWindowFormFieldsComponent({
   flowId,
   isDisabled = false,
 }: Props) {
-  const { control, setValue } = useFormContext();
+  const { control, getValues, setValue } = useFormContext();
   const flowStepType = useWatch({ control, name: "flowStepType" });
   const flowAreaId = useWatch({ control, name: "flowAreaId" });
+  const windowWidth = useWatch({ control, name: "windowWidth" });
+  const windowHeight = useWatch({ control, name: "windowHeight" });
   const isCloseForced = useWatch({ control, name: "isCloseForced" });
   const isClose = flowStepType === FlowStepTypeEnum.WINDOW_CLOSE;
+
+  // The name follows the settings until someone types their own.
+  const settingsName = windowStepName(flowStepType, windowWidth, windowHeight, isCloseForced);
+  const lastSettingsName = useRef(settingsName);
+
+  useEffect(() => {
+    const last = lastSettingsName.current;
+    if (last === settingsName) return;
+
+    lastSettingsName.current = settingsName;
+    if (followsWindowStepName(getValues("name") ?? "", last))
+      setValue("name", settingsName, { shouldValidate: true, shouldDirty: true });
+  }, [settingsName, getValues, setValue]);
 
   // The lookup says each area's type as its description. A tab's program is the whole browser, so
   // a close of one is never forced.
@@ -64,6 +84,14 @@ export default function FlowStepWindowFormFieldsComponent({
 
   return (
     <>
+      <FormInputTextComponent
+        fieldName="name"
+        label="Name"
+        hintText="Follows the settings below until you type your own."
+        isRequired={true}
+        isDisabled={isDisabled}
+      />
+
       <FlowStepAreaFieldComponent
         flowId={flowId}
         labelText="Window"

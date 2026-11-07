@@ -26,7 +26,7 @@ namespace Business.FlowScript.Text
         /// </summary>
         protected void WriteTarget(FlowPoint? point, FlowStep? reference)
         {
-            // point <[ X ]> | <[ a step ]> | nowhere - neither, so a flow saved with that error still round-trips.
+            // point <[ X ]> | <[ a step ]> | <[  ]> - neither, so a flow saved with that error still round-trips.
 
             if (point != null)
             {
@@ -35,26 +35,10 @@ namespace Business.FlowScript.Text
                 return;
             }
 
-            if (reference != null)
-            {
-                WriteQuote(reference.Name);
-                return;
-            }
-
-            WriteKeyword(ScriptSymbolEnum.NOWHERE);
+            WriteQuote(reference?.Name);
         }
 
-        // <[ Browser ]>, the window area a window step acts on, or nowhere - so a step saved with none still round-trips.
-        protected void WriteWindowArea()
-        {
-            if (Step.FlowArea == null)
-            {
-                WriteKeyword(ScriptSymbolEnum.NOWHERE);
-                return;
-            }
 
-            WriteQuote(Step.FlowArea.Name);
-        }
 
         /// <summary>
         /// Write a FlowArea.

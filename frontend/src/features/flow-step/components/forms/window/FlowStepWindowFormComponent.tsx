@@ -76,6 +76,7 @@ export default function FlowStepWindowFormComponent({
       ...defaultValues,
       codeComment: data.codeComment ?? "",
       flowStepType: data.flowStepType,
+      name: data.name,
 
       flowAreaId: data.flowAreaId ?? undefined,
 

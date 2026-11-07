@@ -76,13 +76,13 @@ Wait            800ms to 1200ms
 
 System          LOCK_WORKSTATION
 
-Resize Window   <[ Browser ]>   size 1280 720
+Resize Window   <[ Resize window to 1280x720 ]>   <[ Browser ]>   size 1280 720
 
-Move Window     <[ Browser ]>   to point <[ Origin ]>
+Move Window     <[ Move window ]>   <[ Browser ]>   to point <[ Origin ]>
 
 Launch          <[ Launch Game client ]>   opens <[ Game client ]>
 
-Focus Window    <[ Game client ]>
+Focus Window    <[ Focus window ]>   <[ Game client ]>
 
 Notify          <[ done ]>
 
@@ -94,4 +94,4 @@ Loop            <[ Retry ]>   5 times
 
 End Execution   failed  <[ did not reach the products page ]>
  Shell           <[ Close the browser ]>   KILL_PROCESS <[ chrome.exe ]>
- Close Window    <[ Game client ]>   timeout 10000ms   then force
+ Close Window    <[ Close window, forced ]>   <[ Game client ]>   timeout 10000ms   then force

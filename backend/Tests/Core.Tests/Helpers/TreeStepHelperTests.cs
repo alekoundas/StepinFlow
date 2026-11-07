@@ -142,6 +142,21 @@ namespace Core.Tests.Helpers
             TreeStepHelper.CanBreakOutOf(BreakTree, from, target).ShouldBe(canBreak);
         }
 
+        // An End Execution has already stopped the flow. A loop above it is still a step it sits inside.
+        [Fact]
+        public void A_break_never_leaves_an_end_execution()
+        {
+            Dictionary<int, StepChainNode> tree = new Dictionary<int, StepChainNode>
+            {
+                [1] = new StepChainNode(1, null, FlowStepTypeEnum.LOOP, "Retry", 0),
+                [2] = new StepChainNode(2, 1, FlowStepTypeEnum.END_EXECUTION, "End as failed", 0),
+                [3] = new StepChainNode(3, 2, FlowStepTypeEnum.BREAK, "Break", 0),
+            };
+
+            TreeStepHelper.BreakTargets(tree, 3).Select(x => x.Id).ShouldBe([1]);
+            TreeStepHelper.CanBreakOutOf(tree, 3, 2).ShouldBeFalse();
+        }
+
         [Fact]
         public void A_branching_step_gets_success_then_failure()
         {

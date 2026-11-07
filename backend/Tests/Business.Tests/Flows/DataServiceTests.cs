@@ -466,6 +466,127 @@ namespace Business.Tests.Flows
         }
 
         // ================================================================
+        // A name someone can type
+        // ================================================================
+
+        private async Task<int> NewFocusAsync(int flowId, string name, int orderNumber = 0)
+        {
+            ResultDto<int> created = await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = name, OrderNumber = orderNumber }, [], Ct);
+
+            return created.Data;
+        }
+
+        private static FlowStepDto FocusDto(int flowId, int id, string name)
+        {
+            return new FlowStepDto { Id = id, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = name };
+        }
+
+        [Fact]
+        public async Task A_window_step_keeps_the_name_someone_typed_whatever_its_settings_do()
+        {
+            int flowId = await NewFlowAsync();
+            int id = await NewFocusAsync(flowId, "Focus window");
+
+            FlowStepDto typed = new FlowStepDto { Id = id, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, Name = "Size for the login page", WindowWidth = 800, WindowHeight = 600 };
+            (await _dataService.FlowStep.UpdateAsync(typed, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single(x => x.Id == id).Name.ShouldBe("Size for the login page");
+
+            typed.WindowWidth = 900;
+            (await _dataService.FlowStep.UpdateAsync(typed, Ct)).IsSuccess.ShouldBeTrue();
+            Steps(flowId).Single(x => x.Id == id).Name.ShouldBe("Size for the login page");
+        }
+
+        // The form fills it in, so a clash is nobody's mistake.
+        [Fact]
+        public async Task A_window_steps_filled_in_name_gets_a_number_when_it_is_taken()
+        {
+            int flowId = await NewFlowAsync();
+            await NewFocusAsync(flowId, "Focus window");
+            int secondId = await NewFocusAsync(flowId, "Bring it up", 1);
+
+            (await _dataService.FlowStep.UpdateAsync(FocusDto(flowId, secondId, "Focus window"), Ct)).IsSuccess.ShouldBeTrue();
+
+            Steps(flowId).Single(x => x.Id == secondId).Name.ShouldBe("Focus window 2");
+        }
+
+        [Fact]
+        public async Task A_window_step_saved_with_its_number_keeps_it()
+        {
+            int flowId = await NewFlowAsync();
+            await NewFocusAsync(flowId, "Focus window");
+            int secondId = await NewFocusAsync(flowId, "Focus window", 1);
+            Steps(flowId).Single(x => x.Id == secondId).Name.ShouldBe("Focus window 2");
+
+            (await _dataService.FlowStep.UpdateAsync(FocusDto(flowId, secondId, "Focus window 2"), Ct)).IsSuccess.ShouldBeTrue();
+
+            Steps(flowId).Single(x => x.Id == secondId).Name.ShouldBe("Focus window 2");
+        }
+
+        [Theory]
+        [InlineData("Bring it up")]
+        [InlineData("BRING IT UP")]
+        [InlineData("  Bring it up  ")]
+        public async Task A_name_someone_typed_that_another_step_has_is_refused(string name)
+        {
+            int flowId = await NewFlowAsync();
+            await NewFocusAsync(flowId, "Bring it up");
+            int secondId = await NewFocusAsync(flowId, "Something else", 1);
+
+            ResultDto<FlowStep> saved = await _dataService.FlowStep.UpdateAsync(FocusDto(flowId, secondId, name), Ct);
+
+            saved.IsSuccess.ShouldBeFalse();
+            saved.ErrorMessage.ShouldNotBeNull().ShouldContain("already used");
+            Steps(flowId).Single(x => x.Id == secondId).Name.ShouldBe("Something else");
+        }
+
+        // Any step someone names, not only a window step.
+        [Fact]
+        public async Task A_name_someone_typed_on_a_search_that_another_step_has_is_refused()
+        {
+            int flowId = await NewFlowAsync();
+            await NewFocusAsync(flowId, "Bring it up");
+            int findId = (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find", OrderNumber = 1 }, [], Ct)).Data;
+
+            FlowStepDto dto = new FlowStepDto { Id = findId, RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Bring it up" };
+
+            (await _dataService.FlowStep.UpdateAsync(dto, Ct)).IsSuccess.ShouldBeFalse();
+        }
+
+        [Fact]
+        public async Task A_step_saved_with_its_own_name_is_not_a_clash()
+        {
+            int flowId = await NewFlowAsync();
+            int id = await NewFocusAsync(flowId, "Bring it up");
+
+            (await _dataService.FlowStep.UpdateAsync(FocusDto(flowId, id, "Bring it up"), Ct)).IsSuccess.ShouldBeTrue();
+        }
+
+        // Two Success rows are no clash, and neither is a Success row beside a step called Success.
+        [Fact]
+        public async Task A_branch_is_not_held_to_the_names()
+        {
+            int flowId = await NewFlowAsync();
+            int findId = (await _dataService.FlowStep.CreateAsync(new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Success" }, [], Ct)).Data;
+            FlowStep success = Steps(flowId).Single(x => x.ParentFlowStepId == findId && x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+
+            FlowStepDto dto = new FlowStepDto { Id = success.Id, RootId = flowId, ParentFlowStepId = findId, FlowStepType = FlowStepTypeEnum.SUCCESS, Name = "Success", CodeComment = "a comment" };
+
+            (await _dataService.FlowStep.UpdateAsync(dto, Ct)).IsSuccess.ShouldBeTrue();
+        }
+
+        // A recording's resize comes with no name.
+        [Fact]
+        public async Task A_new_window_step_with_no_name_takes_the_one_its_settings_give()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep resize = new FlowStep { RootId = flowId, FlowId = flowId, FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, WindowWidth = 1280, WindowHeight = 720 };
+
+            await _dataService.FlowStep.CreateAsync(resize, [], Ct);
+
+            Steps(flowId).Single(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE).Name.ShouldBe("Resize window to 1280x720");
+        }
+
+        // ================================================================
         // A flow's name
         // ================================================================
 
@@ -674,13 +795,27 @@ namespace Business.Tests.Flows
             Pictures(flowId).ShouldHaveSingleItem();
         }
 
-        // Where it lands decides whether the step can still read it, and the validator says when not.
         [Fact]
-        public async Task A_pasted_step_keeps_a_reference_to_a_step_outside_the_copy()
+        public async Task A_pasted_step_keeps_a_reference_the_place_it_lands_can_reach()
         {
             int flowId = await NewFlowAsync();
             List<FlowStep> original = await SearchWithMoveAsync(flowId);
             FlowStep find = original.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            FlowStep move = original.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE);
+            FlowStep success = original.Single(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS);
+
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = move.Id, TargetParentFlowStepId = success.Id, TargetIndex = 1 }, Ct);
+
+            pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
+            Steps(flowId).Single(x => x.Id == pasted.Data).FlowStepReferenceId.ShouldBe(find.Id);
+        }
+
+        // As a move clears it. The validator says the step needs one, and its line still reads back.
+        [Fact]
+        public async Task A_pasted_step_lets_go_of_a_reference_the_place_it_lands_cannot_reach()
+        {
+            int flowId = await NewFlowAsync();
+            List<FlowStep> original = await SearchWithMoveAsync(flowId);
             FlowStep move = original.Single(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_RELOCATE);
             FlowStep failure = original.Single(x => x.FlowStepType == FlowStepTypeEnum.FAILURE);
 
@@ -689,7 +824,44 @@ namespace Business.Tests.Flows
             pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
             FlowStep copy = Steps(flowId).Single(x => x.Id == pasted.Data);
             copy.ParentFlowStepId.ShouldBe(failure.Id);
-            copy.FlowStepReferenceId.ShouldBe(find.Id);
+            copy.FlowStepReferenceId.ShouldBeNull();
+            Steps(flowId).Single(x => x.Id == move.Id).FlowStepReferenceId.ShouldNotBeNull();
+        }
+
+        // The tree after the paste, not before: a step that sits inside its loop and lands outside it.
+        [Fact]
+        public async Task A_pasted_break_lets_go_of_the_loop_it_no_longer_sits_inside()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep loop = new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 2 };
+            FlowStep leave = new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, Name = "Break", ParentFlowStep = loop, FlowStepReference = loop };
+            await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [loop, leave], [], Ct);
+
+            FlowStep saved = Steps(flowId).Single(x => x.FlowStepType == FlowStepTypeEnum.BREAK);
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = saved.Id, TargetFlowId = flowId, TargetIndex = 0 }, Ct);
+
+            pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
+            Steps(flowId).Single(x => x.Id == pasted.Data).FlowStepReferenceId.ShouldBeNull();
+            Steps(flowId).Single(x => x.Id == saved.Id).FlowStepReferenceId.ShouldNotBeNull();
+        }
+
+        // Pasted inside the step it was copied from, whose rows stay where they were. The copy sits
+        // inside the loop above them both, so a Break in it can still leave that loop.
+        [Fact]
+        public async Task A_step_pasted_inside_itself_keeps_what_it_can_reach_from_there()
+        {
+            int flowId = await NewFlowAsync();
+            FlowStep outer = new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Outer", LoopCount = 2 };
+            FlowStep inner = new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Inner", LoopCount = 2, ParentFlowStep = outer };
+            FlowStep leave = new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, Name = "Break", ParentFlowStep = inner, FlowStepReference = outer };
+            await _dataService.FlowStep.CreateTreeAsync(flowId, null, 0, [outer, inner, leave], [], Ct);
+
+            List<FlowStep> saved = Steps(flowId);
+            FlowStep savedInner = saved.Single(x => x.Name == "Inner");
+            ResultDto<int> pasted = await _dataService.FlowStep.PasteAsync(new FlowStepPasteDto { FlowStepId = savedInner.Id, TargetParentFlowStepId = savedInner.Id, TargetIndex = 1 }, Ct);
+
+            pasted.IsSuccess.ShouldBeTrue(pasted.ErrorMessage);
+            Steps(flowId).Single(x => x.ParentFlowStepId == pasted.Data).FlowStepReferenceId.ShouldBe(saved.Single(x => x.Name == "Outer").Id);
         }
 
         [Fact]
@@ -772,6 +944,42 @@ namespace Business.Tests.Flows
                 .Select(x => x.Name)
                 .ShouldBe(["Notify", "End as failed"], ignoreOrder: true);
             imported.Validation!.Issues.Select(x => x.Code).ShouldNotContain(FlowValidationCodeEnum.NAME_MISSING);
+        }
+
+        [Fact]
+        public async Task An_import_keeps_the_name_a_window_line_gives()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Focus Window  <[ Focus window 2 ]>  <[  ]>\nFocus Window  <[ Focus window ]>  <[  ]>\n Success:\n  Break  out of <[ Focus window ]>\n");
+
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => x.Message)));
+            List<FlowStep> steps = Steps(imported.FlowId);
+            List<FlowStep> windows = steps.Where(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_FOCUS).OrderBy(x => x.OrderNumber).ToList();
+
+            windows.Select(x => x.Name).ShouldBe(["Focus window 2", "Focus window"]);
+            steps.Single(x => x.FlowStepType == FlowStepTypeEnum.BREAK).FlowStepReferenceId.ShouldBe(windows[1].Id);
+        }
+
+        // Neither refuses the file: both are saved, and the flow says what is wrong with them.
+        [Fact]
+        public async Task An_import_keeps_a_flow_with_an_empty_quote_and_says_what_is_missing()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Break  out of <[  ]>\nMove  to <[  ]>\nFocus Window  <[ Bring it up ]>  <[  ]>\n");
+
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => x.Message)));
+            List<FlowValidationCodeEnum> codes = imported.Validation!.Issues.Select(x => x.Code).ToList();
+            codes.ShouldContain(FlowValidationCodeEnum.BREAK_TARGET_MISSING);
+            codes.ShouldContain(FlowValidationCodeEnum.POINT_MISSING);
+            codes.ShouldContain(FlowValidationCodeEnum.AREA_MISSING);
+        }
+
+        // The same as a search saved with none: the validator says so, and the line reads back.
+        [Fact]
+        public async Task An_import_leaves_a_window_step_with_an_empty_name_for_the_validator()
+        {
+            FlowScriptImportResultDto imported = await ImportAsync("Focus Window  <[  ]>  <[  ]>\n");
+
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => x.Message)));
+            imported.Validation!.Issues.Select(x => x.Code).ShouldContain(FlowValidationCodeEnum.NAME_MISSING);
         }
 
         // Validated once saved, the same as after a form: the errors are reported and the flow stays.

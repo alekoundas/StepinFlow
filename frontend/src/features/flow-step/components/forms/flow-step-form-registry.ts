@@ -27,7 +27,11 @@ import {
   type CursorFlowStepType,
 } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 import { CURSOR_STEP_DEFAULTS } from "@/features/flow-step/components/forms/cursor/cursor-modes";
-import { WINDOW_FLOW_STEP_TYPES } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import {
+  WINDOW_FLOW_STEP_TYPES,
+  type WindowFlowStepType,
+} from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import { windowStepName } from "@/features/flow-step/components/forms/window/window-modes";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
 import { KEYBOARD_MODES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 
@@ -45,8 +49,8 @@ export interface FlowStepFormEntry {
 
   /**
    * What a brand new step of this type starts as, beyond the fields every step shares. Takes the
-   * type because the cursor and window forms each cover several of them. A cursor, wait, keyboard,
-   * window or system action step starts with no name: the backend names it from its settings.
+   * type because the cursor and window forms each cover several of them. A cursor, wait, keyboard
+   * or system action step starts with no name: the backend names it from its settings.
    */
   newStepValues: (flowStepType: FlowStepTypeEnum) => Partial<FlowStepDto>;
 }
@@ -74,7 +78,7 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   // The three window types share one form too.
   ...forTypes(WINDOW_FLOW_STEP_TYPES, {
     component: FlowStepWindowFormComponent,
-    newStepValues: () => ({}),
+    newStepValues: (type) => ({ name: windowStepName(type as WindowFlowStepType, 0, 0, false) }),
   }),
 
   [FlowStepTypeEnum.WAIT]: {

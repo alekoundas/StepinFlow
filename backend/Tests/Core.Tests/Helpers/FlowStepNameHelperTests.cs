@@ -78,5 +78,21 @@ namespace Core.Tests.Helpers
             FlowStepNameHelper.IsNamedBySettings(FlowStepTypeEnum.SEARCH_IMAGE).ShouldBeFalse();
             FlowStepNameHelper.NameOf(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find login" }).ShouldBe("Find login");
         }
+
+        [Theory]
+        [InlineData(FlowStepTypeEnum.WINDOW_FOCUS, "", true)]
+        [InlineData(FlowStepTypeEnum.WINDOW_FOCUS, "Focus window", true)]
+        [InlineData(FlowStepTypeEnum.WINDOW_FOCUS, "focus WINDOW", true)]
+        [InlineData(FlowStepTypeEnum.WINDOW_FOCUS, "Focus window 2", false)]
+        [InlineData(FlowStepTypeEnum.WINDOW_FOCUS, "Bring it up", false)]
+        [InlineData(FlowStepTypeEnum.WINDOW_CLOSE, "Close window", true)]
+        [InlineData(FlowStepTypeEnum.WINDOW_RELOCATE, "Focus window", false)]
+        [InlineData(FlowStepTypeEnum.SEARCH_IMAGE, "", false)]
+        [InlineData(FlowStepTypeEnum.SEARCH_IMAGE, "Find login", false)]
+        public void Only_a_window_step_can_still_have_the_name_its_settings_give(FlowStepTypeEnum type, string name, bool hasIt)
+        {
+            FlowStepNameHelper.IsNamedBySettings(type).ShouldBeFalse();
+            FlowStepNameHelper.HasSettingsName(new FlowStep { FlowStepType = type, Name = name }).ShouldBe(hasIt);
+        }
     }
 }

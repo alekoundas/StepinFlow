@@ -12,10 +12,14 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Close Window  <[ Notepad ]>   timeout 10000ms   then force
+            // Close Window  <[ name ]>   <[ Notepad ]>   timeout 10000ms   then force
             WriteKeyword(FlowStepTypeEnum.WINDOW_CLOSE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteWindowArea();
+            WriteQuote(Step.Name);
+
+            WriteGap();
+            WriteQuote(Step.FlowArea?.Name);
+
 
             // Zero is the five seconds a close waits unless told otherwise.
             if (Step.TimeoutMilliseconds > 0)

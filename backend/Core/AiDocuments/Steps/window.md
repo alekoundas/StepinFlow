@@ -12,6 +12,11 @@
 They share one form with four mode buttons, and all four have **Success** and **Failure**
 branches — a window can simply not be there.
 
+A window step has a name, as a check does, because a `Break` or a `Notify` under it refers to it by
+name. The form fills it in from the settings, "Resize window to 1280x720", and keeps it in step with
+them until someone types their own. A name typed that another step has is refused on Save; one filled
+in gets a number instead.
+
 ## How a window step finds its window
 
 A window step names a **window area**: the same area a search looks inside, which finds its window
@@ -27,10 +32,10 @@ focus, resize, move or close, and the step is refused with `AREA_NOT_A_WINDOW`. 
 whole window, title bar and borders included, whatever the area says about its frame.
 
 ```
-Focus Window    <[ Browser ]>
-Resize Window   <[ Browser ]>   size 1280 720
-Move Window     <[ Browser ]>   to point <[ Left half ]>
-Close Window    <[ Editor ]>   timeout 10000ms   then force
+Focus Window    <[ Bring the browser up ]>   <[ Browser ]>
+Resize Window   <[ Resize window to 1280x720 ]>   <[ Browser ]>   size 1280 720
+Move Window     <[ Move window ]>   <[ Browser ]>   to point <[ Left half ]>
+Close Window    <[ Close window, forced ]>   <[ Editor ]>   timeout 10000ms   then force
 ```
 
 ## Why resizing a window matters

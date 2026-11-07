@@ -13,10 +13,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Move Window  <[ Browser ]>   to point <[ X ]>
+            // Move Window  <[ name ]>   <[ Browser ]>   to point <[ X ]>
             ExpectKeyword(FlowStepTypeEnum.WINDOW_RELOCATE);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE };
 
+            step.Name = ExtractName();
             step.FlowArea = ExtractWindowArea();
 
             ExpectKeyword(ScriptSymbolEnum.TO);

@@ -11,10 +11,14 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Focus Window  <[ Browser ]>
+            // Focus Window  <[ name ]>   <[ Browser ]>
             WriteKeyword(FlowStepTypeEnum.WINDOW_FOCUS);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteWindowArea();
+            WriteQuote(Step.Name);
+
+            WriteGap();
+            WriteQuote(Step.FlowArea?.Name);
+
         }
     }
 }

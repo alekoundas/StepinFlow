@@ -12,10 +12,13 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Resize Window  <[ Browser ]>   size 1280 720
+            // Resize Window  <[ name ]>   <[ Browser ]>   size 1280 720
             WriteKeyword(FlowStepTypeEnum.WINDOW_RESIZE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteWindowArea();
+            WriteQuote(Step.Name);
+
+            WriteGap();
+            WriteQuote(Step.FlowArea?.Name);
 
             WriteGap();
             WriteKeyword(ScriptSymbolEnum.SIZE);

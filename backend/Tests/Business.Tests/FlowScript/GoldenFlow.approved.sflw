@@ -158,6 +158,45 @@ Shell           <[ Break out of a command ]>   <[ exit 1 ]>
 
 Break           out of <[ Loop 5 times ]>
 
+Break           out of <[  ]>
+
+Loop            <[ A loop with a break out of nothing ]>   2 times
+ Break           out of <[  ]>
+
+Focus Window    <[ Focus window 9 ]>   <[ App ]>
+ Success:
+  Break           out of <[ Focus window 9 ]>
+ Failure:
+  Break           out of <[ Focus window 9 ]>
+
+Focus Window    <[ Focus no window, a name a person chose ]>   <[  ]>
+ Success:
+  Break           out of <[ Focus no window, a name a person chose ]>
+
+Resize Window   <[ Resize window to 5x5 (9) ]>   <[ App ]>   size 5 5
+ Success:
+  Break           out of <[ Resize window to 5x5 (9) ]>
+
+Resize Window   <[ Resize window to 0x0 (9) ]>   <[  ]>   size 0 0
+ Failure:
+  Break           out of <[ Resize window to 0x0 (9) ]>
+
+Move Window     <[ Move window 9 ]>   <[ App ]>   to point <[ Point on screen offset ]>
+ Success:
+  Break           out of <[ Move window 9 ]>
+
+Move Window     <[ Move window 10 ]>   <[  ]>   to <[  ]>
+ Failure:
+  Break           out of <[ Move window 10 ]>
+
+Close Window    <[ Close window 9 ]>   <[ App ]>
+ Success:
+  Break           out of <[ Close window 9 ]>
+
+Close Window    <[ Close window, forced 9 ]>   <[ App ]>   timeout 10000ms   then force
+ Failure:
+  Break           out of <[ Close window, forced 9 ]>
+
 ## Click
 
 Click
@@ -232,7 +271,7 @@ Move            to point <[ Point on screen offset at dpi ]>
 
 Move            to <[ Break out of a search ]>
 
-Move            to nowhere
+Move            to <[  ]>
 
 ## Drag
 
@@ -240,19 +279,19 @@ Drag            at point <[ Point inside ratio ]> to point <[ Point inside ratio
 
 Drag            at point <[ Point inside ratio ]> to <[ Break out of a search ]>
 
-Drag            at point <[ Point inside ratio ]> to nowhere
+Drag            at point <[ Point inside ratio ]> to <[  ]>
 
 Drag            at <[ Break out of a search ]> to point <[ Point inside ratio ]>
 
 Drag            at <[ Break out of a search ]> to <[ Break out of a search ]>
 
-Drag            at <[ Break out of a search ]> to nowhere
+Drag            at <[ Break out of a search ]> to <[  ]>
 
-Drag            at nowhere to point <[ Point inside ratio ]>
+Drag            at <[  ]> to point <[ Point inside ratio ]>
 
-Drag            at nowhere to <[ Break out of a search ]>
+Drag            at <[  ]> to <[ Break out of a search ]>
 
-Drag            at nowhere to nowhere
+Drag            at <[  ]> to <[  ]>
 
 Drag            at point <[ Point on screen offset ]> to point <[ Point on screen ratio ]>
 
@@ -280,91 +319,95 @@ Press           <[  ]>   hold
 
 Press           <[  ]>   release
 
-## Focus Window
+## Focus Window lines
 
-Focus Window    <[ App ]>
+Focus Window    <[ Focus window ]>   <[ App ]>
 
-Focus Window    <[ Window plain ]>
+Focus Window    <[ Focus window 2 ]>   <[ Window plain ]>
 
-Focus Window    <[ Window everything ]>
+Focus Window    <[ Focus window 3 ]>   <[ Window everything ]>
 
-Focus Window    <[ Tab plain ]>
+Focus Window    <[ Focus window 4 ]>   <[ Tab plain ]>
 
-Focus Window    <[ Monitor primary ]>
+Focus Window    <[ Focus window 5 ]>   <[ Monitor primary ]>
 
-Focus Window    <[ App ratio ]>
+Focus Window    <[ Focus window 6 ]>   <[ App ratio ]>
 
-Focus Window    nowhere
+Focus Window    <[ Focus window 7 ]>   <[  ]>
 
-## Resize Window
+Focus Window    <[  ]>   <[ App ]>
 
-Resize Window   <[ App ]>   size 1280 720
+Focus Window    <[  ]>   <[  ]>
 
-Resize Window   <[ Tab plain ]>   size 1 1
+## Resize Window lines
 
-Resize Window   <[ App ]>   size 0 0
+Resize Window   <[ Resize window to 1280x720 ]>   <[ App ]>   size 1280 720
 
-Resize Window   nowhere   size 800 600
+Resize Window   <[ Resize window to 1x1 ]>   <[ Tab plain ]>   size 1 1
 
-Resize Window   nowhere   size 0 0
+Resize Window   <[ Resize window to 0x0 ]>   <[ App ]>   size 0 0
 
-## Move Window
+Resize Window   <[ Resize window to 800x600 ]>   <[  ]>   size 800 600
 
-Move Window     <[ App ]>   to point <[ Point on screen offset ]>
+Resize Window   <[ Resize window to 0x0 (2) ]>   <[  ]>   size 0 0
 
-Move Window     <[ App ]>   to point <[ Point inside offset at dpi ]>
+## Move Window lines
 
-Move Window     <[ App ]>   to nowhere
+Move Window     <[ Move window ]>   <[ App ]>   to point <[ Point on screen offset ]>
 
-Move Window     <[ Tab plain ]>   to point <[ Point on screen offset ]>
+Move Window     <[ Move window 2 ]>   <[ App ]>   to point <[ Point inside offset at dpi ]>
 
-Move Window     <[ Tab plain ]>   to point <[ Point inside offset at dpi ]>
+Move Window     <[ Move window 3 ]>   <[ App ]>   to <[  ]>
 
-Move Window     <[ Tab plain ]>   to nowhere
+Move Window     <[ Move window 4 ]>   <[ Tab plain ]>   to point <[ Point on screen offset ]>
 
-Move Window     nowhere   to point <[ Point on screen offset ]>
+Move Window     <[ Move window 5 ]>   <[ Tab plain ]>   to point <[ Point inside offset at dpi ]>
 
-Move Window     nowhere   to point <[ Point inside offset at dpi ]>
+Move Window     <[ Move window 6 ]>   <[ Tab plain ]>   to <[  ]>
 
-Move Window     nowhere   to nowhere
+Move Window     <[ Move window 7 ]>   <[  ]>   to point <[ Point on screen offset ]>
 
-## Close Window
+Move Window     <[ Move window 8 ]>   <[  ]>   to point <[ Point inside offset at dpi ]>
 
-Close Window    <[ App ]>
+Move Window     <[ Move window 11 ]>   <[  ]>   to <[  ]>
 
-Close Window    <[ App ]>   then force
+## Close Window lines
 
-Close Window    <[ App ]>   timeout 1ms
+Close Window    <[ Close window ]>   <[ App ]>
 
-Close Window    <[ App ]>   timeout 1ms   then force
+Close Window    <[ Close window, forced ]>   <[ App ]>   then force
 
-Close Window    <[ App ]>   timeout 10000ms
+Close Window    <[ Close window 2 ]>   <[ App ]>   timeout 1ms
 
-Close Window    <[ App ]>   timeout 10000ms   then force
+Close Window    <[ Close window, forced 2 ]>   <[ App ]>   timeout 1ms   then force
 
-Close Window    <[ Tab plain ]>
+Close Window    <[ Close window 3 ]>   <[ App ]>   timeout 10000ms
 
-Close Window    <[ Tab plain ]>   then force
+Close Window    <[ Close window, forced 3 ]>   <[ App ]>   timeout 10000ms   then force
 
-Close Window    <[ Tab plain ]>   timeout 1ms
+Close Window    <[ Close window 4 ]>   <[ Tab plain ]>
 
-Close Window    <[ Tab plain ]>   timeout 1ms   then force
+Close Window    <[ Close window, forced 4 ]>   <[ Tab plain ]>   then force
 
-Close Window    <[ Tab plain ]>   timeout 10000ms
+Close Window    <[ Close window 5 ]>   <[ Tab plain ]>   timeout 1ms
 
-Close Window    <[ Tab plain ]>   timeout 10000ms   then force
+Close Window    <[ Close window, forced 5 ]>   <[ Tab plain ]>   timeout 1ms   then force
 
-Close Window    nowhere
+Close Window    <[ Close window 6 ]>   <[ Tab plain ]>   timeout 10000ms
 
-Close Window    nowhere   then force
+Close Window    <[ Close window, forced 6 ]>   <[ Tab plain ]>   timeout 10000ms   then force
 
-Close Window    nowhere   timeout 1ms
+Close Window    <[ Close window 7 ]>   <[  ]>
 
-Close Window    nowhere   timeout 1ms   then force
+Close Window    <[ Close window, forced 7 ]>   <[  ]>   then force
 
-Close Window    nowhere   timeout 10000ms
+Close Window    <[ Close window 8 ]>   <[  ]>   timeout 1ms
 
-Close Window    nowhere   timeout 10000ms   then force
+Close Window    <[ Close window, forced 8 ]>   <[  ]>   timeout 1ms   then force
+
+Close Window    <[ Close window 10 ]>   <[  ]>   timeout 10000ms
+
+Close Window    <[ Close window, forced 10 ]>   <[  ]>   timeout 10000ms   then force
 
 ## System
 
@@ -882,6 +925,39 @@ Notify          <[ the result of a search ]>   with result of <[ Find Image one 
 
 Notify          <[ the result of a check ]>   with result of <[ Check Source text is ]>
 
+Notify          <[ a first line ]>  <[ a second line ]>
+
+Notify          <[ a blank line ]>  <[  ]>  <[ between two ]>
+
+Notify          <[  ]>  <[ a blank line first ]>
+
+Notify          <[ a blank line last ]>  <[  ]>
+
+Notify          <[  ]>  <[  ]>
+
+Notify          <[ two lines ]>  <[ and a result ]>   with result of <[ Source text ]>
+
+Notify          <[ {{alpha default}} ]>  <[ # not a comment ]>  <[ with result of ]>  <[ Γειά σου κόσμε ]>
+
+Focus Window    <[ Focus window 20 ]>   <[ App ]>
+ Success:
+  Notify          <[ a focus went well ]>   with result of <[ Focus window 20 ]>
+ Failure:
+  Notify          <[ a focus went badly ]>  <[ over two lines ]>   with result of <[ Focus window 20 ]>
+
+Resize Window   <[ Resize window to 6x6 (20) ]>   <[ App ]>   size 6 6
+ Success:
+  Notify          <[ a resize went well ]>   with result of <[ Resize window to 6x6 (20) ]>
+
+Move Window     <[ Move window 20 ]>   <[ App ]>   to <[  ]>
+ Failure:
+  Notify          <[ a move went badly ]>   with result of <[ Move window 20 ]>
+
+Close Window    <[ Close window 20 ]>   <[ App ]>
+ Failure:
+  Notify          <[ a close went badly ]>   with result of <[ Close window 20 ]>
+  Break           out of <[ Close window 20 ]>
+
 ## End Execution
 
 End Execution   passed
@@ -898,7 +974,7 @@ End Execution   passed
 
 End Execution   failed  <[ cleanup after a failure ]>
  Shell           <[ Cleanup command ]>   KILL_PROCESS <[ chrome.exe ]>
- Close Window    <[ App ]>   timeout 10000ms   then force
+ Close Window    <[ Close window, forced 11 ]>   <[ App ]>   timeout 10000ms   then force
 
 End Execution   failed  <[ an end inside an end ]>
  End Execution   passed
@@ -1024,29 +1100,29 @@ Launch          <[ Branch of launch opens ]>   opens <[ App ]>
  Failure:
   Wait            32ms
 
-Focus Window    <[ App ]>
+Focus Window    <[ Focus window 8 ]>   <[ App ]>
  Success:
   Wait            33ms
  Failure:
   Wait            34ms
 
-Focus Window    nowhere
+Focus Window    <[ Focus window 10 ]>   <[  ]>
  Success:
   Wait            35ms
 
-Resize Window   <[ App ]>   size 2 2
+Resize Window   <[ Resize window to 2x2 ]>   <[ App ]>   size 2 2
  Success:
   Wait            36ms
  Failure:
   Wait            37ms
 
-Move Window     <[ App ]>   to point <[ Point on screen offset ]>
+Move Window     <[ Move window 12 ]>   <[ App ]>   to point <[ Point on screen offset ]>
  Success:
   Wait            38ms
  Failure:
   Wait            39ms
 
-Close Window    <[ App ]>   timeout 1ms   then force
+Close Window    <[ Close window, forced 12 ]>   <[ App ]>   timeout 1ms   then force
  Success:
   Wait            40ms
  Failure:
@@ -1064,7 +1140,7 @@ Find Image      <[ Depth 1 ]>   template <[ template-all.png ]> accuracy 0.9   i
        Success:
         Wait For Text   <[ Depth 6 ]>   is <[ y ]>   in <[ App ]>   timeout 1ms
          Failure:
-          Focus Window    <[ App ]>
+          Focus Window    <[ Focus window 11 ]>   <[ App ]>
            Success:
             Loop            <[ Depth 7 ]>   forever
              Click
@@ -1104,21 +1180,21 @@ Disabled Scroll          down 3
 
 Disabled Move            to point <[ Point inside ratio ]>
 
-Disabled Move            to nowhere
+Disabled Move            to <[  ]>
 
-Disabled Drag            at point <[ Point inside ratio ]> to nowhere
+Disabled Drag            at point <[ Point inside ratio ]> to <[  ]>
 
 Disabled Type            <[ disabled text ]>
 
 Disabled Press           <[ Ctrl+V ]>   hold
 
-Disabled Focus Window    <[ App ]>
+Disabled Focus Window    <[ Focus window 12 ]>   <[ App ]>
 
-Disabled Resize Window   <[ App ]>   size 3 3
+Disabled Resize Window   <[ Resize window to 3x3 ]>   <[ App ]>   size 3 3
 
-Disabled Move Window     <[ App ]>   to nowhere
+Disabled Move Window     <[ Move window 13 ]>   <[ App ]>   to <[  ]>
 
-Disabled Close Window    <[ App ]>   timeout 1ms   then force
+Disabled Close Window    <[ Close window, forced 13 ]>   <[ App ]>   timeout 1ms   then force
 
 Disabled System          SLEEP_PC
 
@@ -1138,6 +1214,14 @@ Disabled End Execution   failed  <[ disabled ]>
 
 Disabled End Execution   failed  <[ disabled with cleanup ]>
  Wait            51ms
+
+Disabled Focus Window    <[ Disabled focus with a name ]>   <[ App ]>
+ Success:
+  Disabled Break           out of <[ Disabled focus with a name ]>
+
+Disabled Notify          <[ disabled ]>  <[ over two lines ]>
+
+Disabled Break           out of <[  ]>
 
 Disabled Sub Flow        <[ Disabled sub flow ]>   <[ Called flow ]>   id <[ 3b0c1d52-6f7e-4a8b-9c0d-1e2f3a4b5c6d ]>
 

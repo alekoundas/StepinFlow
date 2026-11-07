@@ -4,11 +4,13 @@ using Core.Models.Database;
 namespace Core.Helpers
 {
     /// <summary>
-    /// The steps nobody names. A cursor, wait, keyboard, window, system action, break, end or notify
-    /// step is called what its own settings say, "Double click" or "Wait 2s", and renamed whenever it
-    /// is saved. Never
-    /// from another row, such as the window area a window step acts on, the point a Move goes to or
-    /// the loop a Break leaves, which could be renamed under it.
+    /// The steps nobody names. A cursor, wait, keyboard, system action, break, end or notify step is
+    /// called what its own settings say, "Double click" or "Wait 2s", and renamed whenever it is saved.
+    /// Never from another row, such as the point a Move goes to or the loop a Break leaves, which
+    /// could be renamed under it.
+    ///
+    /// A window step can be pointed at, so it has a name of its own, which starts out as what its
+    /// settings say.
     /// </summary>
     public static class FlowStepNameHelper
     {
@@ -22,19 +24,36 @@ namespace Core.Helpers
             FlowStepTypeEnum.CURSOR_RELOCATE,
             FlowStepTypeEnum.CURSOR_DRAG,
             FlowStepTypeEnum.CURSOR_SCROLL,
-            FlowStepTypeEnum.WINDOW_FOCUS,
-            FlowStepTypeEnum.WINDOW_RESIZE,
-            FlowStepTypeEnum.WINDOW_RELOCATE,
-            FlowStepTypeEnum.WINDOW_CLOSE,
             FlowStepTypeEnum.KEYBOARD_INPUT,
             FlowStepTypeEnum.BREAK,
             FlowStepTypeEnum.END_EXECUTION,
             FlowStepTypeEnum.NOTIFY,
         ];
 
+        private static readonly FlowStepTypeEnum[] WindowTypes =
+        [
+            FlowStepTypeEnum.WINDOW_FOCUS,
+            FlowStepTypeEnum.WINDOW_RESIZE,
+            FlowStepTypeEnum.WINDOW_RELOCATE,
+            FlowStepTypeEnum.WINDOW_CLOSE,
+        ];
+
         public static bool IsNamedBySettings(FlowStepTypeEnum type)
         {
             return NamedBySettingsTypes.Contains(type);
+        }
+
+        /// <summary>
+        /// A window step with no name, or still called what its settings say, rather than something
+        /// someone typed. Numbering that name is fine where a typed one has to be refused.
+        /// </summary>
+        public static bool HasSettingsName(FlowStep step)
+        {
+            if (!WindowTypes.Contains(step.FlowStepType))
+                return false;
+
+            return string.IsNullOrWhiteSpace(step.Name)
+                || string.Equals(step.Name.Trim(), NameOf(step), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

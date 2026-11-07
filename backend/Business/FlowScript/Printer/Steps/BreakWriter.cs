@@ -16,7 +16,7 @@ namespace Business.FlowScript.Text.Steps
             WriteKeyword(FlowStepTypeEnum.BREAK);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
             WriteKeyword(ScriptSymbolEnum.OUT_OF);
-            WriteQuote(Step.FlowStepReference?.Name ?? string.Empty);
+            WriteTarget(null, Step.FlowStepReference);
         }
     }
 }

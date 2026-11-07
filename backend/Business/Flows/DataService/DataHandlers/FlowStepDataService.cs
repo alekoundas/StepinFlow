@@ -79,11 +79,14 @@ namespace Business.Flows.DataService.DataHandlers
             dbContext.Entry(step).CurrentValues.SetValues(dto);
             step.IsDisabled = isDisabled;
 
-            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
-            {
-                HashSet<string> taken = await TakenNamesAsync(dbContext, step.RootId, step.Id, ct);
+            HashSet<string> taken = await TakenNamesAsync(dbContext, step.RootId, step.Id, ct);
+
+            // A name nobody typed gets a number. One somebody typed is theirs to change: the script
+            // refers to steps by name, and a file with two of one does not read back.
+            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType) || FlowStepNameHelper.HasSettingsName(step))
                 step.Name = FlowNameHelper.MakeUnique(FlowStepNameHelper.NameOf(step), taken);
-            }
+            else if (!TreeStepHelper.IsBranchChild(step.FlowStepType) && !string.IsNullOrWhiteSpace(step.Name) && taken.Contains(step.Name.Trim()))
+                return ResultDto<FlowStep>.Failure($"\"{step.Name.Trim()}\" is already used in this flow. Steps, areas, points and inputs share one set of names, because the script refers to them by name.");
 
             await SyncTemplatesAsync(dbContext, step, dto.FlowStepTemplates, ct);
 
@@ -157,9 +160,10 @@ namespace Business.Flows.DataService.DataHandlers
 
         /// <summary>
         /// A copy of a step and everything under it, placed at the target, with the id of the copy.
-        /// A reference between the copied steps follows the copy; one to a step outside it is kept,
-        /// and the validator says when the new place cannot reach it. Only into the flow it was
-        /// copied from, whose areas, points and inputs it uses.
+        /// A reference between the copied steps follows the copy; one to a step outside it is kept
+        /// when the new place can reach it and cleared when not, as a move clears it, and the
+        /// validator says the step needs one. Only into the flow it was copied from, whose areas,
+        /// points and inputs it uses.
         /// </summary>
         public async Task<ResultDto<int>> PasteAsync(FlowStepPasteDto dto, CancellationToken ct)
         {
@@ -197,6 +201,7 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<int>.Failure("A Success or Failure branch belongs to its step, so it is copied with it.");
 
             List<FlowStep> copy = CopyOf(flowSteps, source);
+            TreeStepMoveHelper.ClearUnreachableReferences(flowSteps, copy, dto.TargetParentFlowStepId);
 
             ResultDto<int> inserted = await InsertTreeAsync(dbContext, dto.TargetFlowId, dto.TargetParentFlowStepId, dto.TargetIndex, copy, [], ct);
             if (!inserted.IsSuccess)
@@ -569,10 +574,11 @@ namespace Business.Flows.DataService.DataHandlers
                 AddWithChildren(flowSteps, child, copy);
         }
 
-        // What a step named by its settings is called, whatever name it came with.
+        // What a step named by its settings is called, whatever name it came with. A window step that
+        // came with none, as a recording's resize does, starts out the same.
         private static string DesiredName(FlowStep step)
         {
-            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
+            if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType) || FlowStepNameHelper.HasSettingsName(step))
                 return FlowStepNameHelper.NameOf(step);
 
             return step.Name;

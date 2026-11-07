@@ -13,10 +13,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Close Window  <[ Notepad ]>   timeout 10000ms   then force
+            // Close Window  <[ name ]>   <[ Notepad ]>   timeout 10000ms   then force
             ExpectKeyword(FlowStepTypeEnum.WINDOW_CLOSE);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_CLOSE };
 
+            step.Name = ExtractName();
             step.FlowArea = ExtractWindowArea();
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.TIMEOUT))

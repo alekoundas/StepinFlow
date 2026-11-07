@@ -12,10 +12,13 @@ namespace Business.FlowScript.Text.Steps
 
         protected override void Compose()
         {
-            // Move Window  <[ Browser ]>   to point <[ X ]>
+            // Move Window  <[ name ]>   <[ Browser ]>   to point <[ X ]>
             WriteKeyword(FlowStepTypeEnum.WINDOW_RELOCATE);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
-            WriteWindowArea();
+            WriteQuote(Step.Name);
+
+            WriteGap();
+            WriteQuote(Step.FlowArea?.Name);
 
             WriteGap();
             WriteKeyword(ScriptSymbolEnum.TO);

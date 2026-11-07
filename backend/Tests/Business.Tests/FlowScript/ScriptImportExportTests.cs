@@ -319,6 +319,49 @@ namespace Business.Tests.FlowScript
             Directory.GetFiles(exported.TemplateFolderPath).ShouldHaveSingleItem();
         }
 
+        // Numbered in the order they were made, so the first in the file can be the second made. The
+        // names come back as they went, so the Break lands on the same window.
+        [Fact]
+        public async Task A_break_out_of_a_window_step_leaves_that_step_after_an_export_and_an_import()
+        {
+            int flowId;
+            using (AppDbContext db = _database.CreateDbContext())
+            {
+                Flow flow = new Flow { Name = "Two windows", PublicId = Guid.NewGuid() };
+                db.Flows.Add(flow);
+                db.SaveChanges();
+                flowId = flow.Id;
+
+                FlowStep first = new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window 2", RootId = flowId, FlowId = flowId, OrderNumber = 0 };
+                FlowStep second = new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window", RootId = flowId, FlowId = flowId, OrderNumber = 1 };
+                db.FlowSteps.AddRange(first, second);
+                db.SaveChanges();
+
+                FlowStep success = new FlowStep { FlowStepType = FlowStepTypeEnum.SUCCESS, Name = "Success", RootId = flowId, ParentFlowStepId = first.Id };
+                db.FlowSteps.Add(success);
+                db.SaveChanges();
+
+                db.FlowSteps.Add(new FlowStep { FlowStepType = FlowStepTypeEnum.BREAK, Name = "Break", RootId = flowId, ParentFlowStepId = success.Id, FlowStepReferenceId = first.Id });
+                db.SaveChanges();
+            }
+
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(flowId, _folder, Ct);
+            string script = await File.ReadAllTextAsync(exported.ScriptPath, Ct);
+
+            FlowScriptImportResultDto imported = await Importer().ImportAsync(exported.ScriptPath, Ct);
+            imported.IsSuccess.ShouldBeTrue(string.Join("; ", imported.Errors.Select(x => $"line {x.Line}: {x.Message}")));
+
+            ScriptRows rows = await ScriptRows.LoadAsync(_database, imported.FlowId);
+            FlowStep leave = rows.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.BREAK);
+            FlowStep left = rows.Steps.Single(x => x.Id == leave.FlowStepReferenceId);
+
+            (left.Name, left.OrderNumber).ShouldBe(("Focus window 2", 0));
+            rows.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_FOCUS && x.OrderNumber == 1).Name.ShouldBe("Focus window");
+
+            FlowScriptExportResultDto again = await Exporter().ExportAsync(imported.FlowId, _folder, Ct);
+            (await File.ReadAllTextAsync(again.ScriptPath, Ct)).ShouldBe(script);
+        }
+
         // ================================================================
         // Sub-flows and the flow's kind
         // ================================================================
@@ -548,9 +591,9 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_DRAG, FlowPointId = hamburger.Id, FlowPointEndId = origin.Id, CursorButtonType = CursorButtonTypeEnum.LEFT_BUTTON }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_SCROLL, CursorScrollDirectionType = CursorScrollDirectionTypeEnum.DOWN, LoopCount = 3 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, WaitForMilliseconds = 800, WaitForMillisecondsMax = 1200 }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, FlowAreaId = browser.Id, WindowWidth = 1280, WindowHeight = 720 }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE, Name = "Resize window to 1280x720", FlowAreaId = browser.Id, WindowWidth = 1280, WindowHeight = 720 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowAreaId = gameClient.Id }, null);
-            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, FlowAreaId = gameClient.Id }, null);
+            Add(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window", FlowAreaId = gameClient.Id }, null);
 
             FlowStep loop = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepReferenceId = find.Id }, loop.Id);

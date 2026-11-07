@@ -51,7 +51,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nFind Image <[ x ]> accuracy 0.9" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match colour" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nClick at <[ Origin ]>" },
-            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nDrag at match to nowhere" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nDrag at match to <[  ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nScroll sideways 3" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\nScroll down 3 in <[ Browser ]>" },
             { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Steps:\nLoop each match in <[ Find ]>" },
@@ -73,7 +73,7 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Points:\n  <[ P ]> inside <[ Nowhere ]> offset 1 2" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nBreak out of <[ Itself ]>" },
-            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nFocus Window <[ chrome ]>" },
+            { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nFocus Window <[ Bring it up ]> <[ chrome ]>" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Steps:\n## Sign in\n## Sign in" },
             { DiagnosticCodeEnum.NAME_DUPLICATE, "Areas:\n  <[ Browser ]> monitor primary\nSteps:\n## browser" },
             { DiagnosticCodeEnum.AREA_MAIN_DUPLICATE, "Areas:\n  <[ A ]> main monitor primary\n  <[ B ]> main window process <[ chrome.exe ]>" },
@@ -124,7 +124,7 @@ namespace Business.Tests.FlowScript
         // clauses passed over on the way included.
         [Theory]
         [InlineData("Steps:\nNotify <[ never closes", "Unexpected end of the line, expected \"]>\".")]
-        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected \"with result of\" or the end of the line.")]
+        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected \"<[\", \"with result of\" or the end of the line.")]
         [InlineData("Steps:\nFnid Image <[ x ]>", "Unexpected \"Fnid\".")]
         [InlineData("Steps:\nLoop <[ Retry ]> often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]

@@ -98,7 +98,7 @@ namespace Business.Recording.Setup
                 if (refused != null)
                     return ResultDto<int>.Failure($"{refused} Restore it if it is maximised or full screen, or untick the resize step.");
 
-                // Named by its size, as every window step is.
+                // No name, so it takes the one its size gives.
                 steps.Add(new FlowStep
                 {
                     FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE,

@@ -13,10 +13,11 @@ namespace Business.FlowScript.Parsers.Steps
 
         public override FlowStep Parse()
         {
-            // Resize Window  <[ Browser ]>   size 1280 720
+            // Resize Window  <[ name ]>   <[ Browser ]>   size 1280 720
             ExpectKeyword(FlowStepTypeEnum.WINDOW_RESIZE);
             FlowStep step = new FlowStep() { FlowStepType = FlowStepTypeEnum.WINDOW_RESIZE };
 
+            step.Name = ExtractName();
             step.FlowArea = ExtractWindowArea();
 
             ExpectKeyword(ScriptSymbolEnum.SIZE);

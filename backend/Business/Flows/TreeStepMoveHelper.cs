@@ -114,8 +114,8 @@ namespace Business.Flows
                 if (referenceId == null)
                     return;
 
-                bool wasValid = CanReach(before, step, referenceId.Value);
-                bool isValid = CanReach(after, step, referenceId.Value);
+                bool wasValid = CanReach(before, step.FlowStepType, step.Id, referenceId.Value);
+                bool isValid = CanReach(after, step.FlowStepType, step.Id, referenceId.Value);
 
                 if (!wasValid || isValid)
                     return;
@@ -127,6 +127,37 @@ namespace Business.Flows
                     ReferencedStepName = before.TryGetValue(referenceId.Value, out StepChainNode r) ? r.Name : string.Empty,
                     IsEndReference = isEndReference,
                 });
+            }
+        }
+
+        /// <summary>
+        /// A pasted copy's references to steps outside it, cleared when the place it lands cannot
+        /// reach them, as a move clears them. The validator then says the step needs one, and its line
+        /// can always be read back, which a reference to a step below it could not.
+        /// </summary>
+        public static void ClearUnreachableReferences(IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowStep> copy, int? targetParentFlowStepId)
+        {
+            Dictionary<int, StepChainNode> byId = steps.ToDictionary(
+                x => x.Id,
+                x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber));
+
+            // The copy goes in beside the rows it was read from, under ids of its own.
+            foreach (FlowStep step in copy)
+            {
+                int? parentId = -step.ParentFlowStepId;
+                if (step == copy[0])
+                    parentId = targetParentFlowStepId;
+
+                byId[-step.Id] = new StepChainNode(-step.Id, parentId, step.FlowStepType, step.Name, step.OrderNumber);
+            }
+
+            foreach (FlowStep step in copy)
+            {
+                if (step.FlowStepReferenceId != null && !CanReach(byId, step.FlowStepType, -step.Id, step.FlowStepReferenceId.Value))
+                    step.FlowStepReferenceId = null;
+
+                if (step.FlowStepReferenceEndId != null && !CanReach(byId, step.FlowStepType, -step.Id, step.FlowStepReferenceEndId.Value))
+                    step.FlowStepReferenceEndId = null;
             }
         }
 
@@ -153,15 +184,15 @@ namespace Business.Flows
         // Private methods
         // ================================================================
 
-        private static bool CanReach(IReadOnlyDictionary<int, StepChainNode> byId, FlowStep step, int referenceId)
+        private static bool CanReach(IReadOnlyDictionary<int, StepChainNode> byId, FlowStepTypeEnum type, int stepId, int referenceId)
         {
-            if (step.FlowStepType == FlowStepTypeEnum.BREAK)
-                return TreeStepHelper.CanBreakOutOf(byId, step.Id, referenceId);
+            if (type == FlowStepTypeEnum.BREAK)
+                return TreeStepHelper.CanBreakOutOf(byId, stepId, referenceId);
 
-            if (step.FlowStepType == FlowStepTypeEnum.NOTIFY)
-                return TreeStepHelper.CanReportOn(byId, step.Id, referenceId);
+            if (type == FlowStepTypeEnum.NOTIFY)
+                return TreeStepHelper.CanReportOn(byId, stepId, referenceId);
 
-            return TreeStepHelper.CanReadResultOf(byId, step.Id, referenceId);
+            return TreeStepHelper.CanReadResultOf(byId, stepId, referenceId);
         }
 
         // The new parent, and the destination renumbered the way ApplyOrder will.

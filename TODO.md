@@ -184,24 +184,33 @@ the history.
       (optional)" on a pass and the report shows it, but the writer stops at `passed`, so an export
       drops it. Either write it or stop offering it. No step in the real database has one.
 
-- [ ] **Lines the app can write and cannot read back, which refuse the whole import.** Found
-      2026-11-07, each confirmed by printing the step and reading it. A Notify message of two lines,
-      since its form is a text area: the quote is cut at the line end. A Break with no target, left by
-      a move that broke its reference: `out of <[  ]>` is `NAME_UNKNOWN`, where a Move has `nowhere`
-      for this. A Notify reporting a step named by its settings, such as a Focus Window it sits under:
-      the same trouble as the Break below. A Check Value or a text search with no condition, which the
-      forms do not allow but `CONDITION_TYPE_MISSING` expects. None is in the real database yet.
+- [x] **A Notify of two lines and a Break with no target refused the whole import. Done 2026-11-07.**
+      A message of several lines is now a quote for each, and a Break with no step to leave is written
+      `out of <[  ]>`, as a Move is `to <[  ]>`, and reads back as null for the validator to report.
+
+- [ ] **A line the app can still write and cannot read back, which refuses the whole import.** Found
+      2026-11-07. A Check Value or a text search with no condition, which the forms do not allow but
+      `CONDITION_TYPE_MISSING` expects. None is in the real database.
+
+- [ ] **A typed duplicate name on a new step is numbered, not refused.** Found 2026-11-07. Saving an
+      existing step refuses a name another step has. Creating one numbers it, "Find login 2", because
+      the backend cannot tell a typed name from the form's default, "Image Search". Sending whether
+      the user typed it would let both behave the same.
 
 - [ ] **`Move Window` reads a target it never writes.** Found 2026-11-07. `to <[ a step ]>` reads
-      without complaint and prints as `to nowhere`, so a hand-written one is lost on its first export.
+      without complaint and prints as `to <[  ]>`, so a hand-written one is lost on its first export.
       The window step goes to a point only, so the parser should refuse it.
 
-- [ ] **A Break can only be written out of a step whose line carries its name.** Since 2026-10-22 the
-      Break dropdown offers every step it sits inside, but only a loop, a search and a Check Value
-      write their own name in the script. A Break out of a System Command, a window step or an End
-      Execution executes fine and exports as `Break  out of <[ Focus window ]>`, which the import
-      then reports as `NAME_UNKNOWN`. Either offer only loops and checks in the dropdown, or have the
-      parser declare settings-named steps under the name they will be given.
+- [x] **A Break can only be written out of a step whose line carries its name. Done 2026-11-07.** A
+      Break out of a window step or an End Execution, and a Notify reporting a window step, exported a
+      name no line declared, and the import reported `NAME_UNKNOWN`. A window step now has a required
+      name, first on its line as Image Search's is, and a Break cannot leave an End Execution. Older
+      files whose window lines have no name no longer read: nobody had exported flows to keep, and
+      the AI's examples were rewritten by hand.
+
+- [x] **A reference to a step below its line. Done 2026-11-07.** A Break, a Notify, a Move or a Check
+      Value pasted above the step it names kept the link, and the read said `NAME_UNKNOWN`. A paste now
+      clears a reference the new place cannot reach, as a drag does.
 - [x] **A stage's name stays unique. Settled 2026-09-30.** Exempting it looked harmless - two stages
       both called "Retry" is a fair description of some flows - until the cost showed up: the script
       links a step reference by name across every named step, and a stage is a named step, so
