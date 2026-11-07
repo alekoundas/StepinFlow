@@ -8,6 +8,7 @@ import HotkeysPanelComponent from "@/features/settings/components/HotkeysPanelCo
 import AiSettingsPanelComponent from "@/features/settings/components/AiSettingsPanelComponent";
 import RepositoryPanelComponent from "@/features/settings/components/RepositoryPanelComponent";
 import AppVersionComponent from "@/features/auto-updater/components/AppVersionComponent";
+import PageComponent from "@/shared/components/PageComponent";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -95,9 +96,9 @@ export default function SettingsPage() {
     );
 
   return (
-    <div
-      className="m-4 flex flex-column gap-4"
-      style={{ maxWidth: 1240 }}
+    <PageComponent
+      width="form"
+      className="flex flex-column gap-4"
     >
       <div className="flex flex-column gap-1">
         <h1
@@ -150,7 +151,7 @@ export default function SettingsPage() {
           {section.content}
         </div>
       </div>
-    </div>
+    </PageComponent>
   );
 }
 

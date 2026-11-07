@@ -1,4 +1,5 @@
-﻿using Core.Helpers;
+﻿using Core.Enums;
+using Core.Helpers;
 using DataAccess.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -44,6 +45,21 @@ namespace DataAccess
         public static void UseWriteAheadLog(this DatabaseFacade database)
         {
             database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+        }
+
+        /// <summary>
+        /// An execution still RUNNING as the app starts was going when the app went away. It is marked
+        /// abandoned, and its steps are counted from what its history kept, since its walk never got
+        /// to write how many it executed.
+        /// </summary>
+        public static async Task AbandonUnfinishedExecutionsAsync(this AppDbContext dbContext, TimeProvider timeProvider)
+        {
+            await dbContext.Executions
+                .Where(x => x.Status == ExecutionStatusEnum.RUNNING)
+                .ExecuteUpdateAsync(x => x
+                    .SetProperty(execution => execution.Status, ExecutionStatusEnum.ABANDONED)
+                    .SetProperty(execution => execution.CompletedAt, timeProvider.GetUtcNow().UtcDateTime)
+                    .SetProperty(execution => execution.StepCount, execution => execution.ExecutionSteps.Count()));
         }
 
 

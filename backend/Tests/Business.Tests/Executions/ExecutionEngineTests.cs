@@ -251,6 +251,42 @@ namespace Business.Tests.Executions
             engine.IsRunning.ShouldBeFalse();
         }
 
+        [Fact]
+        public async Task A_stopped_execution_keeps_the_count_of_the_steps_it_executed()
+        {
+            int flowId = SeedFlow(false, Wait("First"), Wait("Second"), Wait("Slow"), Wait("Never"));
+            TaskCompletionSource started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _workers.Does("Slow", async ct =>
+            {
+                started.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+                return ExecutionStep.Success();
+            });
+
+            ExecutionEngine engine = Engine();
+            await engine.StartAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
+            await started.Task.WaitAsync(TIMEOUT, Ct);
+            engine.StepCount.ShouldBe(2);
+
+            engine.Stop();
+            await engine.Completion.WaitAsync(TIMEOUT, Ct);
+
+            Execution row = ExecutionRows().ShouldHaveSingleItem();
+            row.Status.ShouldBe(ExecutionStatusEnum.STOPPED);
+            row.StepCount.ShouldBe(2);
+        }
+
+        [Fact]
+        public async Task An_errored_execution_keeps_the_count_of_the_steps_it_executed()
+        {
+            int flowId = SeedFlow(false, Wait("First"), Wait("Broken"), Wait("Never"));
+            _workers.Does("Broken", ct => throw new InvalidOperationException("The screen went away."));
+
+            (await ExecuteAsync(flowId)).ShouldBe(ExecutionStatusEnum.ERRORED);
+
+            ExecutionRows().ShouldHaveSingleItem().StepCount.ShouldBe(1);
+        }
+
 
         // ================================================================
         // One at a time

@@ -15,15 +15,16 @@ export function executionStatusSeverity(
       return "danger";
     case ExecutionStatusEnum.INCONCLUSIVE:
       return "warning";
+    // Stopped by you or by the app closing: neither is a verdict, so neither wears one's colour.
     default:
-      return "paused";
+      return "neutral";
   }
 }
 
 export function executionStatusText(status: ExecutionStatusEnum): string {
   switch (status) {
     case ExecutionStatusEnum.RUNNING:
-      return "Running";
+      return "Executing";
     case ExecutionStatusEnum.COMPLETED:
       return "Completed";
     case ExecutionStatusEnum.FAILED:

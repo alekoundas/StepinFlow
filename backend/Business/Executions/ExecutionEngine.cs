@@ -55,6 +55,7 @@ namespace Business.Executions
         private HashSet<int> _debuggerBreakpoints = new HashSet<int>();
         private int _currentDepth;
         private int? _currentStepId;
+        private volatile int _stepCount;// Counted as it goes, so a stopped or errored execution still says how many steps it executed
 
         public ExecutionEngine(
             IDbContextFactory<AppDbContext> dbContextFactory,
@@ -86,6 +87,12 @@ namespace Business.Executions
         {
             get { return _state; }
             private set { _state = value; }
+        }
+
+        /// <summary>The steps the current execution, or the last one, has executed so far.</summary>
+        public int StepCount
+        {
+            get { return _stepCount; }
         }
 
         /// <summary>
@@ -121,7 +128,6 @@ namespace Business.Executions
             ExecutionStatusEnum status = ExecutionStatusEnum.COMPLETED;
             string error = string.Empty;
             int? errorStepId = null;
-            int stepCount = 0;
 
             // Load. The engine is claimed already, and a throw from here would leave it claimed for
             // good - every later start refused - so it lets go before passing the exception on.
@@ -154,7 +160,6 @@ namespace Business.Executions
                     using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct, runToken);
                     WalkOutcome outcome = await WalkAsync(isQaTest, linked.Token);
 
-                    stepCount = outcome.StepCount;
                     status = outcome.Status;
                     error = outcome.Reason;
                 }
@@ -186,7 +191,7 @@ namespace Business.Executions
                 // Complete execution
                 try
                 {
-                    await FinishAsync(status, error, errorStepId, stepCount);
+                    await FinishAsync(status, error, errorStepId, _stepCount);
                 }
                 catch (Exception ex)
                 {
@@ -253,6 +258,7 @@ namespace Business.Executions
             _debuggerStepOverDepth = null;
             _currentDepth = 0;
             _currentStepId = null;
+            _stepCount = 0;
 
             _debuggerSignalNextStep = false;
             _debuggerBreakpoints = dto.Breakpoints.ToHashSet();
@@ -305,7 +311,6 @@ namespace Business.Executions
         private async Task<WalkOutcome> WalkAsync(bool isQaTest, CancellationToken ct)
         {
             FlowStep? step = _walker.Start(FlowId);
-            int stepCount = 0;
             WalkOutcome? verdict = null;
 
             while (step != null)
@@ -319,7 +324,7 @@ namespace Business.Executions
                 ct.ThrowIfCancellationRequested();
 
                 ExecutionStep result = await ExecuteAsync(step, ct);
-                stepCount++;
+                _stepCount++;
 
                 // The one step that ends an execution on purpose, and says how it ended. It does
                 // not stop the walk - the walker drops everything pending and pushes this step's
@@ -328,7 +333,6 @@ namespace Business.Executions
                 if (step.FlowStepType == FlowStepTypeEnum.END_EXECUTION && verdict == null)
                 {
                     verdict = new WalkOutcome(
-                        0,
                         step.EndExecutionAsSuccess ? ExecutionStatusEnum.COMPLETED : ExecutionStatusEnum.FAILED,
                         step.Message);
                 }
@@ -341,19 +345,19 @@ namespace Business.Executions
                 {
                     await _history.RecordAsync(repeat);
                     await BroadcastAsync(ExecutionEventDto.Finished(ExecutionId, repeat));
-                    stepCount++;
+                    _stepCount++;
                 }
             }
 
             // Nobody said how it went. An automation that reached its end did what it was written to
             // do; a QA test whose checks all failed would look the same, so it has to say.
             if (verdict == null && isQaTest)
-                return new WalkOutcome(stepCount, ExecutionStatusEnum.INCONCLUSIVE, string.Empty);
+                return new WalkOutcome(ExecutionStatusEnum.INCONCLUSIVE, string.Empty);
 
             if (verdict == null)
-                return new WalkOutcome(stepCount, ExecutionStatusEnum.COMPLETED, string.Empty);
+                return new WalkOutcome(ExecutionStatusEnum.COMPLETED, string.Empty);
 
-            return new WalkOutcome(stepCount, verdict.Status, verdict.Reason);
+            return verdict;
         }
 
         private async Task<ExecutionStep> ExecuteAsync(FlowStep step, CancellationToken ct)
@@ -435,8 +439,8 @@ namespace Business.Executions
         // Private types
         // ================================================================
 
-        /// <summary>How the walk ended, so nothing has to be remembered in a field between steps.</summary>
-        private sealed record WalkOutcome(int StepCount, ExecutionStatusEnum Status, string Reason);
+        /// <summary>How the walk ended, when it reached its end.</summary>
+        private sealed record WalkOutcome(ExecutionStatusEnum Status, string Reason);
 
 
     }

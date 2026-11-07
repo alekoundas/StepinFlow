@@ -9,6 +9,9 @@ export interface FlowExecutionSummaryDto {
   runCount: number;
   completedCount: number;
 
+  /** Failed or errored: with completedCount, every execution that ended with a verdict. */
+  failedCount: number;
+
   lastRunOn?: string | null;
   lastStatus?: ExecutionStatusEnum | null;
 

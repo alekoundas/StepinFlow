@@ -2366,7 +2366,10 @@ Check, with the recording bar's own window in `windows/recording-bar/`.
 and Executions, then Import and Ask AI, Settings, and the model the AI features use with where it
 runs, a link to its settings. On the editor and an execution it keeps only its icons, since those pages want the
 width. Settings shows one card at a time, picked from a list of sections beside it, each at its own
-address such as `/settings/ai`, so the model's link opens the AI card. The window has no menu bar on
+address such as `/settings/ai`, so the model's link opens the AI card. Every page but those two sits in
+`PageComponent`: its content grows with the window up to 1200 px for a form - Recording, Settings,
+Import - or 1600 px for a list or a dashboard - Home, Flows, Sub-flows, Executions - then stays that
+wide in the middle, so a 4K screen does not leave it against the rail. The window has no menu bar on
 Windows and Linux: `main.ts` clears Electron's default, and its Ctrl+R reload, Ctrl+Shift+I developer
 tools, Ctrl+= zoom and F11 full screen go with it. macOS keeps it, since Cmd+C and Cmd+V reach a text box only through
 its Edit menu.
@@ -2575,6 +2578,35 @@ since before the click holds the old answer. The row is dimmed with a Disabled c
 `keysUnderDisabled` dims the rows under it, in the editor, the execution page and the read-only
 trees. Dimmed rather than greyed, because a Wait or a Loop is blue-grey already. A disabled step's
 form says so in one line with Enable, and the script view greys its line as it does a comment.
+
+### The executions page
+
+`/executions` is every execution on this machine, newest first, in one feed, rather than a flow to
+pick before anything shows.
+
+- **Executing now** sits above it: the flow, how long, and the steps so far, from the engine's state
+  read every second while it lasts (`ExecutionStateDto.StepCount`). View opens its execution page.
+- **The flows**, by when each last executed, with its last ten outcomes and how often it completed.
+  All flows comes first and is picked to begin with; a flow picked narrows the tiles and the feed,
+  and is in the address (`?flow=`), so coming back from an execution finds it still picked. A
+  sub-flow executes inside the flow that calls it, so it is listed once it has executions of its own.
+- **Four tiles** over the last 7 days (`Execution.getStats`): executions, completed, failed, stopped.
+  For one flow, how long it usually takes - the median of the completed ones, which one left waiting
+  all night does not drag - and when it last failed, instead of the last two.
+- **The feed** (`Execution.getFeed`), by day, 50 at a time below the last id shown. All, Failed,
+  Completed and Stopped, and Inconclusive when there are any, each counted over every day. A row has
+  the outcome, the number, the flow, when, how long, the steps, the version and what it kept - the
+  camera opens the screenshots' folder - and under a failure the message that ended it, with Explain
+  when the AI is on.
+- **Stopped is not a verdict.** A stopped or abandoned execution is grey, and "completed" counts only
+  the executions that ended with one - completed, failed or errored - so a loop always stopped by hand
+  has no verdict rather than 0%.
+
+The step count is counted as the walk goes (`ExecutionEngine.StepCount`), so a stopped or errored
+execution keeps it. It used to be written only when the walk reached its end, so every stopped one
+said 0; `CountStoppedExecutionSteps` counted those from the steps their history kept, and an
+execution abandoned at start-up is counted the same way. The two endpoints mark their times as UTC:
+SQLite hands a time back with no zone, which went out with none and was read as local time.
 
 ### The execution page
 

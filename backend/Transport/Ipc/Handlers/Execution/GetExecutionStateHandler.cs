@@ -25,6 +25,7 @@ namespace Transport.Ipc.Handlers.Execution
                 IsRunning = _executionEngine.IsRunning,
                 ExecutionId = _executionEngine.ExecutionId,
                 FlowId = _executionEngine.FlowId,
+                StepCount = _executionEngine.StepCount,
             };
 
             return Task.FromResult(ResultDto<ExecutionStateDto>.Success(dto));

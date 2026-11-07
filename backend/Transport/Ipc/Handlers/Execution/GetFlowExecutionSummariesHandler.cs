@@ -59,6 +59,7 @@ namespace Transport.Ipc.Handlers.Execution
                     IsSubFlow = flow.IsSubFlow,
                     RunCount = flowRuns.Count,
                     CompletedCount = flowRuns.Count(x => x.Status == ExecutionStatusEnum.COMPLETED),
+                    FailedCount = flowRuns.Count(x => x.Status == ExecutionStatusEnum.FAILED || x.Status == ExecutionStatusEnum.ERRORED),
                     LastRunOn = flowRuns.Count > 0 ? flowRuns[0].CreatedOn : null,
                     LastStatus = flowRuns.Count > 0 ? flowRuns[0].Status : null,
                     RecentOutcomes = flowRuns

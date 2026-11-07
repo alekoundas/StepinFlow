@@ -1,14 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { backendApiService } from "@/shared/services/backend-api-service";
+import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+
+// As GetExecutionFeedHandler's: a page shorter than this is the last one.
+const FEED_PAGE_SIZE = 50;
 
 export const executionKeys = {
   detail: (id: number) => ["execution", "detail", id] as const,
   list: (flowId: number) => ["execution", "list", flowId] as const,
   state: () => ["execution", "state"] as const,
+  liveState: () => ["execution", "liveState"] as const,
   flowSummaries: () => ["execution", "flowSummaries"] as const,
+  feeds: () => ["execution", "feed"] as const,
+  feed: (flowId: number | null, statuses: ExecutionStatusEnum[]) => ["execution", "feed", flowId, statuses] as const,
+  allStats: () => ["execution", "stats"] as const,
+  stats: (flowId: number | null, days: number | null) => ["execution", "stats", flowId, days] as const,
   stepScreenshot: (executionStepId: number) =>
     ["execution", "stepScreenshot", executionStepId] as const,
   savedStep: (executionId: number, sequence: number, isLive: boolean) =>
@@ -21,6 +30,36 @@ export function useFlowExecutionSummaries() {
     queryKey: executionKeys.flowSummaries(),
     queryFn: () => backendApiService.Execution.getFlowSummaries(),
     staleTime: 0,
+  });
+}
+
+/** Every flow's executions, or one flow's, newest first, a page at a time. */
+export function useExecutionFeed(flowId: number | null, statuses: ExecutionStatusEnum[]) {
+  return useInfiniteQuery({
+    queryKey: executionKeys.feed(flowId, statuses),
+    queryFn: ({ pageParam }) => backendApiService.Execution.getFeed({ flowId, beforeId: pageParam, statuses }),
+    initialPageParam: null as number | null,
+    getNextPageParam: (page) => (page.length < FEED_PAGE_SIZE ? undefined : page[page.length - 1].id),
+    staleTime: 0,
+  });
+}
+
+/** How executions ended, counted: every flow's or one flow's, over every day or the last few. */
+export function useExecutionStats(flowId: number | null, days: number | null) {
+  return useQuery({
+    queryKey: executionKeys.stats(flowId, days),
+    queryFn: () => backendApiService.Execution.getStats({ flowId, days }),
+    staleTime: 0,
+  });
+}
+
+/** The engine's state asked again every second while it executes, for a count of steps that keeps moving. */
+export function useLiveExecutionState(isExecuting: boolean) {
+  return useQuery({
+    queryKey: executionKeys.liveState(),
+    queryFn: () => backendApiService.Execution.getState(),
+    enabled: isExecuting,
+    refetchInterval: isExecuting ? 1000 : false,
   });
 }
 

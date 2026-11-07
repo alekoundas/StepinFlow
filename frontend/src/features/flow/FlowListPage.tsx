@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 
+import PageComponent from "@/shared/components/PageComponent";
+import { PAGE_MAX_WIDTHS } from "@/shared/components/page-widths";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
 import type { RepositoryStatusDto } from "@/shared/models/repository-dtos";
@@ -101,32 +103,37 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
 
   return (
     <>
-      <header className="flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3 border-bottom-1 surface-border">
-        <div className="flex align-items-center gap-3">
-          <span
-            className="text-sm"
-            style={MUTED}
-          >
-            {isSubFlow ? "Sub-flows" : "Flows"}
-          </span>
-          {status && (
-            <div className="border-1 surface-border border-round-md">
-              <BranchMenuComponent
-                flowId={undefined}
-                branch={status.branch}
-                commitCount={status.commitCount}
-                changeCount={status.changeCount}
-              />
-            </div>
-          )}
-        </div>
+      <header className="px-4 py-3 border-bottom-1 surface-border">
+        <div
+          className="flex align-items-center justify-content-between flex-wrap gap-3 mx-auto"
+          style={{ maxWidth: PAGE_MAX_WIDTHS.wide }}
+        >
+          <div className="flex align-items-center gap-3">
+            <span
+              className="text-sm"
+              style={MUTED}
+            >
+              {isSubFlow ? "Sub-flows" : "Flows"}
+            </span>
+            {status && (
+              <div className="border-1 surface-border border-round-md">
+                <BranchMenuComponent
+                  flowId={undefined}
+                  branch={status.branch}
+                  commitCount={status.commitCount}
+                  changeCount={status.changeCount}
+                />
+              </div>
+            )}
+          </div>
 
-        <FlowSearchComponent />
+          <FlowSearchComponent />
+        </div>
       </header>
 
-      <div
-        className="m-4 flex flex-column gap-4"
-        style={{ maxWidth: 1240 }}
+      <PageComponent
+        width="wide"
+        className="flex flex-column gap-4"
       >
         <div className="flex align-items-end justify-content-between flex-wrap gap-3">
           <div className="flex flex-column gap-1">
@@ -179,7 +186,7 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
           isSubFlow={isSubFlow}
           emptyMessage={emptyMessage}
         />
-      </div>
+      </PageComponent>
     </>
   );
 }

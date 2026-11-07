@@ -15,6 +15,9 @@ namespace Core.Models.Dtos.Database
         public int RunCount { get; set; }
         public int CompletedCount { get; set; }
 
+        /// <summary>Failed or errored: with CompletedCount, every execution that ended with a verdict.</summary>
+        public int FailedCount { get; set; }
+
         public DateTime? LastRunOn { get; set; }
         public ExecutionStatusEnum? LastStatus { get; set; }
 

@@ -76,6 +76,10 @@ import type { ExecutionStepRangeDto } from "@/shared/models/execution-step-range
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 import type { ExecutionStateDto } from "@/shared/models/execution-state-dto";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
+import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
+import type { ExecutionFeedRequestDto } from "@/shared/models/execution-feed-request-dto";
+import type { ExecutionStatsDto } from "@/shared/models/database/execution-stats-dto";
+import type { ExecutionStatsRequestDto } from "@/shared/models/execution-stats-request-dto";
 import type {
   AiChatAvailabilityDto,
   AiChatRequestDto,
@@ -379,6 +383,8 @@ export const backendApiService = {
     getState: () => call<ExecutionStateDto>("Execution.getState"),
     getFlowSummaries: () =>
       call<FlowExecutionSummaryDto[]>("Execution.getFlowSummaries"),
+    getFeed: (dto: ExecutionFeedRequestDto) => call<ExecutionFeedItemDto[]>("Execution.getFeed", dto),
+    getStats: (dto: ExecutionStatsRequestDto) => call<ExecutionStatsDto>("Execution.getStats", dto),
     getStepScreenshot: (executionStepId: number) =>
       callNullable<string>("Execution.getStepScreenshot", executionStepId),
   },

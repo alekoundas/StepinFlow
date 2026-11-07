@@ -9,4 +9,7 @@ export interface ExecutionStateDto {
   isRunning: boolean;
   executionId: number;
   flowId: number;
+
+  /** The steps executed so far. The broadcast adds each one after that. */
+  stepCount: number;
 }

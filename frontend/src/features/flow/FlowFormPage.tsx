@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { useFlowMutations } from "@/features/flow/hooks/use-flow";
 import { FlowDto } from "@/shared/models/database/flow-dto";
+import PageComponent from "@/shared/components/PageComponent";
 
 export default function FlowFormPage() {
   const { id, formMode = FormMode.ADD } = useParams<{
@@ -24,7 +25,7 @@ export default function FlowFormPage() {
   };
 
   return (
-    <div className="p-6">
+    <PageComponent width="form">
       <div className="flex items-center gap-4 mb-6">
         <Button
           icon="pi pi-arrow-left"
@@ -47,6 +48,6 @@ export default function FlowFormPage() {
         onCancel={() => navigate("/flows")}
         onEdit={() => {}} // No edit button on add page
       />
-    </div>
+    </PageComponent>
   );
 }

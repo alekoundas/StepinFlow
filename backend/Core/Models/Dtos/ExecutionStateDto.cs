@@ -13,5 +13,8 @@ namespace Core.Models.Dtos
 
         public int ExecutionId { get; set; }
         public int FlowId { get; set; }
+
+        /// <summary>The steps executed so far. The broadcast adds each one after that.</summary>
+        public int StepCount { get; set; }
     }
 }

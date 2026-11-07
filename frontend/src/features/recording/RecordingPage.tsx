@@ -9,6 +9,7 @@ import { ProgressBar } from "primereact/progressbar";
 
 import { BroadcastTypeEnum, type IpcBroadcastMessage } from "../../../../electron/shared/types";
 import LabelComponent from "@/shared/components/LabelComponent";
+import PageComponent from "@/shared/components/PageComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
@@ -519,9 +520,9 @@ export default function RecordingPage() {
   const recentActions = progress?.recentActions ?? [];
 
   return (
-    <div
-      className="m-4 flex flex-column gap-4"
-      style={{ maxWidth: 1180 }}
+    <PageComponent
+      width="form"
+      className="flex flex-column gap-4"
     >
       <div className="flex align-items-start justify-content-between flex-wrap gap-3">
         <div className="flex flex-column gap-1">
@@ -687,7 +688,7 @@ export default function RecordingPage() {
           )}
         </Panel>
       )}
-    </div>
+    </PageComponent>
   );
 }
 

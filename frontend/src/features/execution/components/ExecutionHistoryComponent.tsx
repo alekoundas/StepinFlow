@@ -3,6 +3,7 @@ import { Column } from "primereact/column";
 
 import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import { executionStatusSeverity, executionStatusText } from "@/shared/utils/execution-status";
+import { toTook } from "@/shared/utils/clock";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { useExecutionList } from "@/features/execution/hooks/use-execution";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
@@ -33,11 +34,11 @@ export default function ExecutionHistoryComponent({
       size="small"
       selectionMode="single"
       onSelectionChange={(e) => onOpen(e.value as ExecutionDto)}
-      emptyMessage="This flow has not been run yet."
+      emptyMessage="Not executed yet."
       className="cursor-pointer"
     >
       <Column
-        header="Run"
+        header="Execution"
         body={(execution: ExecutionDto) => `#${execution.id}`}
       />
       <Column
@@ -115,13 +116,5 @@ function historyLevelText(level: ExecutionHistoryLevelEnum): string {
 function duration(execution: ExecutionDto): string {
   if (!execution.completedAt) return "—";
 
-  const milliseconds =
-    new Date(execution.completedAt).getTime() -
-    new Date(execution.createdOn).getTime();
-
-  if (milliseconds < 60_000) return `${(milliseconds / 1000).toFixed(1)}s`;
-
-  const minutes = Math.floor(milliseconds / 60_000);
-  const seconds = Math.round((milliseconds % 60_000) / 1000);
-  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  return toTook(new Date(execution.completedAt).getTime() - new Date(execution.createdOn).getTime());
 }

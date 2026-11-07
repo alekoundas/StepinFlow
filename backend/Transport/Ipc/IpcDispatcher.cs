@@ -218,6 +218,8 @@ namespace Transport.Ipc
                     "Execution.getList" => await Handler<GetExecutionListHandler>().HandleAsync(Payload<int>(request), ct),
                     "Execution.getState" => await Handler<GetExecutionStateHandler>().HandleAsync(ct),
                     "Execution.getFlowSummaries" => await Handler<GetFlowExecutionSummariesHandler>().HandleAsync(ct),
+                    "Execution.getFeed" => await Handler<GetExecutionFeedHandler>().HandleAsync(Payload<ExecutionFeedRequestDto>(request), ct),
+                    "Execution.getStats" => await Handler<GetExecutionStatsHandler>().HandleAsync(Payload<ExecutionStatsRequestDto>(request), ct),
                     "Execution.getStepScreenshot" => await Handler<GetExecutionStepScreenshotHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Ai

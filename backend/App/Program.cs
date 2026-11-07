@@ -43,7 +43,6 @@ using Business.Repository;
 using DataAccess;
 
 using Core.Ports;
-using Core.Enums;
 
 using Platform.Shared.Git;
 using Platform.Shared.Input;
@@ -329,6 +328,8 @@ namespace App
             builder.Services.AddTransient<GetExecutionListHandler>();
             builder.Services.AddTransient<GetExecutionStateHandler>();
             builder.Services.AddTransient<GetFlowExecutionSummariesHandler>();
+            builder.Services.AddTransient<GetExecutionFeedHandler>();
+            builder.Services.AddTransient<GetExecutionStatsHandler>();
             builder.Services.AddTransient<GetExecutionStepScreenshotHandler>();
             builder.Services.AddTransient<ExplainExecutionHandler>();
             builder.Services.AddTransient<GetAiStatusHandler>();
@@ -366,13 +367,8 @@ namespace App
             dbContext.Database.Migrate();
             dbContext.Database.UseWriteAheadLog();
 
-            // Check if any exution is set as RUNNING and stop them.
             TimeProvider timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
-            await dbContext.Executions
-                .Where(x => x.Status == ExecutionStatusEnum.RUNNING)
-                .ExecuteUpdateAsync(x => x
-                    .SetProperty(execution => execution.Status, ExecutionStatusEnum.ABANDONED)
-                    .SetProperty(execution => execution.CompletedAt, timeProvider.GetUtcNow().UtcDateTime));
+            await dbContext.AbandonUnfinishedExecutionsAsync(timeProvider);
 
             await app.RunAsync();
         }

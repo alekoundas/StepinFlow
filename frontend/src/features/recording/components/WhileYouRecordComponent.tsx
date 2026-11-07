@@ -17,6 +17,14 @@ export default function WhileYouRecordComponent() {
   const checkKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_CHECK)?.value;
   const substituteKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE)?.value;
 
+  const entries = [
+    { keys: pauseKeys, does: "Pause or resume" },
+    { keys: stopKeys, does: "Stop and review" },
+    { keys: stageKeys, does: "A stage of the test begins here, such as Delete customer: Review asks for its name" },
+    { keys: checkKeys, does: "Check what you click on: that it is there, or that it goes" },
+    { keys: substituteKeys, does: "A step that is not a click: a command, an application, an input" },
+  ];
+
   return (
     <section
       className="flex flex-column gap-3 p-4 border-1 border-round-xl"
@@ -30,55 +38,27 @@ export default function WhileYouRecordComponent() {
         StepinFlow steps aside to a small bar that stays on top. Arrange your windows, then press
         Start on it. Clicks on the bar are never recorded, and it never shows up in a screenshot.
       </p>
+      {/* Each key above what it does: one as long as "LeftControl + Right click" beside its words left them two to a line. */}
       <dl
-        className="m-0 align-items-center"
-        style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "10px 14px" }}
+        className="m-0"
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "14px 20px" }}
       >
-        <dt>
-          <KeysComponent keys={pauseKeys} />
-        </dt>
-        <dd
-          className="m-0"
-          style={MUTED}
-        >
-          Pause or resume
-        </dd>
-        <dt>
-          <KeysComponent keys={stopKeys} />
-        </dt>
-        <dd
-          className="m-0"
-          style={MUTED}
-        >
-          Stop and review
-        </dd>
-        <dt>
-          <KeysComponent keys={stageKeys} />
-        </dt>
-        <dd
-          className="m-0"
-          style={MUTED}
-        >
-          A stage of the test begins here, such as Delete customer: Review asks for its name
-        </dd>
-        <dt>
-          <KeysComponent keys={checkKeys} />
-        </dt>
-        <dd
-          className="m-0"
-          style={MUTED}
-        >
-          Check what you click on: that it is there, or that it goes
-        </dd>
-        <dt>
-          <KeysComponent keys={substituteKeys} />
-        </dt>
-        <dd
-          className="m-0"
-          style={MUTED}
-        >
-          A step that is not a click: a command, an application, an input
-        </dd>
+        {entries.map((x) => (
+          <div
+            key={x.does}
+            className="flex flex-column align-items-start gap-1"
+          >
+            <dt>
+              <KeysComponent keys={x.keys} />
+            </dt>
+            <dd
+              className="m-0"
+              style={MUTED}
+            >
+              {x.does}
+            </dd>
+          </div>
+        ))}
       </dl>
       <span
         className="text-xs"
@@ -112,7 +92,7 @@ function KeysComponent({ keys }: { keys: string | undefined }) {
 
   return (
     <kbd
-      className="text-xs border-1 border-round-md px-2 py-1"
+      className="text-xs border-1 border-round-md px-2 py-1 white-space-nowrap"
       style={{ fontFamily: "inherit", borderColor: "var(--surface-border)", borderBottomWidth: 2 }}
     >
       {toHotkeyDisplay(keys)}

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import PageComponent from "@/shared/components/PageComponent";
 import FirstFlowCardComponent from "@/features/home/components/FirstFlowCardComponent";
 import LastExecutedCardComponent from "@/features/home/components/LastExecutedCardComponent";
 import LocalModelCardComponent from "@/features/home/components/LocalModelCardComponent";
@@ -33,9 +34,9 @@ export default function HomePage() {
   const isNewInstall = !isLoading && !hasFlows;
 
   return (
-    <div
-      className="m-4 flex flex-column gap-3"
-      style={{ maxWidth: 1240 }}
+    <PageComponent
+      width="wide"
+      className="flex flex-column gap-3"
     >
       <h1
         className="m-0 text-3xl font-semibold"
@@ -76,6 +77,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-    </div>
+    </PageComponent>
   );
 }

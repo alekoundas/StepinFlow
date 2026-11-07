@@ -8,6 +8,7 @@ import { ProgressBar } from "primereact/progressbar";
 import { TabPanel, TabView } from "primereact/tabview";
 import { Tag } from "primereact/tag";
 
+import PageComponent from "@/shared/components/PageComponent";
 import ScriptMergeComponent from "@/shared/components/script-view/ScriptMergeComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
 import { backendApiService } from "@/shared/services/backend-api-service";
@@ -131,9 +132,9 @@ export default function ImportFlowPage() {
   const isChoosing = picked === null && imported === null;
 
   return (
-    <div
-      className="m-4 flex flex-column gap-4"
-      style={{ maxWidth: 1240 }}
+    <PageComponent
+      width="form"
+      className="flex flex-column gap-4"
     >
       <div className="flex flex-column gap-1">
         <h1
@@ -210,7 +211,7 @@ export default function ImportFlowPage() {
           onOpen={() => navigate(`/workflow/${imported.flowId}`)}
         />
       )}
-    </div>
+    </PageComponent>
   );
 }
 

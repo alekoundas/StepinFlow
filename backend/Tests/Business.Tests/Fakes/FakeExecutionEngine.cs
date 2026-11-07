@@ -23,6 +23,11 @@ namespace Business.Tests.Fakes
             get { return 0; }
         }
 
+        public int StepCount
+        {
+            get { return 0; }
+        }
+
         public Task Completion
         {
             get { return Task.CompletedTask; }
