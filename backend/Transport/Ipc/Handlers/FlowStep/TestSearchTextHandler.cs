@@ -45,7 +45,7 @@ namespace Transport.Ipc.Handlers
             string text;
             try
             {
-                text = await _ocrService.ReadAsync(image, step.OcrLanguage, ct);
+                text = await _ocrService.ReadAsync(image, step.OcrLanguage, area.Dpi, ct);
             }
             catch (Exception ex)
             {

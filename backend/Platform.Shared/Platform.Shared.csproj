@@ -16,6 +16,13 @@
 
     <!-- Carries libuiohook for each system. -->
     <PackageReference Include="SharpHook" Version="7.1.3" />
+
+    <!-- Carries the runtime for each system; reads text with PaddleOCR's models. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Platform.Shared.Tests" />
   </ItemGroup>
 
   <ItemGroup>
