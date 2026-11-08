@@ -1748,7 +1748,8 @@ Settings, about 8 MB each, by `Business/ScreenText/OcrReaderDownloadService` fro
 `ocr-v1` release into the `OcrReaders` folder beside the database. A model is checked against the
 catalog's SHA-256 before it is kept; the release is filled by `publish-ocr-models.yml` from pinned
 Hugging Face revisions against the same hashes, and `npm run models` fetches the line finder and
-Latin. A step's `OcrLanguage` names its reader - empty is Latin, on every machine - and one not
+Latin. `scripts/download-models.mjs` checks every model file it fetches against the SHA-256 its
+release lists, and fetches again a file already there that does not match. A step's `OcrLanguage` names its reader - empty is Latin, on every machine - and one not
 on this machine is an error, `OCR_READER_NOT_DOWNLOADED`, naming the reader to download, so the
 flow does not start. Validation asks `IOcrService.GetLanguages` only when the flow reads text. The Greek reader reads English too,
 though an English word inside a Greek sentence comes out in Greek letters.
@@ -2015,16 +2016,19 @@ same way with what the tester wrote (§6).
 
 **The element detector.** OmniParser v2's `icon_detect_v3`, a YOLOv9-E whose weights are MIT,
 Copyright Microsoft - the earlier `icon_detect` is AGPL-3.0, inherited from Ultralytics, and is not
-used. Microsoft ships it as TorchScript; it was exported once to ONNX (opset 17, with a height and
-width that can vary) and is hosted as the `vision-v1` release asset beside its licence, which
-`npm run models` fetches. The resize, the decoding of its three grids and the suppression are
+used. Microsoft ships it as TorchScript; `publish-element-detector.yml` exports it to ONNX on
+GitHub's runner (opset 17, with a height and width that can vary), checks the copy against the
+original, and publishes `element-detector.onnx` beside `OmniParser.LICENSE.txt` as the
+`element-detector-v1` release, which `npm run models` fetches. The resize, the decoding of its three grids and the suppression are
 C# (`ElementDetector`), as OmniParser's `util/yolov9.py` does them in Python. It finds what a
 recorded click hit (§6) and reads nothing out of the machine.
 
 **The documentation index.** `backend/Core/AiDocuments/` is markdown written for the model - one
 file per step type and concept, troubleshooting, every validation message. `AiDocumentIndexService`
-splits it into chunks, embeds them locally with an ONNX model and `Microsoft.ML.Tokenizers`, and
-searches them with USearch. It is built on the first question and saved, so an app that never asks
+splits it into chunks, embeds them locally with BAAI's bge-small-en-v1.5 (MIT) and
+`Microsoft.ML.Tokenizers`, and searches them with USearch. The model is `text-embedder.onnx` and
+`text-embedder-vocab.txt`, published by `publish-text-embedder.yml` as the `text-embedder-v1`
+release beside `BGE.LICENSE.txt` and fetched by `npm run models`. It is built on the first question and saved, so an app that never asks
 anything never loads the model. `OnnxEmbeddingService` runs on the machine, but `AiDocumentTools`
 returns raw chunk text — so **embedding is not a privacy layer** and must not be described as one.
 

@@ -548,7 +548,7 @@ the history.
       couple of hundred MB until the recording is discarded. A temp folder per session, cleared on
       leaving Check and swept at startup, would cap that, and works the same on every system. It may
       never be needed; decide it with whether a recording outlives the app, above.
-- [ ] **Where the element detector comes from.** `icon_detect_v3.onnx` (232 MB) is copied beside
+- [ ] **Where the element detector comes from.** `element-detector.onnx` (232 MB) is copied beside
       the backend like the docs model, so it ships inside the installer and nearly doubles it.
       Downloading it on first use instead would keep the installer small, at the price of a first
       recording that waits, or works with the box around the click until it has. To decide.
@@ -903,7 +903,9 @@ the history.
       the heavy ones by hand - OpenCvSharp, SharpHook, ONNX Runtime, Microsoft.ML.Tokenizers,
       OllamaSharp, protobuf-net, USearch, EF Core - and recording the result somewhere it survives.
       Model weights count as well: OmniParser's `icon_detect_v3` is MIT, checked 2026-10-14 from the
-      LICENSE in its folder of Microsoft's release, and its MIT notice ships beside the ONNX file.
+      LICENSE in its folder of Microsoft's release, and bge-small-en-v1.5 is MIT by its model card,
+      with FlagEmbedding's text; each MIT notice ships beside its ONNX file (`OmniParser.LICENSE.txt`,
+      `BGE.LICENSE.txt`), as PaddleOCR's Apache-2.0 one does (`PaddleOCR.LICENSE.txt`).
       The test packages count too: xUnit, Shouldly and ArchUnitNET ship inside no installer, but
       they are in the repository.
 

@@ -23,7 +23,8 @@ backend/.vs/
 backend/.vscode/
 backend/appsettings.Development.json
 
-# Embedding model - 127 MB, fetched from the model-v1 release on first build
+# The models - the text embedder, the element detector and the built-in OCR, about 380 MB, fetched
+# from their releases by npm run models
 backend/Core/AiModels/
 
 # Probes

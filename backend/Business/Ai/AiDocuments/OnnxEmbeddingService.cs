@@ -10,7 +10,7 @@ namespace Business.Ai.AiDocuments
     /// Turns text into a vector with bge-small-en-v1.5, on the cpu, locally.
     ///
     /// The model is a loose file beside the exe, so it can be absent - a build that skipped
-    /// "npm run model:download", or a user who deleted it. That is reported through
+    /// "npm run models", or a user who deleted it. That is reported through
     /// <see cref="IsAvailable"/> rather than thrown, because the assistant still answers without it.
     /// </summary>
 
@@ -25,8 +25,8 @@ namespace Business.Ai.AiDocuments
         private const int _dimensions = 384;
         private const int _maxTokens = 512;
 
-        private readonly string _modelPath = Path.Combine(PathHelper.GetAiModelsPath(), "model.onnx");
-        private readonly string _vocabPath = Path.Combine(PathHelper.GetAiModelsPath(), "vocab.txt");
+        private readonly string _modelPath = Path.Combine(PathHelper.GetAiModelsPath(), "text-embedder.onnx");
+        private readonly string _vocabPath = Path.Combine(PathHelper.GetAiModelsPath(), "text-embedder-vocab.txt");
 
         private readonly Lock _lockObj = new Lock();
 

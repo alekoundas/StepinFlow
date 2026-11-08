@@ -11,9 +11,8 @@
     <EmbeddedResource Include="AiDocuments\**\*.md" />
   </ItemGroup>
 
-  <!-- Downloaded by "npm run models" into AiModels/, which is gitignored. Content
-       rather than EmbeddedResource: it stays a loose file beside the exe, which single file
-       publish leaves alone. -->
+  <!-- The text embedder, the element detector and the built-in OCR, downloaded by "npm run models" into AiModels/, which is gitignored. 
+       Content rather than EmbeddedResource: it stays a loose file beside the exe, which single file publish leaves alone. -->
   <ItemGroup>
     <Content Include="AiModels\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

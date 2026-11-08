@@ -6,7 +6,7 @@ namespace Core.Models.Dtos
         public string Tag { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string Languages { get; set; } = string.Empty;
-        ◘public int Megabytes { get; set; }
+        public int Megabytes { get; set; }
 
         public bool IsInstalled { get; set; }
         public bool IsBuiltIn { get; set; }
