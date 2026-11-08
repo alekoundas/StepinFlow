@@ -24,7 +24,7 @@ namespace Core.Enums
         // Searches
         NO_TEMPLATES,
         SEARCH_TEXT_MISSING,
-        OCR_LANGUAGE_MISSING,
+        OCR_READER_NOT_DOWNLOADED,
 
         // Conditions
         CONDITION_TYPE_MISSING,

@@ -4,6 +4,7 @@ using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using Core.Ports;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,14 @@ namespace Business.Flows.FlowValidationService
     /// </summary>
     public sealed class FlowValidationService : IFlowValidationService
     {
+        private readonly IOcrService _ocrService;
+
+        public FlowValidationService(IOcrService ocrService)
+        {
+            _ocrService = ocrService;
+        }
+
+
         // ================================================================
         // Public methods
         // ================================================================
@@ -78,7 +87,7 @@ namespace Business.Flows.FlowValidationService
             Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber, x.SearchMode));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
 
-            FlowStepValidator.Validate(authored, templateCountByStepId, areas, result);
+            FlowStepValidator.Validate(authored, templateCountByStepId, areas, InstalledReaders(authored), result);
             FlowStructureValidator.Validate(authored, everyAuthored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
 
@@ -97,6 +106,18 @@ namespace Business.Flows.FlowValidationService
         // ================================================================
         // Private methods
         // ================================================================
+
+        // Looks for the readers' files, so only when the flow reads text.
+        private IReadOnlySet<string> InstalledReaders(IReadOnlyList<FlowStep> steps)
+        {
+            if (!steps.Any(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT))
+                return new HashSet<string>();
+
+            return _ocrService.GetLanguages()
+                .Where(x => x.IsInstalled)
+                .Select(x => x.Tag)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
 
         // Where each issue sits, and in the order the tree shows them, the flow's own first. A step
         // the tree cannot reach goes last.

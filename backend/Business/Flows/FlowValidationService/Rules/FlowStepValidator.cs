@@ -4,6 +4,7 @@ using Core.Helpers;
 using Core.Models.Database;
 using Core.Models.Dtos;
 using Core.Catalogs;
+using Core.Models.Business.Ocr;
 
 namespace Business.Flows.FlowValidationService.Rules
 {
@@ -23,7 +24,12 @@ namespace Business.Flows.FlowValidationService.Rules
         // ================================================================
         // Public methods
         // ================================================================
-        public static void Validate(IReadOnlyList<FlowStep> authoredSteps, IReadOnlyDictionary<int, int> templateCountByStepId, IReadOnlyList<FlowArea> areas, FlowValidationResultDto result)
+        public static void Validate(
+            IReadOnlyList<FlowStep> authoredSteps,
+            IReadOnlyDictionary<int, int> templateCountByStepId,
+            IReadOnlyList<FlowArea> areas,
+            IReadOnlySet<string> installedReaders,
+            FlowValidationResultDto result)
         {
             Dictionary<int, FlowArea> areasById = areas.ToDictionary(x => x.Id);
 
@@ -48,6 +54,7 @@ namespace Business.Flows.FlowValidationService.Rules
 
                     case FlowStepTypeEnum.SEARCH_TEXT:
                         ValidateArea(result, step);
+                        ValidateReader(result, step, installedReaders);
 
                         if (string.IsNullOrWhiteSpace(step.ConditionText))
                             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
@@ -90,7 +97,27 @@ namespace Business.Flows.FlowValidationService.Rules
         // Private methods
         // ================================================================
 
-        // A FlowStep column cant contain <[ and ]> 
+        // A reader is downloaded per machine, and a flow from a repository can name one this
+        // machine does not have.
+        private static void ValidateReader(FlowValidationResultDto result, FlowStep step, IReadOnlySet<string> installedReaders)
+        {
+            OcrReader? reader = OcrReaderCatalog.Find(step.OcrLanguage);
+            if (reader == null)
+            {
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"\"{step.OcrLanguage}\" is not a text reader this app knows. Pick one.");
+                return;
+            }
+
+            if (installedReaders.Contains(reader.Id))
+                return;
+
+            if (reader.IsBuiltIn)
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"The {reader.Name} text reader is missing from the app. Reinstall it.");
+            else
+                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"The {reader.Name} text reader is not downloaded on this machine. Download it in Settings, under Text recognition.");
+        }
+
+        // A FlowStep column cant contain <[ and ]>
         private static void ValidateQuotes(FlowValidationResultDto result, FlowStep step)
         {
             string quoteOpen = ScriptKeywordCatalog.GetTextOfKeyword(ScriptSymbolEnum.QUOTE_OPEN);
