@@ -26,6 +26,8 @@ env:
   WEIGHTS_SHA: 11c6cbb77f22569fab22d86c76407a83ec81ab89dbfe28279854822d6e3fb00c
   LICENSE_SHA: 646f8936b8ddcd14e13e578ff6857e368780b0d1a4f6066bee89211923a373e2
   TORCH: 2.8.0
+  # The exporter hands its graph to onnx to write; the version the first export was made with.
+  ONNX: 1.23.2
   # The app's, so the check reads the copy the way the app will.
   ONNXRUNTIME: 1.31.0
 
@@ -59,10 +61,10 @@ jobs:
           echo "$WEIGHTS_SHA  weights/model.pt" | sha256sum --check --strict
           echo "$LICENSE_SHA  weights/LICENSE" | sha256sum --check --strict
 
-      - name: Install PyTorch and ONNX Runtime
+      - name: Install PyTorch, onnx and ONNX Runtime
         run: |
           pip install --quiet "torch==$TORCH" --index-url https://download.pytorch.org/whl/cpu
-          pip install --quiet "onnxruntime==$ONNXRUNTIME" numpy
+          pip install --quiet "onnx==$ONNX" "onnxruntime==$ONNXRUNTIME" numpy
 
       # dynamo=False is the exporter that reads TorchScript. Opset 17 is what the app's ONNX Runtime
       # reads. The height and width may vary, so a screenshot is read at its own size. The outputs
@@ -165,7 +167,7 @@ jobs:
           gh release create "${{ inputs.tag }}" detector/* \
             --latest=false \
             --title "Element detector ${{ inputs.tag }}" \
-            --notes "OmniParser v2's \`icon_detect_v3\` (MIT, Copyright Microsoft) from \`$REPO\` at revision \`$REVISION\`, exported from TorchScript to ONNX with PyTorch $TORCH (opset 17, height and width free) and checked against the original with ONNX Runtime $ONNXRUNTIME. The build downloads it (\`npm run models\`).
+            --notes "OmniParser v2's \`icon_detect_v3\` (MIT, Copyright Microsoft) from \`$REPO\` at revision \`$REVISION\`, exported from TorchScript to ONNX with PyTorch $TORCH and onnx $ONNX (opset 17, height and width free) and checked against the original with ONNX Runtime $ONNXRUNTIME. The build downloads it (\`npm run models\`).
 
           SHA-256:
 
