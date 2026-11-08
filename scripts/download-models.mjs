@@ -14,6 +14,13 @@ const FILES = [
   ["model-v1", "vocab.txt"],
   ["vision-v1", "icon_detect_v3.onnx"],
   ["vision-v1", "icon_detect_v3.LICENSE.txt"],
+
+  // The line finder and the Latin reader ship; the other readers are downloaded from Settings
+  // (.github/workflows/publish-ocr-models.yml).
+  ["ocr-v1", "ocr-lines.onnx"],
+  ["ocr-v1", "ocr-latin.onnx"],
+  ["ocr-v1", "ocr-latin.yml"],
+  ["ocr-v1", "PaddleOCR.LICENSE.txt"],
 ];
 
 mkdirSync(TARGET, { recursive: true });
