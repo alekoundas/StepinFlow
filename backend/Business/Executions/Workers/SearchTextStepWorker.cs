@@ -56,7 +56,7 @@ namespace Business.Executions.Workers
             if (cannotRead != null)
                 return ExecutionStep.Failure(cannotRead);
 
-            return await ReadAsync(step, area.Bounds, expected.Text, expectedEnd.Text, cache, ct);
+            return await ReadAsync(step, area, expected.Text, expectedEnd.Text, cache, ct);
         }
 
 
@@ -88,7 +88,7 @@ namespace Business.Executions.Workers
                 string? cannotRead = CannotRead(area);
                 if (cannotRead == null)
                 {
-                    ExecutionStep read = await ReadAsync(step, area.Bounds, expected, expectedEnd, cache, ct);
+                    ExecutionStep read = await ReadAsync(step, area, expected, expectedEnd, cache, ct);
                     bool satisfied = read.Outcome == StepOutcomeEnum.SUCCESS;
 
                     if (satisfied && wantSatisfied)
@@ -145,19 +145,19 @@ namespace Business.Executions.Workers
             return null;
         }
 
-        private async Task<ExecutionStep> ReadAsync(FlowStep step, Rectangle bounds, string expected, string expectedEnd, IExecutionCacheService cache, CancellationToken ct)
+        private async Task<ExecutionStep> ReadAsync(FlowStep step, AreaResolution area, string expected, string expectedEnd, IExecutionCacheService cache, CancellationToken ct)
         {
-            RawImage image = _screenshotService.CaptureRaw(bounds);
+            RawImage image = _screenshotService.CaptureRaw(area.Bounds);
 
             // The screenshot the text was read from, so a wrong read can be seen rather than
             // guessed at. Whether it is worth keeping is the cache's business.
             ExecutionScreenshot? screenshot = cache.EncodeForHistory(image, step);
 
-            string text = await _ocrService.ReadAsync(image, step.OcrLanguage, ct);
+            string text = await _ocrService.ReadAsync(image, step.OcrLanguage, area.Dpi, ct);
             string value = RegexHelper.Extract(text, step.ResultExtractPattern);
 
             ExecutionStep result = ConditionEvaluatorHelper.IsSatisfied(value, step.ConditionType, expected, expectedEnd)
-                                   ? ExecutionStep.Success(Centre(bounds))
+                                   ? ExecutionStep.Success(Centre(area.Bounds))
                                    : ExecutionStep.Failure($"Read \"{value}\", which does not satisfy {ConditionEvaluatorHelper.Describe(step)}.");
 
             result.Value = value;

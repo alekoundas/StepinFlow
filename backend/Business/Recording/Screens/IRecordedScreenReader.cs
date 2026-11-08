@@ -1,5 +1,4 @@
 using Business.Recording.Models.Session;
-using Core.Models.Business;
 using Core.Models.Dtos;
 
 namespace Business.Recording.Screens
@@ -13,7 +12,7 @@ namespace Business.Recording.Screens
         Task<RecordedScreens> ReadAsync(
             IReadOnlyList<RecordedActionDto> actions,
             Func<int, RecordedPress?> pressOf,
-            RawImage? lastScreen,
+            RecordingScreenshot? lastScreen,
             Action<int, int> onProgress,
             CancellationToken ct = default);
     }

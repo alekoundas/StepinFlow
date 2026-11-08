@@ -855,7 +855,7 @@ namespace Business.Recording.Session
 
             try
             {
-                RecordedScreens screens = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, _cache.LastScreenshot?.Image, (done, total) =>
+                RecordedScreens screens = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, _cache.LastScreenshot, (done, total) =>
                 {
                     ReportStage(RecordingStageEnum.READING_SCREENS, done, total);
                 }, ct);

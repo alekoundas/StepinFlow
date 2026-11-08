@@ -9,14 +9,14 @@ using Core.Ports;
 namespace Business.Recording.Screens
 {
     /// <summary>
-    /// Every press's screenshot of the main area read whole by OCR - about 80 ms each - and
+    /// Every press's screenshot of the main area read whole by OCR - about a second each - and
     /// compared with the one before it: what the actions between the two made appear and go, and
     /// how much of the text changed, and whether the main area's window took another title - for a
     /// browser, another page. A press's screenshot is from just before it, so what a click did
     /// shows at the next press, and what the last one did on the screen the recording stopped on.
     ///
-    /// One screenshot decoded at a time, as the clicked elements are. The language is the user's,
-    /// as it is for the text under a click.
+    /// One screenshot decoded at a time, as the clicked elements are. Read with the default
+    /// reader, Latin, as the text under a click is.
     /// </summary>
     public sealed class RecordedScreenReader : IRecordedScreenReader
     {
@@ -39,7 +39,7 @@ namespace Business.Recording.Screens
         public async Task<RecordedScreens> ReadAsync(
             IReadOnlyList<RecordedActionDto> actions,
             Func<int, RecordedPress?> pressOf,
-            RawImage? lastScreen,
+            RecordingScreenshot? lastScreen,
             Action<int, int> onProgress,
             CancellationToken ct = default)
         {
@@ -59,7 +59,7 @@ namespace Business.Recording.Screens
                 ct.ThrowIfCancellationRequested();
 
                 RecordedPress press = pressOf(pressed[done].ScreenshotIndex!.Value)!;
-                List<ScreenLine> lines = await ReadLinesAsync(_screenshotService.Decode(press.Screenshot), screens, read, ct);
+                List<ScreenLine> lines = await ReadLinesAsync(_screenshotService.Decode(press.Screenshot), press.Dpi, screens, read, ct);
 
                 if (before != null)
                     screens.Changes.Add(ChangeOf(pressed[done - 1], pressed[done], ScreenTextComparer.Compare(before, lines)));
@@ -72,7 +72,7 @@ namespace Business.Recording.Screens
             {
                 ct.ThrowIfCancellationRequested();
 
-                List<ScreenLine> lines = await ReadLinesAsync(lastScreen, screens, read, ct);
+                List<ScreenLine> lines = await ReadLinesAsync(lastScreen.Image, lastScreen.Target.Dpi, screens, read, ct);
                 if (before != null)
                     screens.Changes.Add(ChangeOf(pressed[^1], null, ScreenTextComparer.Compare(before, lines)));
 
@@ -87,9 +87,9 @@ namespace Business.Recording.Screens
         // Private methods
         // ================================================================
 
-        private async Task<List<ScreenLine>> ReadLinesAsync(RawImage image, RecordedScreens screens, HashSet<string> read, CancellationToken ct)
+        private async Task<List<ScreenLine>> ReadLinesAsync(RawImage image, int dpi, RecordedScreens screens, HashSet<string> read, CancellationToken ct)
         {
-            IReadOnlyList<OcrWord> words = await _ocrService.ReadWordsAsync(image, string.Empty, ct);
+            IReadOnlyList<OcrWord> words = await _ocrService.ReadWordsAsync(image, string.Empty, dpi, ct);
             List<ScreenLine> lines = ScreenLineBuilder.Build(words);
 
             foreach (ScreenLine line in lines.Where(x => read.Add(x.Text)))

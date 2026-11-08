@@ -6,21 +6,20 @@ namespace Core.Ports
     // Dependency Inversion Principle(DIP)
     public interface IOcrService
     {
-        /// <summary>Every language that can be read now, plus the ones that could be installed.</summary>
+        
+        /// <summary>Every reader: built in, downloaded, or available to download from Settings.</summary>
         IReadOnlyList<OcrLanguageDto> GetLanguages();
 
-        Task<OcrLanguageInstallResultDto> InstallLanguageAsync(string languageTag, CancellationToken ct = default);
 
-        /// <summary>Opens Windows language settings.</summary>
-        void OpenWindowsLanguageSettings();
+        /// <summary>Every word in the image with its rectangle, in the order read. Throws when the reader doesnt exist.</summary>
+        Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, int dpi, CancellationToken ct = default);
+
 
         /// <summary>
-        /// Reads the text in a captured area. Throws when the language is not installed, which is
-        /// a machine problem the author has to know about rather than an empty result.
+        /// Reads the text in a captured area, line after line. 
+        /// Throws when the reader doesnt exist.
+        /// The screen's dpi used for text on a scaled screen to be looked at the size it would have at 100%.
         /// </summary>
-        Task<string> ReadAsync(RawImage image, string language, CancellationToken ct = default);
-
-        /// <summary>Every word in the image with its rectangle, in the order read. Throws as ReadAsync does.</summary>
-        Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, CancellationToken ct = default);
+        Task<string> ReadAsync(RawImage image, string language, int dpi, CancellationToken ct = default);
     }
 }

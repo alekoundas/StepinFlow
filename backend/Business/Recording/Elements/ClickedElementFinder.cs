@@ -96,7 +96,7 @@ namespace Business.Recording.Elements
 
             LocatedElement element = _elementLocator.Locate(image, point, press.Dpi);
             RawImage crop = RawImageHelper.Crop(image, whole, element.Bounds);
-            string text = await ReadTextAsync(crop, ct);
+            string text = await ReadTextAsync(crop, press.Dpi, ct);
 
             return new ClickedElementDto
             {
@@ -114,15 +114,15 @@ namespace Business.Recording.Elements
 
         // On one line, as a name is. An element OCR cannot read is kept, with no text.
         // Faint text on a small button often reads only at twice the size, so that is the second try.
-        private async Task<string> ReadTextAsync(RawImage crop, CancellationToken ct)
+        private async Task<string> ReadTextAsync(RawImage crop, int dpi, CancellationToken ct)
         {
             try
             {
-                string read = await _ocrService.ReadAsync(crop, string.Empty, ct);
+                string read = await _ocrService.ReadAsync(crop, string.Empty, dpi, ct);
                 if (string.IsNullOrWhiteSpace(read))
                 {
                     RawImage enlarged = RawImageHelper.Enlarge(crop, 2);
-                    read = await _ocrService.ReadAsync(enlarged, string.Empty, ct);
+                    read = await _ocrService.ReadAsync(enlarged, string.Empty, dpi, ct);
                 }
 
                 string[] words = read.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
