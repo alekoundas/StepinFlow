@@ -5,9 +5,10 @@ using Core.Models.Business;
 namespace Business.ScreenText
 {
     /// <summary>
-    /// OCR's words into the lines a person reads as one thing. The Windows engine puts every word on
-    /// a row into one line - "Bag Fellowship Party" across three buttons - so a line is cut wherever
-    /// two words are further apart than one and a half times their height.
+    /// OCR's words into the lines a person reads as one thing. The line finder keeps words far
+    /// apart in lines of their own, but where it joins a row - "Bag Fellowship Party" across three
+    /// buttons - a line is cut wherever two words are further apart than one and a half times their
+    /// height.
     /// </summary>
     public static class ScreenLineBuilder
     {

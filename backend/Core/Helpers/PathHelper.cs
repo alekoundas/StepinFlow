@@ -4,6 +4,9 @@
     {
         private static readonly string _appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         private static readonly string _appFolderName = "StepinFlow_v2";
+
+
+        /// <summary> Get the root app folder path. Creates it if missing. </summary>
         public static string GetAppDataPath()
         {
             string appDataFolder = Path.Combine(_appDataPath, _appFolderName);
@@ -14,6 +17,7 @@
             return appDataFolder;
         }
 
+        /// <summary> Get ".../Database" path. Creates it if missing. </summary>
         public static string GetDatabaseDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Database");
@@ -24,6 +28,7 @@
             return path;
         }
 
+        /// <summary> Get ".../AiDocumentsIndex" path. Creates it if missing. </summary>
         public static string GetAiDocumentsIndexDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "AiDocumentsIndex");
@@ -34,13 +39,16 @@
             return path;
         }
 
-        /// <summary>The models that ship beside the app, which `npm run models` fetches.</summary>
+        /// <summary>
+        /// Get ".../AiModels" path form AppContext. This folder exists inside the app code.
+        /// `npm run models` fetches it.
+        /// </summary>
         public static string GetAiModelsPath()
         {
             return Path.Combine(AppContext.BaseDirectory, "AiModels");
         }
 
-        /// <summary>The text readers downloaded from Settings. The one built in is in AiModels.</summary>
+        /// <summary> Get ".../OcrReaders" path. Creates it if missing. </summary>
         public static string GetOcrReadersPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "OcrReaders");
@@ -51,6 +59,7 @@
             return path;
         }
 
+        /// <summary> Get ".../Temp" path. Creates it if missing. </summary>
         public static string GetTempDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Temp");
@@ -61,6 +70,7 @@
             return path;
         }
 
+        /// <summary> Get ".../Export" path. Creates it if missing. </summary>
         public static string GetExportDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Export");
@@ -71,6 +81,7 @@
             return path;
         }
 
+        /// <summary> Get ".../Repository" path. Creates it if missing. </summary>
         public static string GetRepositoryPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Repository");
@@ -81,11 +92,10 @@
             return path;
         }
 
-        public static string GetExecutionRunPath(string flowName, DateTime startedOn)
+        /// <summary> Get ".../Execution History" path. Creates it if missing. </summary>
+        public static string GetExecutionHistoryDataPath()
         {
-            string safeName = FileNameHelper.Clean(flowName, "Flow");
-            string folder = $"{safeName} - {startedOn:yyyy-MM-dd HH.mm.ss}";
-            string path = Path.Combine(GetExecutionHistoryDataPath(), folder);
+            string path = Path.Combine(_appDataPath, _appFolderName, "Execution History");
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
@@ -93,9 +103,12 @@
             return path;
         }
 
-        public static string GetExecutionHistoryDataPath()
+        /// <summary> Create and get ".../Execution History/{flowName} - {startedOn}" path. </summary>
+        public static string GetExecutionRunPath(string flowName, DateTime startedOn)
         {
-            string path = Path.Combine(_appDataPath, _appFolderName, "Execution History");
+            string safeName = FileNameHelper.Clean(flowName, "Flow");
+            string folder = $"{safeName} - {startedOn:yyyy-MM-dd HH.mm.ss}";
+            string path = Path.Combine(GetExecutionHistoryDataPath(), folder);
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
