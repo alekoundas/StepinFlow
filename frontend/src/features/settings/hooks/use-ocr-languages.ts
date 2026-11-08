@@ -1,29 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { flowHealthKeys } from "@/features/flow/hooks/use-flow-health";
 import { backendApiService } from "@/shared/services/backend-api-service";
 
 export const ocrLanguageKeys = {
   all: ["lookup", "ocrLanguages"] as const,
 } as const;
 
-/**
- * A pack can take minutes to download and nothing tells us when it lands, so while one is
- * installing the list asks again instead.
- */
-export function useOcrLanguages(isInstalling = false) {
+export function useOcrLanguages() {
   return useQuery({
     queryKey: ocrLanguageKeys.all,
     queryFn: () => backendApiService.Lookup.ocrLanguages(),
-    refetchInterval: isInstalling ? 5000 : false,
   });
 }
 
 export function useOcrLanguageMutations() {
   const queryClient = useQueryClient();
 
-  const installLanguageMutation = useMutation({
-    mutationFn: (tag: string) => backendApiService.System.installOcrLanguage(tag),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ocrLanguageKeys.all }),
+  const downloadLanguageMutation = useMutation({
+    mutationFn: (tag: string) => backendApiService.System.downloadOcrLanguage(tag),
+    // A step whose reader was missing is no longer an error.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ocrLanguageKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
+        queryClient.invalidateQueries({ queryKey: flowHealthKeys.all }),
+      ]),
   });
 
-  return { installLanguageMutation };
+  return { downloadLanguageMutation };
 }

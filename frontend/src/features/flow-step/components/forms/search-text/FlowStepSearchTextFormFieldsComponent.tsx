@@ -41,6 +41,7 @@ export default function FlowStepSearchTextFormFieldsComponent({
   const { control } = useFormContext();
   const mode = useWatch({ control, name: "searchMode" });
   const conditionType = useWatch({ control, name: "conditionType" });
+  const ocrLanguage = useWatch({ control, name: "ocrLanguage" });
   const { data: languages = [] } = useOcrLanguages();
 
   const isWaiting = isWaitingMode(mode);
@@ -55,11 +56,14 @@ export default function FlowStepSearchTextFormFieldsComponent({
     valuePlaceholder = "6";
   }
 
-  // Only an installed pack can be read, so an uninstalled one is not offered here. Settings is
-  // where that gets fixed.
+  // Only a reader on this computer can read, so the others are downloaded in Settings first. One
+  // the step already names stays in the list, marked, so it is not silently changed.
   const languageOptions: Option[] = languages
-    .filter((x) => x.isInstalled)
-    .map((x) => ({ label: x.displayName, value: x.tag }));
+    .filter((x) => x.isInstalled || x.tag === ocrLanguage)
+    .map((x) => ({
+      label: x.isInstalled ? x.displayName : `${x.displayName} (not downloaded)`,
+      value: x.tag,
+    }));
 
   return (
     <>
@@ -96,10 +100,10 @@ export default function FlowStepSearchTextFormFieldsComponent({
         options={languageOptions}
         optionLabel="label"
         optionValue="value"
-        placeholderText="Select a language..."
-        isRequired={true}
+        placeholderText="Latin"
+        defaultValue=""
         isDisabled={isDisabled}
-        hintText="Windows reads text with the language packs it has installed. Add more in Settings."
+        hintText="Latin reads English and most European languages. Download Greek, Cyrillic, Chinese and others in Settings."
       />
 
       {/* Before the condition, because the condition is tested against what this leaves. */}

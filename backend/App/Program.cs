@@ -39,19 +39,22 @@ using Business.Ai.AiModels;
 using Business.Ai.Vision;
 using Business.Ai.ScriptRevision;
 using Business.Repository;
+using Business.ScreenText;
 
 using DataAccess;
 
+using Core.Catalogs;
+using Core.Helpers;
 using Core.Ports;
 
 using Platform.Shared.Git;
 using Platform.Shared.Input;
+using Platform.Shared.Ocr;
 using Platform.Shared.Vision;
 
 using Platform.Windows.Input;
 using Platform.Windows.Native;
 using Platform.Windows.Accessibility;
-using Platform.Windows.Ocr;
 using Platform.Windows.Screen;
 using Platform.Windows.SystemActions;
 using Platform.Windows.Windowing;
@@ -92,7 +95,8 @@ namespace App
             builder.Services.AddSingleton<IWindowService, WindowService>();
             builder.Services.AddSingleton<ISystemActionService, SystemActionService>();
             builder.Services.AddSingleton<IProcessService, ProcessService>();
-            builder.Services.AddSingleton<IOcrService, OcrService>();
+            // The folders a service works in are given here, so a test can give folders of its own.
+            builder.Services.AddSingleton<IOcrService>(x => new PaddleOcrService(PathHelper.GetAiModelsPath(), PathHelper.GetOcrReadersPath()));
             builder.Services.AddSingleton<IAccessibleElementService, AccessibleElementService>();
             builder.Services.AddSingleton<IBrowserTabService, BrowserTabService>();
             builder.Services.AddSingleton<IWindowsGraphicsCaptureService, WindowsGraphicsCaptureService>();
@@ -172,6 +176,13 @@ namespace App
             {
                 client.Timeout = Timeout.InfiniteTimeSpan;
             });
+
+            // A text reader is eight megabytes or so.
+            builder.Services.AddHttpClient(nameof(OcrReaderDownloadService), client =>
+            {
+                client.Timeout = TimeSpan.FromMinutes(5);
+            });
+            builder.Services.AddSingleton<IOcrReaderDownloadService>(x => ActivatorUtilities.CreateInstance<OcrReaderDownloadService>(x, PathHelper.GetOcrReadersPath(), OcrReaderCatalog.All));
 
             // Notifications.
             // The queue is a singleton because the throttle is per bot and has to be remembered between flows, not per request.
@@ -306,8 +317,7 @@ namespace App
             builder.Services.AddTransient<SystemCaptureForOverlayHandler>();
             builder.Services.AddTransient<SystemCropScreenshotsHandler>();
             builder.Services.AddTransient<SystemMoveCursorHandler>();
-            builder.Services.AddTransient<SystemInstallOcrLanguageHandler>();
-            builder.Services.AddTransient<SystemOpenWindowsLanguageSettingsHandler>();
+            builder.Services.AddTransient<SystemDownloadOcrLanguageHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStartHandler>();
             builder.Services.AddTransient<SystemInputRecordAllStopHandler>();
             builder.Services.AddTransient<SystemInputRecordOverlayStartHandler>();

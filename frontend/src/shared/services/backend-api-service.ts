@@ -24,7 +24,6 @@ import type { ImageSearchTestResultDto } from "@/shared/models/database/image-se
 import type { ShellCommandResultDto } from "@/shared/models/database/shell-command-result-dto";
 import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 import type { OcrLanguageDto } from "@/shared/models/database/ocr-language-dto";
-import type { OcrLanguageInstallResultDto } from "@/shared/models/database/ocr-language-install-result-dto";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
 import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
@@ -351,10 +350,8 @@ export const backendApiService = {
       call<string>("System.takeScreenshot", dto),
     moveCursor: (dto: ScreenPointDto) =>
       call<boolean>("System.moveCursor", dto),
-    installOcrLanguage: (languageTag: string) =>
-      call<OcrLanguageInstallResultDto>("System.installOcrLanguage", languageTag),
-    openWindowsLanguageSettings: () =>
-      call<boolean>("System.openWindowsLanguageSettings"),
+    downloadOcrLanguage: (language: string) =>
+      call<boolean>("System.downloadOcrLanguage", language),
     inputRecordOverlayStart: () =>
       call<boolean>("System.inputRecordOverlayStart"),
     inputRecordOverlayStop: () =>

@@ -5,41 +5,35 @@ import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
 import {
   useOcrLanguageMutations,
   useOcrLanguages,
 } from "@/features/settings/hooks/use-ocr-languages";
 
 export default function OcrLanguagesPanelComponent() {
-  const [installingTag, setInstallingTag] = useState<string | null>(null);
+  const [downloadingTag, setDownloadingTag] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: languages = [], isLoading } = useOcrLanguages(installingTag !== null);
-  const { installLanguageMutation } = useOcrLanguageMutations();
+  const { data: languages = [], isLoading } = useOcrLanguages();
+  const { downloadLanguageMutation } = useOcrLanguageMutations();
 
-  // The install outlives the call that started it, so it is the language list that says when it
-  // is done rather than the mutation. Clearing it here is also what stops the polling.
-  if (installingTag && languages.some((x) => x.tag === installingTag && x.isInstalled))
-    setInstallingTag(null);
-
-  const handleInstall = async (tag: string) => {
+  const handleDownload = async (tag: string) => {
     setError(null);
-    setInstallingTag(tag);
+    setDownloadingTag(tag);
 
     try {
-      const result = await installLanguageMutation.mutateAsync(tag);
-      if (!result.isRunning) setInstallingTag(null);
+      await downloadLanguageMutation.mutateAsync(tag);
     } catch (err) {
-      setInstallingTag(null);
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDownloadingTag(null);
     }
   };
 
   return (
     <Panel header="Text recognition languages">
       <LabelComponent
-        text="A Read Text step can only use a language Windows has a pack for. Installing one asks for administrator permission and can take a few minutes."
+        text="Text is read on this computer, the same way on every system. Latin comes with the app and reads English and most European languages. A Read Text step in another script needs its reader: a few megabytes, downloaded once."
         size="sm"
         color="secondary"
       />
@@ -55,7 +49,7 @@ export default function OcrLanguagesPanelComponent() {
       <div className="flex flex-column gap-2 mt-3">
         {isLoading && (
           <LabelComponent
-            text="Reading installed languages..."
+            text="Reading the readers..."
             size="sm"
           />
         )}
@@ -65,44 +59,41 @@ export default function OcrLanguagesPanelComponent() {
             key={language.tag}
             className="flex align-items-center justify-content-between gap-3 p-2 border-round surface-100"
           >
-            <div className="flex align-items-center gap-2">
+            <div className="flex flex-column gap-1 min-w-0">
               <LabelComponent text={language.displayName} />
               <LabelComponent
-                text={language.tag}
+                text={language.languages}
                 size="xs"
                 color="secondary"
               />
             </div>
 
-            {language.isInstalled ? (
+            {language.isBuiltIn && (
+              <Tag
+                severity="info"
+                value="Built in"
+              />
+            )}
+            {!language.isBuiltIn && language.isInstalled && (
               <Tag
                 severity="success"
-                value="Installed"
+                value="Downloaded"
               />
-            ) : (
+            )}
+            {!language.isInstalled && (
               <Button
                 type="button"
-                label={installingTag === language.tag ? "Installing..." : "Install"}
+                label={downloadingTag === language.tag ? "Downloading..." : `Download, ${language.megabytes} MB`}
                 icon="pi pi-download"
-                loading={installingTag === language.tag}
-                disabled={installingTag !== null}
-                onClick={() => handleInstall(language.tag)}
-                className="p-button-outlined p-button-sm"
+                loading={downloadingTag === language.tag}
+                disabled={downloadingTag !== null}
+                onClick={() => handleDownload(language.tag)}
+                className="p-button-outlined p-button-sm flex-none"
               />
             )}
           </div>
         ))}
       </div>
-
-      <Button
-        type="button"
-        label="Open Windows language settings"
-        icon="pi pi-external-link"
-        onClick={() => backendApiService.System.openWindowsLanguageSettings()}
-        className="p-button-text mt-3"
-        tooltip="For when the install cannot run here"
-        tooltipOptions={{ position: "top" }}
-      />
     </Panel>
   );
 }
