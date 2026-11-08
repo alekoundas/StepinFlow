@@ -124,6 +124,50 @@ app. Left:
 
 ---
 
+## Reading text
+
+### 5.18. One OCR on every system: PaddleOCR's models on ONNX Runtime
+
+Decided and built 2026-11-08 (`PROJECT.md` §8 Reading text): Windows OCR replaced by PaddleOCR's
+PP-OCRv5 on ONNX Runtime in `Platform.Shared`, the small line finder only, Latin built in and the
+other readers downloaded from Settings, a step's language turned into its reader by a migration, the
+line finder shrinking a scaled screen by its DPI and giving its memory back after each read.
+Measured against Windows OCR first: 98% of English words read exactly to 69%, at about a second a
+whole screen to 70 ms. Verified by the build, the type check and the tests, with the real models;
+never by hand. Left:
+
+- [ ] **Publish the models.** Before the next release, in this order:
+      1. Push the workflows, then run the three: "Publish text embedder"
+         (`publish-text-embedder.yml`, release `text-embedder-v1`), "Publish element detector"
+         (`publish-element-detector.yml`, `element-detector-v1`, exported from OmniParser's
+         TorchScript on the runner) and "Publish OCR models" (`publish-ocr-models.yml`, `ocr-v1`).
+         Until `ocr-v1` exists, `npm run models` and Settings' reader downloads fail with a 404.
+      2. Point the code at the new names: `download-models.mjs` (each file with the SHA-256 its
+         release lists), `OnnxEmbeddingService` (`text-embedder.onnx`, `text-embedder-vocab.txt`),
+         `ElementLocator` (`element-detector.onnx`), the `.gitignore` and `Core.csproj` comments,
+         PROJECT.md and TODO.md. Delete the old files in `Core/AiModels` and `npm run models`.
+      3. By hand: Ask AI answers from the documents (embedder), a recording names what was clicked
+         (detector).
+      4. Delete the `model-v1` and `vision-v1` releases on GitHub, with their tags. Installed apps
+         carry their models inside, so nothing out there reads them.
+- [ ] **Try it by hand.** Settings, Text recognition: Latin built in, the others offered with their
+      size; download Greek once the release exists, and it says Downloaded. A Read Text step's
+      Language shows Latin when none is picked, and a downloaded reader once one is. Test on Crude
+      Oil's price reads `104.120`, where Windows read `104.12`; the migration turned its `en-US`
+      into `latin`. A step set to Greek before Greek is downloaded is an error and the flow does
+      not start; downloading it clears the error. A recording: Review names the clicks and says
+      what changed on each screen, about a second a press now.
+- [ ] **The recording's screen reading is the slow part.** About 1 s a press where Windows took
+      70 ms, so a recording of 30 presses waits about 30 s longer. Worth trying: reading only what
+      changed since the previous press's screenshot.
+- [ ] **macOS and Linux.** The service, ONNX Runtime and its models are the same there; OpenCV needs
+      a runtime package for each, as `Platform.Windows` has `OpenCvSharp4.runtime.win`, and the rest
+      of the backend still targets Windows only.
+- [ ] Later, if speed matters: an 8-bit copy of each model, which needs Python's onnx tools; the
+      GPU, through DirectML on Windows and CoreML on macOS.
+
+---
+
 ## Loose ends in finished phases
 
 ### The script

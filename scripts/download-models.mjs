@@ -17,9 +17,9 @@ const FILES = [
 
   // The line finder and the Latin reader ship; the other readers are downloaded from Settings
   // (.github/workflows/publish-ocr-models.yml).
-  ["ocr-v1", "ocr-lines.onnx"],
-  ["ocr-v1", "ocr-latin.onnx"],
-  ["ocr-v1", "ocr-latin.yml"],
+  ["ocr-v1", "ocr-line-finder.onnx"],
+  ["ocr-v1", "ocr-reader-latin.onnx"],
+  ["ocr-v1", "ocr-reader-latin.yml"],
   ["ocr-v1", "PaddleOCR.LICENSE.txt"],
 ];
 

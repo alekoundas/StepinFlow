@@ -165,10 +165,10 @@ the history.
 - [ ] **A text search's language is not in the script.** Found 2026-10-28, when the recorder began
       writing `Wait For Text`. `OcrLanguage` is a column the script never writes, so a text search
       from a file, a recording or a model's answer has none, and an export loses the one picked.
-      Since 2026-10-28 that is a warning rather than an error (`OCR_LANGUAGE_MISSING`): Windows reads
-      in the languages it is set to on each machine. Writing it - `Wait For Text <[ … ]> … language
-      <[ en-US ]>`, left out when none is picked - would make a flow read the same everywhere. A
-      format change, so the Firestone export has to keep importing; it has no text searches.
+      Since 2026-11-08 the language is a PaddleOCR reader and none means Latin on every machine, so
+      only a text search in another script - Greek, Cyrillic - loses anything. Writing it - `Wait
+      For Text <[ … ]> … language <[ greek ]>`, left out for Latin - would keep it. A format change,
+      so the Firestone export has to keep importing; it has no text searches.
 
 - [ ] **What a form saves and the script has no words for.** Found 2026-11-07, writing
       `GoldenFlow.approved.sflw`. An export, an import or a branch switch resets these, and only
@@ -548,28 +548,6 @@ the history.
       couple of hundred MB until the recording is discarded. A temp folder per session, cleared on
       leaving Check and swept at startup, would cap that, and works the same on every system. It may
       never be needed; decide it with whether a recording outlives the app, above.
-- [ ] **One OCR on every system: PaddleOCR's models on ONNX. To talk about.** Raised 2026-10-14.
-      `IOcrService` has one adapter, Windows OCR, so the Read Text step, the text on a clicked
-      element (`ClickedElementFinder`) and what changed on the screen between presses
-      (`RecordedScreenReader`) are Windows only; on macOS or Linux a click keeps its rectangle but
-      no name, and a recording says nothing of its screens. OmniParser does not read text itself - its detector only finds
-      rectangles, and it calls EasyOCR or PaddleOCR (Python) for the words. PaddleOCR's own models,
-      PP-OCR, are Apache-2.0 (GPL-3.0 compatible), cover 106 languages in v5, Greek included, and
-      exist as ONNX, so one adapter on the ONNX Runtime the detector already runs on would read the
-      same on all three systems.
-      - For: a flow's Read Text reads the same on a Linux CI runner as on the machine it was made on;
-        no Windows language packs, and no installer asking for elevation from the Settings page;
-        nothing new to ship.
-      - Against: two models per language family - one finds the lines (84 MB for v5), one reads a
-        line (7.4 MB for Greek) - and C# for what they leave: the detection map into boxes (OpenCV,
-        already in the app) and the recognition output decoded against a character list. Settings
-        downloads a recognition model instead of installing a language pack. The ONNX conversions
-        found (`monkt/paddleocr-onnx` on Hugging Face) are a third party's, so export our own as
-        with the detector, or vet them.
-      - For the clicked elements the detection model may not be needed: the detector already gives
-        the element, and a button's label is one line, which the recognition model reads alone.
-      - Measure it against Windows OCR on real screenshots first, the way the detector was checked.
-      - Meanwhile, macOS has Apple's Vision framework and Linux has Tesseract, as adapters of their own.
 - [ ] **Where the element detector comes from.** `icon_detect_v3.onnx` (232 MB) is copied beside
       the backend like the docs model, so it ships inside the installer and nearly doubles it.
       Downloading it on first use instead would keep the installer small, at the price of a first

@@ -121,7 +121,7 @@ Core/Ports/IInputSimulatorService    →  Platform.Shared/Input/InputSimulatorSe
 Core/Ports/IInputRecordService       →  Platform.Shared/Input/InputRecordService
 Core/Ports/IMouseService             →  Platform.Windows/Input/MouseService
 Core/Ports/IWindowService            →  Platform.Windows/Windowing/WindowService
-Core/Ports/IOcrService               →  Platform.Windows/Ocr/OcrService
+Core/Ports/IOcrService               →  Platform.Shared/Ocr/PaddleOcrService
 Core/Ports/ISystemActionService      →  Platform.Windows/SystemActions/SystemActionService
 Core/Ports/IProcessService           →  Platform.Windows/SystemActions/ProcessService
 Core/Ports/IOpenCvService            →  Platform.Shared/Vision/OpenCvService
@@ -151,7 +151,7 @@ site.
 
 ```
 Platform.Windows/
-  Screen/  Input/  Windowing/  Ocr/  SystemActions/  Native/   — Win32, WinRT, GDI+
+  Screen/  Input/  Windowing/  SystemActions/  Native/   — Win32, WinRT, GDI+
 ```
 
 There is no `Windows/` wrapper folder: the project name already carries the OS. Code that would
@@ -245,10 +245,10 @@ switching it off excuses all of them wherever it reaches. Written as `Business/S
 quietly let the regex ban off in the one file most likely to break it — the executor is where the
 duplicated pattern matching used to live.
 
-**Platform internals can be `internal`.** `Direct3D11Interop`, `NativeCursor` and
-`OcrLanguageCatalog` are called only from inside Platform. They were `public static` solely
-because one assembly left no other option, and the assembly boundary makes "this is a private
-detail of the screenshot adapter" a compiler fact.
+**Platform internals can be `internal`.** `Direct3D11Interop` and `NativeCursor` are called only
+from inside Platform, as OCR's line finder and readers are only from inside `Platform.Shared`.
+They were `public static` solely because one assembly left no other option, and the assembly
+boundary makes "this is a private detail of the screenshot adapter" a compiler fact.
 
 Two could not follow. `ScreenMetrics` stays public because `App` calls
 `EnablePerMonitorDpiAwareness` at startup, before a container exists.
@@ -748,8 +748,8 @@ detection model over the 640 by 640 pixels of the press's screenshot around the 
 size: the whole screen at full size is six times the work and gigabytes of memory, and shrunk to fit
 the model it makes a small icon a third of its size. The model scores every 8, 16 and 32 pixel cell
 for an element centred there; the boxes that clear 0.25 are thinned by non-maximum suppression, and
-the smallest the click is in is the element, so a click on an icon in a row is the icon. Windows OCR
-reads the text on it, and again at twice the size when faint text reads as nothing. When the model
+the smallest the click is in is the element, so a click on an icon in a row is the icon. OCR (§8,
+Reading text) reads the text on it, and again at twice the size when faint text reads as nothing. When the model
 has nothing to say - no model file, nothing under the click, or an element that runs past what it
 looked at - a box around the click stands in, 64 pixels at 96 dpi, and its note says why.
 
@@ -780,14 +780,15 @@ the click; never a flat one; never two whose read text differs. A group in diffe
 marked moving, the same place clicked again is not.
 
 **What changed on the screen** (`Business/Recording/Screens/RecordedScreenReader`) is read last:
-every press's screenshot of the main area whole, by Windows OCR, every word with its rectangle -
-about 80 ms a screenshot - and each compared with the one before (`Business/ScreenText/`). A
+every press's screenshot of the main area whole, by OCR at the press's DPI, every word with its
+rectangle - about a second a screenshot on the CPU - and each compared with the one before
+(`Business/ScreenText/`). A
 press's screenshot is from just before it, so what a click did shows at the next press, and what
 the last one did on the screen the recording stopped on: the newest screenshot of the main area at
 Stop, taken while the bar was still up, so StepinFlow's own window is never over it, and kept
-unencoded only until it is read. Every line read is kept as well, once each. The engine
-reads a row of buttons as one line, "Bag Fellowship Party", so a line is cut wherever two words are
-further apart than one and a half times their height. It reads a word differently on every
+unencoded only until it is read. Every line read is kept as well, once each. The line finder
+can take a row of buttons for one line, "Bag Fellowship Party", so a line is cut wherever two words
+are further apart than one and a half times their height. OCR reads a word differently on every
 screenshot - Town was "Town", "Towri" and "TOWR" on three of one screen - so two lines are the same
 when their words are, wherever they are, or when no more than one letter in three differs and they
 sit within a line's height of each other. Numbers never nearly match: a badge going from 1 to 2 is a
@@ -795,11 +796,10 @@ change. Equal lines pair nearest first, so of six "Add to cart" buttons the one 
 "Remove" is the one that changed. How much changed is counted in letters, on lines of four letters
 or more, because a game counts up numbers on every screenshot: over one Firestone execution the
 same screen scored 0 to 0.17, or 0.43 where OCR missed four labels on one of the two, a dialog
-opening or closing about 0.42, and the move to another screen 1. Half or more is a new page. When
-the engine finds text tilted - the game's slanted lettering, by 5.6 degrees - it straightens it and
-measures in the straightened picture, so `OcrService.ReadWordsAsync` turns its rectangles back by
-that angle. The words are screen data and reach a cloud model only through the gate (§10); how much
-changed is a number and goes anywhere. Windows only, as the text under a click is.
+opening or closing about 0.42, and the move to another screen 1. Half or more is a new page. Text
+found tilted - the game's slanted lettering, by 5.6 degrees - is read straightened, and each word's
+rectangle is put back through the tilt. The words are screen data and reach a cloud model only
+through the gate (§10); how much changed is a number and goes anywhere.
 
 The same comparison says whether the main area's window took another title between the two presses -
 for a browser, another page, which a single-page application can reach with most of its words in
@@ -905,7 +905,7 @@ setup's Launch step first.
   area - `Find Invoices area`, placed as a point is, at the press's DPI. The search is a `Wait For
   Text` there. A text search succeeds with its area's centre, so the move goes to the middle of the
   rectangle, which is why for a click it sits on what was clicked. Words left empty go by the
-  picture. Read by Windows OCR, so Windows only until `TODO.md`'s OCR item is decided.
+  picture. Read by PaddleOCR, the same on every system (§8, Reading text).
 - A search is named from the text read on the element - `Find Invoices`, `Find icon` when there was
   none - through `FlowNameHelper.MakeUnique`; found by its words, from those.
 - Typed text is an input with what was typed as its default, and the step types `{{email}}`; a
@@ -959,8 +959,8 @@ as it was recorded (` ```sflw recorded `), with what was wrong with it - the mos
 recording needs - for a person or the assistant, never the request. Firestone is cut to four of its
 thirteen notifications, one of each pattern, at about 13,000 characters beside the reference's
 39,000. `FlowExamplesTests` imports every finished example as a file is imported, validation
-included, so a format change cannot leave the model learning lines the app refuses; the only issues
-allowed are a Notify's Discord bot and a text search's OCR language, which no file carries.
+included, so a format change cannot leave the model learning lines the app refuses; the only issue
+allowed is a Notify's Discord bot, which no file carries.
 
 The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
 do, with no tool calling. It is read back with the scanner as a file is, and checked in code rather
@@ -1702,9 +1702,56 @@ Brightness-and-shape is only as strict as the template is tight: the same button
 of it rather than 4 finds the disabled one at 0.964, past the bar, because every pixel of
 background added agrees. And colour is never compared - both modes match in grayscale.
 
-`SEARCH_TEXT` captures the area, reads it with Windows OCR, optionally keeps the part a regex
-captures, and evaluates the condition against it: as text, as a number, or by its length in
+`SEARCH_TEXT` captures the area, reads it with OCR at the area's DPI, optionally keeps the part a
+regex captures, and evaluates the condition against it: as text, as a number, or by its length in
 characters, counted without the spaces OCR adds at either end.
+
+### Reading text
+
+Since 2026-11-08 text is read by PaddleOCR's PP-OCRv5 models (Apache-2.0) on the ONNX Runtime the
+element detector already uses, in `Platform.Shared/Ocr/PaddleOcrService`: the same models and the
+same code on Windows, macOS and Linux, where Windows OCR was Windows only, needed a language pack
+per language, and asked for administrator permission to install one. Measured against it on pages
+whose every word was known, it reads 98% of English words exactly to Windows' 69%, and 97% of Greek
+to 89%. Windows read `104.120` as `104.12`, `14:58` as `1458`, and missed the town names on a
+Firestone screen. The price is time and memory - below.
+
+- **A line finder** (`TextLineFinder`, `ocr-line-finder.onnx`, the small PP-OCRv5 detector, 4.8 MB)
+  answers with a heat map: how sure it is that each pixel is text, marking only the middle of a line
+  so lines close together stay apart. Each patch above 0.3 becomes a rectangle, tilted when the text
+  is, kept when its mean is 0.6 or more and grown back by area × 1.5 / perimeter; top to bottom,
+  then left to right. The big detector took 6 to 8 seconds a screen on a CPU and found nothing on a
+  4K page at 7 GB, so it is not offered.
+- **A reader** (`TextLineReader`) cuts each line out level, scales it to 48 pixels tall, and guesses
+  for every 8 pixels across it which character is there, or none. Repeats merge and the "none"s
+  drop; the characters come from the model's `inference.yml` (`OcrCharacterList`), an entry a
+  string, since the Chinese list has emoji. One line at a time: six at once was slower.
+- **A word's rectangle** runs between the blank columns that part it from its neighbours, found
+  from the slices its characters were seen in (`WordEdges`), its top and bottom at the ink: 1 pixel
+  out typically and 2 for nine words in ten, as Windows was. A line's words are joined by spaces
+  for `ReadAsync`, as Windows joined them.
+- **The DPI.** A screen at 150% draws text half as large again, so the line finder looks at it
+  shrunk by 1.5: a 4K page read 99.3% of its words in half the time and memory. The reader reads the
+  pixels as captured.
+- **Memory.** Loaded on first use and kept, about 40 MB for the line finder and Latin. The line
+  finder runs without ONNX Runtime's arena, so a read's working memory - hundreds of MB for a whole
+  screen, over a gigabyte for a tall page - goes back when it ends; a reader, on one line 48 pixels
+  tall, keeps its arena and its speed.
+- **Speed**, on an i9-9900K with a game running: a Read Text area 25 to 40 ms where Windows took
+  2; a 1753 by 909 game screen about a second where Windows took 70 ms, a 1600 by 1000 page 1.5
+  seconds, a 1920 by 1949 web page 3.4. A recording's screens are where it shows.
+
+**Readers.** `Core/Catalogs/OcrReaderCatalog` lists them: Latin - English and the other languages
+written in Latin letters - ships with the app and is the default; Greek, East Slavic, Cyrillic,
+Chinese and Japanese, Korean, Arabic, Devanagari, Thai, Tamil and Telugu are downloaded from
+Settings, about 8 MB each, by `Business/ScreenText/OcrReaderDownloadService` from the app's own
+`ocr-v1` release into the `OcrReaders` folder beside the database. A model is checked against the
+catalog's SHA-256 before it is kept; the release is filled by `publish-ocr-models.yml` from pinned
+Hugging Face revisions against the same hashes, and `npm run models` fetches the line finder and
+Latin. A step's `OcrLanguage` names its reader - empty is Latin, on every machine - and one not
+on this machine is an error, `OCR_READER_NOT_DOWNLOADED`, naming the reader to download, so the
+flow does not start. Validation asks `IOcrService.GetLanguages` only when the flow reads text. The Greek reader reads English too,
+though an English word inside a Greek sentence comes out in Greek letters.
 
 ### The matrix
 
@@ -2015,7 +2062,7 @@ around.
 
 **What a screen says, without OmniParser.** Its detector over a whole screen costs seconds and
 gigabytes and finds almost nothing on a game (measured 2026-10-30), so it stays on the 640 pixels
-around a click. A screen is read by three things instead, cheapest first: Windows OCR over every
+around a click. A screen is read by three things instead, cheapest first: OCR over every
 press screenshot, each line with its rectangle, compared with the screenshot before - what appeared,
 what went, and the window's title; UI Automation's element under each press - role, name, state, and
 the dialog or page it sits in - where the application has an accessibility tree, a browser or an
@@ -2722,15 +2769,16 @@ Two different things, two homes.
 setting's label, description, default, min and max — read by the loader *and* the settings page so
 the two cannot disagree), `FlowStepFieldCatalog` (which columns mean anything for which step type),
 `KeyCatalog` (how keys are named - what the recorder writes as "Ctrl+V" and the execution and the
-validation read back into keys, so the round trip cannot break).
+validation read back into keys, so the round trip cannot break), `OcrReaderCatalog` (every text
+reader, its languages and the hash its download is checked against).
 `ShellCommandModeCatalog` is the same kind of thing and sits beside the executor in `Business/Shell`,
 its only consumer. These are not constants; they are queried, and a `Constants.cs` full of
 `public const string` would describe them less accurately than `Catalog` does. The pattern has a
 well-known precedent in Roslyn's `SyntaxFacts`.
 
 **Things that genuinely are constants** live in the class that uses them — `WM_CLOSE` in
-`WindowService`, the DPI awareness handles in `ScreenMetrics`, the OCR language tags in the internal
-`OcrLanguageCatalog`. There is no `Constants/` folder, for the same reason there is no `Helpers/`
+`WindowService`, the DPI awareness handles in `ScreenMetrics`, the line finder's thresholds in the
+internal `TextLineFinder`. There is no `Constants/` folder, for the same reason there is no `Helpers/`
 folder in `Business`.
 
 ### Backend
@@ -2823,19 +2871,19 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1129 tests, all passing, in eight projects under `backend/Tests/` - one
+1507 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
-| `Core.Tests` | 179 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 856 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
-| `DataAccess.Tests` | 17 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
+| `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
+| `Business.Tests` | 1124 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `DataAccess.Tests` | 47 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
-| `Transport.Tests` | 17 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
-| `Platform.Windows.Tests` | 4 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; Windows OCR on lines drawn straight and tilted, each read where it was drawn; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
-| `Platform.Shared.Tests` | 44 | git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
+| `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
+| `Platform.Windows.Tests` | 1 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
+| `Platform.Shared.Tests` | 61 | PaddleOCR with the real models on lines drawn straight, tilted and at 150%, each read word for word where it was drawn, a reader not downloaded, a reader's character list with an empty entry and an escape only YAML has refused, and the blank columns a word's edges go to; git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash

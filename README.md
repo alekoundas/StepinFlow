@@ -76,7 +76,9 @@ answer that here:
   telling an enabled button from a disabled one
 - **Accuracy per template**, and several templates as alternatives for one thing
 - **Four search modes** — best match, every match, wait until found, wait until gone
-- **Read text** — Windows OCR over a region, with a regex to pull out the part you want
+- **Read text** — PaddleOCR's models over a region, the same on Windows, macOS and Linux, with a regex
+  to pull out the part you want. Latin is built in; Greek, Cyrillic, Chinese and others download
+  from Settings
 - **Portable across screens** — each area says whether its contents scale with the screen's DPI (a
   browser, an app) or with its own size (a game), and every captured pixel carries the DPI it was
   captured at. A template captured at 150% is found at 100%, and in a window that is not maximised
@@ -236,7 +238,7 @@ npm run coverage:backend
 | Backend | .NET 10, a hand-written IPC dispatcher, AutoMapper |
 | Data | EF Core 10 + SQLite |
 | Input | SharpHook — global hook and event simulation |
-| Vision | OpenCvSharp4 template matching, `Windows.Media.Ocr` |
+| Vision | OpenCvSharp4 template matching, PaddleOCR PP-OCRv5 on ONNX Runtime |
 | Capture | `Windows.Graphics.Capture` over Direct3D11 |
 | AI | Microsoft.Extensions.AI with tool calling, OllamaSharp, OpenAI |
 | Docs search | ONNX Runtime embeddings, Microsoft.ML.Tokenizers, USearch vector index |

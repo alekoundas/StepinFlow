@@ -1,0 +1,125 @@
+name: Publish text embedder
+
+# BAAI's bge-small-en-v1.5 (MIT), the model that turns the AI documents and a question into numbers
+# to compare, in a release of the app's own. The build downloads it (scripts/download-models.mjs).
+# Run once; a new model means a new tag, and the download script pointing at it.
+#
+# Server to server: the bytes go HuggingFace -> runner -> release without crossing your connection.
+# Every file is checked against the SHA-256 pinned here, so the release holds exactly these bytes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag. A new model means a new tag - text-embedder-v2, text-embedder-v3."
+        required: true
+        default: "text-embedder-v1"
+
+permissions:
+  contents: write
+
+env:
+  REPO: BAAI/bge-small-en-v1.5
+  # A commit, not 'main': the author can push new bytes to a branch.
+  REVISION: 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a
+  MODEL_SHA: 828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35
+  VOCAB_SHA: 07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
+  DIMENSIONS: 384
+  # The model card says MIT; the text and its copyright line are FlagEmbedding's, where BGE comes from.
+  LICENSE_COMMIT: c086741f5e117b7b8ce1745ea00b6c262f281a01
+  LICENSE_SHA: 587a673933425dbc36ec61268d3b954051b2d3ef3c9b322ede357976055ffdd5
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      # The point of a tag is that it always serves the same bytes, so a build from March and one
+      # from December resolve identically. Overwriting one would lose that silently.
+      - name: Refuse to overwrite an existing release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "${{ inputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Release ${{ inputs.tag }} already exists. Use a new tag."
+            exit 1
+          fi
+
+      # --fail so an error page is never written to disk as a model.
+      - name: Download from HuggingFace
+        run: |
+          mkdir -p embedder
+          base="https://huggingface.co/$REPO/resolve/$REVISION"
+
+          curl --fail --location --show-error --silent -o embedder/text-embedder.onnx "$base/onnx/model.onnx"
+          curl --fail --location --show-error --silent -o embedder/text-embedder-vocab.txt "$base/vocab.txt"
+
+          echo "$MODEL_SHA  embedder/text-embedder.onnx" | sha256sum --check --strict
+          echo "$VOCAB_SHA  embedder/text-embedder-vocab.txt" | sha256sum --check --strict
+
+      # The hash says these are the bytes picked; this says they embed as the app expects, at full
+      # precision and the width the documents index is built with.
+      - name: Smoke test the model
+        run: |
+          pip install --quiet onnxruntime numpy
+          python - <<'PY'
+          import numpy, onnxruntime, os, sys
+
+          session = onnxruntime.InferenceSession("embedder/text-embedder.onnx", providers=["CPUExecutionProvider"])
+
+          inputs = {i.name: i for i in session.get_inputs()}
+          print("inputs :", list(inputs))
+          print("outputs:", [(o.name, o.shape) for o in session.get_outputs()])
+
+          tokens = 8
+          feed = {}
+          for name in inputs:
+              value = numpy.ones((1, tokens), dtype=numpy.int64)
+              if name == "token_type_ids":
+                  value = numpy.zeros((1, tokens), dtype=numpy.int64)
+              feed[name] = value
+
+          result = session.run(None, feed)[0]
+          print("output shape:", result.shape)
+
+          expected = int(os.environ["DIMENSIONS"])
+          if result.shape[-1] != expected:
+              sys.exit(f"expected {expected} dimensions, model produced {result.shape[-1]}")
+
+          if not numpy.isfinite(result).all():
+              sys.exit("model produced NaN or infinity")
+
+          print(f"ok: {expected} finite dimensions")
+          PY
+
+      - name: Write the licence
+        run: |
+          curl --fail --location --show-error --silent -o mit.txt "https://raw.githubusercontent.com/FlagOpen/FlagEmbedding/$LICENSE_COMMIT/LICENSE"
+          echo "$LICENSE_SHA  mit.txt" | sha256sum --check --strict
+
+          {
+            echo "BAAI's bge-small-en-v1.5, from https://huggingface.co/$REPO and"
+            echo "https://github.com/FlagOpen/FlagEmbedding, is licensed under the MIT License:"
+            echo
+            cat mit.txt
+          } > embedder/BGE.LICENSE.txt
+
+      # Never "Latest": the app's updater reads latest.yml from whichever release is.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          sums=$(cd embedder && sha256sum *)
+
+          gh release create "${{ inputs.tag }}" embedder/* \
+            --latest=false \
+            --title "Text embedder ${{ inputs.tag }}" \
+            --notes "BAAI's \`$REPO\` (MIT) at revision \`$REVISION\`: \`onnx/model.onnx\` and \`vocab.txt\`, $DIMENSIONS dimensions. The build downloads them (\`npm run models\`).
+
+          SHA-256:
+
+          \`\`\`
+          $sums
+          \`\`\`"
