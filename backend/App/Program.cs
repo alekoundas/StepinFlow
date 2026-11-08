@@ -136,7 +136,7 @@ namespace App
 
             // Repository.
             builder.Services.AddSingleton<IGitService, GitService>();
-            builder.Services.AddSingleton<IGitRepositoryService, GitRepositoryService>();
+            builder.Services.AddSingleton<IGitRepositoryService>(x => ActivatorUtilities.CreateInstance<GitRepositoryService>(x, PathHelper.GetRepositoryPath()));
             builder.Services.AddSingleton<IFlowRestoreService, FlowRestoreService>();
             builder.Services.AddSingleton<IBranchSwitchService, BranchSwitchService>();
             builder.Services.AddHostedService<HostedGitRepositoryService>(); // <- Background service!

@@ -64,19 +64,6 @@ namespace Business.Repository
             IAppSettingService appSettingService,
             IIpcBroadcastService broadcast,
             TimeProvider timeProvider,
-            ILogger<GitRepositoryService> logger)
-            : this(dbContextFactory, exporter, git, appSettingService, broadcast, timeProvider, logger, PathHelper.GetRepositoryPath())
-        {
-        }
-
-        // A test points it at a folder of its own.
-        internal GitRepositoryService(
-            IDbContextFactory<AppDbContext> dbContextFactory,
-            IFlowScriptExporter exporter,
-            IGitService git,
-            IAppSettingService appSettingService,
-            IIpcBroadcastService broadcast,
-            TimeProvider timeProvider,
             ILogger<GitRepositoryService> logger,
             string folderPath)
         {

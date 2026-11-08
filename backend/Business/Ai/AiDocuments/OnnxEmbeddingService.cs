@@ -1,4 +1,5 @@
 using System.Numerics.Tensors;
+using Core.Helpers;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Microsoft.ML.Tokenizers;
@@ -24,8 +25,8 @@ namespace Business.Ai.AiDocuments
         private const int _dimensions = 384;
         private const int _maxTokens = 512;
 
-        private readonly string _modelPath = Path.Combine(AppContext.BaseDirectory, "AiModels", "model.onnx");
-        private readonly string _vocabPath = Path.Combine(AppContext.BaseDirectory, "AiModels", "vocab.txt");
+        private readonly string _modelPath = Path.Combine(PathHelper.GetAiModelsPath(), "model.onnx");
+        private readonly string _vocabPath = Path.Combine(PathHelper.GetAiModelsPath(), "vocab.txt");
 
         private readonly Lock _lockObj = new Lock();
 

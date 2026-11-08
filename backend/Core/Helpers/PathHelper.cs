@@ -34,6 +34,23 @@
             return path;
         }
 
+        /// <summary>The models that ship beside the app, which `npm run models` fetches.</summary>
+        public static string GetAiModelsPath()
+        {
+            return Path.Combine(AppContext.BaseDirectory, "AiModels");
+        }
+
+        /// <summary>The text readers downloaded from Settings. The one built in is in AiModels.</summary>
+        public static string GetOcrReadersPath()
+        {
+            string path = Path.Combine(_appDataPath, _appFolderName, "OcrReaders");
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            return path;
+        }
+
         public static string GetTempDataPath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Temp");

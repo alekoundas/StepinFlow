@@ -1,6 +1,7 @@
 using System.Drawing;
 using Business.Ai.Vision.Models;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Business;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -27,7 +28,7 @@ namespace Business.Ai.Vision
         private const int EDGE_MARGIN = 2;
         private const int FALLBACK_SIZE = 64;          // At 96 dpi; scaled with the screen's.
 
-        private readonly string _modelPath = Path.Combine(AppContext.BaseDirectory, "AiModels", "icon_detect_v3.onnx");
+        private readonly string _modelPath = Path.Combine(PathHelper.GetAiModelsPath(), "icon_detect_v3.onnx");
 
         private InferenceSession? _session;
 
