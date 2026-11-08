@@ -2,7 +2,7 @@
 
 ## What Search Text does
 
-`SEARCH_TEXT` reads text inside an area using Windows OCR, decides whether it says what it should,
+`SEARCH_TEXT` reads text inside an area using OCR, decides whether it says what it should,
 and hands what it read to steps below it. It has **Success** and **Failure** branches.
 
 It works off the raw screen capture with no image encoding in between.
@@ -46,10 +46,18 @@ because something was read.
 
 ## OCR languages
 
-The language is a dropdown of the language packs Windows actually has installed, so you cannot pick
-one Windows cannot read. English works out of the box.
+The language picks the text reader, PaddleOCR's model for one script. **Latin** is built in and is
+what a step with no language reads with: English, French, German, Spanish, Italian, Portuguese and
+the other languages written in Latin letters. A script does not carry the language, so a text search
+from a file or a recording reads with Latin.
 
-More languages can be installed from Settings, which uses the Windows language pack installer.
+The others - Greek, East Slavic, Cyrillic, Chinese and Japanese, Korean, Arabic, Devanagari, Thai,
+Tamil, Telugu - are downloaded once from Settings, a few megabytes each, with no administrator
+permission. The dropdown offers the readers on this computer; a flow with a step whose reader is
+not downloaded does not start, and validation says which one to download. The Greek reader reads English too, but an English word inside
+Greek text can come out in Greek letters.
+
+It reads the same on Windows, macOS and Linux.
 
 ## Keep only — narrowing before deciding
 

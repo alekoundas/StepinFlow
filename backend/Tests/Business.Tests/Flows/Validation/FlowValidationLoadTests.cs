@@ -54,7 +54,7 @@ namespace Business.Tests.Flows.Validation
             int broken = Seed("Broken", new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, Name = "Move" });
             int fine = Seed("Fine", new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", WaitForMilliseconds = 100 });
             int empty = Seed("Empty");
-            FlowValidationService validation = new FlowValidationService();
+            FlowValidationService validation = new FlowValidationService(new FakeOcrService());
 
             using AppDbContext db = _database.CreateDbContext();
             IReadOnlyDictionary<int, FlowValidationResultDto> batch = await validation.ValidateAsync(db, [broken, fine, empty], Ct);
@@ -76,7 +76,7 @@ namespace Business.Tests.Flows.Validation
             int second = Seed("Same", new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", WaitForMilliseconds = 100 });
 
             using AppDbContext db = _database.CreateDbContext();
-            IReadOnlyDictionary<int, FlowValidationResultDto> batch = await new FlowValidationService().ValidateAsync(db, [first, second], Ct);
+            IReadOnlyDictionary<int, FlowValidationResultDto> batch = await new FlowValidationService(new FakeOcrService()).ValidateAsync(db, [first, second], Ct);
 
             batch[first].Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.NAME_DUPLICATE);
             batch[second].Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.NAME_DUPLICATE);
@@ -87,7 +87,7 @@ namespace Business.Tests.Flows.Validation
         {
             int existing = Seed("Fine", new FlowStep { FlowStepType = FlowStepTypeEnum.WAIT, Name = "Wait", WaitForMilliseconds = 100 });
             int missing = existing + 1000;
-            FlowValidationService validation = new FlowValidationService();
+            FlowValidationService validation = new FlowValidationService(new FakeOcrService());
 
             using AppDbContext db = _database.CreateDbContext();
             IReadOnlyDictionary<int, FlowValidationResultDto> batch = await validation.ValidateAsync(db, [existing, missing], Ct);
@@ -107,11 +107,11 @@ namespace Business.Tests.Flows.Validation
             using AppDbContext db = _database.CreateDbContext();
             await db.Flows.Where(x => x.Id == test).ExecuteUpdateAsync(x => x.SetProperty(flow => flow.IsQaTest, true), Ct);
 
-            IReadOnlyDictionary<int, FlowValidationResultDto> batch = await new FlowValidationService().ValidateAsync(db, [automation, test], Ct);
+            IReadOnlyDictionary<int, FlowValidationResultDto> batch = await new FlowValidationService(new FakeOcrService()).ValidateAsync(db, [automation, test], Ct);
 
             Codes(batch[automation]).ShouldNotContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
             Codes(batch[test]).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
-            Codes(await new FlowValidationService().ValidateAsync(db, test, Ct)).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
+            Codes(await new FlowValidationService(new FakeOcrService()).ValidateAsync(db, test, Ct)).ShouldContain(FlowValidationCodeEnum.CHECK_CANNOT_FAIL);
         }
     }
 }

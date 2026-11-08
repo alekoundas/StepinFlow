@@ -16,8 +16,13 @@ namespace Business.Tests.Recording
         private readonly RecordedScreenReader _reader;
         private readonly Dictionary<int, RecordedPress> _presses = new Dictionary<int, RecordedPress>();
 
+        private const int LAST_SCREEN_DPI = 144;
+
         // What the fake OCR reads does not depend on the picture.
-        private static readonly RawImage LAST_SCREEN = new RawImage { Width = 1, Height = 1, Stride = 4, Pixels = [0, 0, 0, 255] };
+        private static readonly RecordingScreenshot LAST_SCREEN = new RecordingScreenshot(
+            new DateTime(2026, 11, 8, 12, 0, 0, DateTimeKind.Utc),
+            new RecordingTarget(new Rectangle(0, 0, 800, 600), LAST_SCREEN_DPI, WindowHandle.None, 0),
+            new RawImage { Width = 1, Height = 1, Stride = 4, Pixels = [0, 0, 0, 255] });
 
         public RecordedScreenReaderTests()
         {
@@ -132,6 +137,20 @@ namespace Business.Tests.Recording
             RecordedScreens screens = await _reader.ReadAsync([Click(0)], x => _presses.GetValueOrDefault(x), LAST_SCREEN, (done, total) => { }, Ct);
 
             screens.Lines.ShouldBe(["Products", "Add to cart", "Remove"]);
+        }
+
+        // A screen scaled to 150% draws text half as large again, which the reader allows for.
+        [Fact]
+        public async Task Each_screen_is_read_at_the_dpi_it_was_captured_at()
+        {
+            RecordedActionDto click = Click(0);
+            _presses[0] = new RecordedPress { Index = 0, MainAreaBounds = new Rectangle(0, 0, 800, 600), Dpi = 120, Screenshot = [1] };
+
+            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), null, (done, total) => { }, Ct);
+            _ocr.LastDpi.ShouldBe(120);
+
+            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), LAST_SCREEN, (done, total) => { }, Ct);
+            _ocr.LastDpi.ShouldBe(LAST_SCREEN_DPI);
         }
     }
 }

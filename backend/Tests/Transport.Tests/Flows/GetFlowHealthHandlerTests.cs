@@ -32,7 +32,7 @@ namespace Transport.Tests.Flows
 
         private async Task<IReadOnlyList<FlowHealthDto>> HealthAsync()
         {
-            GetFlowHealthHandler handler = new GetFlowHealthHandler(_database, new FlowValidationService());
+            GetFlowHealthHandler handler = new GetFlowHealthHandler(_database, new FlowValidationService(new FakeOcrService()));
             ResultDto<IReadOnlyList<FlowHealthDto>> result = await handler.HandleAsync(new FlowHealthRequestDto(), Ct);
 
             return result.Data!;

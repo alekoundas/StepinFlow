@@ -63,8 +63,8 @@ you can tell a misread from a wrong condition.
 Common causes: the area includes too much, the text is small, or the text is anti-aliased against a
 busy background. Tightening the area usually helps more than anything else.
 
-If the language is not English, check that the Windows language pack is installed — the dropdown
-only offers packs that are.
+If the text is not in Latin letters, pick its reader in the step - Greek, Cyrillic, Chinese and
+others - after downloading it in Settings. A step with no language reads with Latin.
 
 ## A window step does not find its window
 

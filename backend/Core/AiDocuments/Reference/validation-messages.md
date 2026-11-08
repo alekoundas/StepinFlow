@@ -47,9 +47,10 @@ was deleted.
 
 **SEARCH_TEXT_MISSING** — a waiting read-text mode has no text to look for.
 
-**OCR_LANGUAGE_MISSING** — no OCR language is picked. A warning: the step executes, reading in the
-languages Windows is set to on that machine, which can differ from one machine to the next. A
-script does not carry the language, so a text search from a file or a recording starts with none.
+**OCR_READER_NOT_DOWNLOADED** — the text search reads with a reader this machine does not have.
+Every reader but Latin is downloaded per machine, so a flow from a repository can name one that is
+missing here. Download it in Settings, under Text recognition, or pick another in the step. When the
+reader is Latin, the app's own files are missing: reinstall.
 
 ## Conditions
 

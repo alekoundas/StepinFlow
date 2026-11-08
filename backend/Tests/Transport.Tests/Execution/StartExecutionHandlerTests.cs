@@ -26,7 +26,7 @@ namespace Transport.Tests.Execution
 
         private Task<ResultDto<int>> StartAsync(int flowId)
         {
-            return new StartExecutionHandler(_engine, _database, new FlowValidationService(), _hotkeys).HandleAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
+            return new StartExecutionHandler(_engine, _database, new FlowValidationService(new FakeOcrService()), _hotkeys).HandleAsync(new ExecutionStartDto { FlowId = flowId }, Ct);
         }
 
         private int Seed(string name, FlowStep step)

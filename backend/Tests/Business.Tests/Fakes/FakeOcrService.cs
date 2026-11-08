@@ -1,3 +1,4 @@
+using Core.Catalogs;
 using Core.Models.Business;
 using Core.Models.Dtos;
 using Core.Ports;
@@ -11,6 +12,7 @@ namespace Business.Tests.Fakes
         private string _last = string.Empty;
         private readonly Queue<IReadOnlyList<OcrWord>> _wordReads = new Queue<IReadOnlyList<OcrWord>>();
         private IReadOnlyList<OcrWord> _lastWords = [];
+        private readonly HashSet<string> _downloaded = new HashSet<string>();
 
         public int ReadCount { get; private set; }
         public int WordReadCount { get; private set; }
@@ -31,9 +33,13 @@ namespace Business.Tests.Fakes
             return this;
         }
 
-        public Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, CancellationToken ct = default)
+        /// <summary>The dpi of the last read, as the caller gave it.</summary>
+        public int LastDpi { get; private set; }
+
+        public Task<IReadOnlyList<OcrWord>> ReadWordsAsync(RawImage image, string language, int dpi, CancellationToken ct = default)
         {
             WordReadCount++;
+            LastDpi = dpi;
 
             if (_wordReads.Count > 0)
                 _lastWords = _wordReads.Dequeue();
@@ -41,9 +47,10 @@ namespace Business.Tests.Fakes
             return Task.FromResult(_lastWords);
         }
 
-        public Task<string> ReadAsync(RawImage image, string language, CancellationToken ct = default)
+        public Task<string> ReadAsync(RawImage image, string language, int dpi, CancellationToken ct = default)
         {
             ReadCount++;
+            LastDpi = dpi;
 
             if (_reads.Count > 0)
                 _last = _reads.Dequeue();
@@ -51,19 +58,26 @@ namespace Business.Tests.Fakes
             return Task.FromResult(_last);
         }
 
+        /// <summary>Readers on this machine besides the built-in one, which is always there.</summary>
+        public FakeOcrService Downloaded(params string[] readers)
+        {
+            foreach (string reader in readers)
+                _downloaded.Add(reader);
+
+            return this;
+        }
+
         public IReadOnlyList<OcrLanguageDto> GetLanguages()
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<OcrLanguageInstallResultDto> InstallLanguageAsync(string languageTag, CancellationToken ct = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OpenWindowsLanguageSettings()
-        {
-            throw new NotImplementedException();
+            return OcrReaderCatalog.All
+                .Select(x => new OcrLanguageDto
+                {
+                    Tag = x.Id,
+                    DisplayName = x.Name,
+                    IsBuiltIn = x.IsBuiltIn,
+                    IsInstalled = x.IsBuiltIn || _downloaded.Contains(x.Id),
+                })
+                .ToList();
         }
     }
 }

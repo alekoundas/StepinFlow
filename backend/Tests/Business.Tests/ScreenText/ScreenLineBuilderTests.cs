@@ -23,7 +23,7 @@ namespace Business.Tests.ScreenText
             line.Bounds.ShouldBe(Rectangle.FromLTRB(10, 100, 90, 116));
         }
 
-        // The Windows engine reads three buttons in a row as one line.
+        // Three buttons in a row read as one line.
         [Fact]
         public void A_gap_wider_than_the_words_are_tall_cuts_the_line()
         {

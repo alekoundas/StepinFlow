@@ -72,7 +72,7 @@ namespace Business.Tests.Ai
             imported.IsSuccess.ShouldBeTrue();
             imported.Warnings.ShouldBeEmpty();
             imported.Validation.ShouldNotBeNull().Issues
-                .Where(x => x.Code != FlowValidationCodeEnum.DISCORD_BOT_MISSING && x.Code != FlowValidationCodeEnum.OCR_LANGUAGE_MISSING)
+                .Where(x => x.Code != FlowValidationCodeEnum.DISCORD_BOT_MISSING)
                 .Select(x => $"{x.FlowStepName}: {x.Severity} {x.Code} {x.Message}")
                 .ShouldBeEmpty();
         }

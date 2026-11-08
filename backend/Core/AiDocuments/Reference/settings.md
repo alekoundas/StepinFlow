@@ -45,8 +45,9 @@ sees it, because nothing leaves this machine.
 
 ## OCR languages
 
-Lists the language packs installed and the ones available to install. Installing uses the Windows
-language installer and asks for elevation.
+Lists the text readers: Latin, built in, and the ones that can be downloaded for a Read Text step in
+another script - Greek, Cyrillic, Chinese and others, a few megabytes each. A download needs no
+administrator permission and is checked before it is kept.
 
 ## Hotkeys
 

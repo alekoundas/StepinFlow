@@ -1,4 +1,5 @@
 using Business.Flows.FlowValidationService;
+using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
@@ -13,6 +14,7 @@ namespace Business.Tests.Flows.Validation
         private readonly List<FlowPoint> _points = new List<FlowPoint>();
         private readonly List<string> _inputs = new List<string>();
         private bool _isQaTest;
+        private readonly FakeOcrService _ocr = new FakeOcrService();
 
         private FlowStep Add(FlowStepTypeEnum type, string name, FlowStep? parent = null)
         {
@@ -31,6 +33,18 @@ namespace Business.Tests.Flows.Validation
             return search;
         }
 
+        // A text search with everything it needs, reading with the reader given.
+        private FlowStep ReadText(string reader)
+        {
+            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Find Invoices");
+            read.FlowAreaId = 100;
+            read.ConditionType = ConditionTypeEnum.CONTAINS;
+            read.ConditionText = "Invoices";
+            read.OcrLanguage = reader;
+            _areas.Add(new FlowArea { Id = 100, Name = "Invoices area", Type = FlowAreaTypeEnum.MONITOR });
+            return read;
+        }
+
         private FlowStep Branch(FlowStep parent, FlowStepTypeEnum type)
         {
             return Add(type, string.Empty, parent);
@@ -39,7 +53,7 @@ namespace Business.Tests.Flows.Validation
         private FlowValidationResultDto Validate()
         {
             List<string> names = _areas.Select(x => x.Name).Concat(_points.Select(x => x.Name)).Concat(_inputs).ToList();
-            return new FlowValidationService().Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _isQaTest);
+            return new FlowValidationService(_ocr).Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _isQaTest);
         }
 
         private List<FlowValidationCodeEnum> CodesOn(FlowStep step)
@@ -72,20 +86,35 @@ namespace Business.Tests.Flows.Validation
         }
 
         // A script does not carry the language, so a text search from a file or a recording has
-        // none. It reads in the machine's own languages, and executes.
+        // none. It reads with Latin, the same on every machine, so there is nothing to say.
         [Fact]
-        public void A_text_search_with_no_language_is_a_warning_not_an_error()
+        public void A_text_search_with_no_language_is_valid()
         {
-            FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Find Invoices");
-            read.FlowAreaId = 100;
-            read.ConditionType = ConditionTypeEnum.CONTAINS;
-            read.ConditionText = "Invoices";
-            _areas.Add(new FlowArea { Id = 100, Name = "Invoices area", Type = FlowAreaTypeEnum.MONITOR });
+            FlowStep read = ReadText(string.Empty);
 
-            FlowValidationResultDto result = Validate();
+            CodesOn(read).Where(x => x != FlowValidationCodeEnum.BRANCHES_EMPTY).ShouldBeEmpty();
+        }
 
-            result.Issues.Single(x => x.Code == FlowValidationCodeEnum.OCR_LANGUAGE_MISSING).Severity.ShouldBe(ValidationSeverityEnum.WARNING);
-            result.HasErrors.ShouldBeFalse();
+        // A flow from a repository can name a reader this machine has not downloaded.
+        [Fact]
+        public void A_text_search_whose_reader_is_not_downloaded_is_an_error()
+        {
+            FlowStep read = ReadText("greek");
+
+            FlowValidationIssueDto issue = Validate().Issues.Single(x => x.Code == FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED);
+
+            issue.FlowStepId.ShouldBe(read.Id);
+            issue.Severity.ShouldBe(ValidationSeverityEnum.ERROR);
+            issue.Message.ShouldContain("Greek");
+        }
+
+        [Fact]
+        public void A_text_search_whose_reader_is_downloaded_is_valid()
+        {
+            _ocr.Downloaded("greek");
+            FlowStep read = ReadText("greek");
+
+            CodesOn(read).Where(x => x != FlowValidationCodeEnum.BRANCHES_EMPTY).ShouldBeEmpty();
         }
 
         [Fact]

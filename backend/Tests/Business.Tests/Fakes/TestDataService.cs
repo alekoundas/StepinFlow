@@ -12,7 +12,7 @@ namespace Business.Tests.Fakes
     {
         public static DataService For(IDbContextFactory<AppDbContext> database, IGitRepositoryService? gitRepositoryService = null)
         {
-            FlowValidationService validation = new FlowValidationService();
+            FlowValidationService validation = new FlowValidationService(new FakeOcrService());
             IGitRepositoryService repository = gitRepositoryService ?? new FakeGitRepositoryService();
 
             return new DataService(
