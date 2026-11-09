@@ -108,17 +108,40 @@ the history.
       list (SUCCESS, FAILURE, LOOP, GO_BACK, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
-- [ ] **Shape and brightness is only as strict as the template is tight.** Measured 2026-10-29 in
-      `OpenCvServiceMatchModeTests`: a PrimeReact button's template cut 4 pixels wide of it scores
-      0.937 against the disabled one, under the 0.95 bar; cut 10 wide, 0.964, and the disabled
-      button is clicked. Every pixel of background added agrees. Ways out: trim a template to what
-      differs from its own border as it is saved; or mask that border out of the match in this mode
-      only; or have the form say when a shape-and-brightness template is mostly background.
-- [ ] **Colour matching.** Both match modes run in grayscale, so two states with the same
-      lightness in a different hue look identical - rarity borders in a game are the likely case.
-      Matching the three channels costs roughly three times a grayscale match, affordable now the
-      scale sweep is gone. A third mode when a flow needs it; the enum names intents rather than
-      OpenCV's methods, so adding one breaks nothing.
+- [ ] **Redesign the match modes: Shape, and Shape and colour.** Talked through 2026-11-09, to
+      continue with the user before building; nothing is decided or built yet.
+      - **Why.** Shape and brightness (`SqDiffNormed` on grayscale) mostly measures average
+        brightness, not the picture. Firestone's "Image Search Alchemist" (`template-gu6ei.png`, the
+        potion, accuracy 0.95) found a phoenix button at 0.956; Shape scores that spot 0.66. The
+        kept pixels average 151 with a variation of 40 against the screen's 150 and 39, so
+        brightness is about 93% of what the formula compares, and two unrelated pictures of the same
+        brightness score about 0.87. Erasing the template down to its icon only took it to 0.94.
+        The same was measured 2026-10-29 in `OpenCvServiceMatchModeTests`: a PrimeReact button's
+        template cut 4 pixels wide scores 0.937 against the disabled one, cut 10 wide 0.964.
+      - **The direction so far.** Two modes. Shape finds the candidates, as now (`CCoeffNormed`).
+        Shape and colour then compares, at each candidate only, the average hue and saturation (Lab
+        a and b, lightness left out) of the template's kept pixels with the same pixels on screen,
+        and refuses one over a tolerance, going on to the next candidate, so a greyed button with a
+        higher shape score does not hide the live one. A refused one shows both numbers ("shape
+        0.97, colour 18 apart"). Colour replaces brightness rather than joining it.
+      - **Ruled out.** A Brightness mode on its own finds anything: the phoenix is 0.9 of 100 apart.
+        Snapping pixels to named colours: a 10% brightness change flips 3-8% of pixels on
+        red/green/blue/white/black and 12-23% on 12 colours, and this button sits on the red/brown
+        boundary, so it would pass or fail by luck.
+      - **Measured on the potion, simulated.** Hue and saturation difference: brightness ±10%,
+        gamma 0.85 and 1.15, washed out like HDR, 2 to 6; greyed state 30; the phoenix 18. A
+        tolerance around 10-12, to confirm on real screenshots.
+      - **Open.** A fixed tolerance or one per step (start fixed). Lit against dim in the same colour
+        cannot be told apart and also survive brightness settings or HDR. The migration moves every
+        `SHAPE_AND_BRIGHTNESS` step and converts its accuracy, tuned for the old formula. Firestone
+        has several (the research greyed or live, the missions, the mission close, the Alchemist):
+        get a screenshot of a live and of a greyed research before switching it. Changes with it:
+        the script's `match shape and brightness`, the hints in `match-modes.ts`, `search-image.md`,
+        `flow-format.md`, `troubleshooting.md`, `example-firestone.md`.
+      - **macOS.** A Mac captures in the display's colour space, often Display P3, so the screen
+        must be converted to sRGB before comparing, or a flow made on a PC fails on a Mac.
+      - **Until then.** The docs and the form still call 0.95 safe for shape and brightness; it is
+        not when the template is mostly a frame other buttons share.
 - [ ] **A step that sets the browser tab's zoom.** Zoom is indistinguishable from DPI from outside
       the browser, so a tab at 110% breaks every template captured at 100%. Resetting it is a
       keystroke with side effects and needs focus, which is why it is a step and not something a
@@ -626,6 +649,18 @@ the history.
       "End as failed" and the numbered ones after it. Save an End and a Notify from their forms, which
       have no Name field now. Export "Crude oil price" and import it back: Notify 2 still includes
       Read Text, and the launch keeps its name. Record and generate a flow again: no NAME_MISSING.
+- [ ] **Not tried by hand: the Discord Bots header.** Verified by the tests, 2026-11-09. Export a
+      flow with a Notify: `Discord Bots:` lists its bot and the Notify says `through <[ … ]>`. Import
+      it on a machine without that bot, or after renaming yours: one warning at the header line, the
+      import goes through, and Settings shows the new bot with "No webhook yet". The flow's
+      validation warns at each Notify through it, and an execution sends nothing and says so. Paste
+      the webhook in: the warnings are gone. A preview adds no bot. Record a check with a notify:
+      the draft names its bot.
+- [ ] **"Same bot as…" in Settings.** When a file's bot name differs from yours ("Alerts" against
+      "Team Alerts"), the import adds a webhookless "Alerts". A choice on that bot could move its
+      steps onto an existing one and delete it. Today: rename one of the two, or paste the webhook
+      into the new one. Writing more than the name into the header was ruled out 2026-11-09: the
+      webhook is a secret, the id is local, and a shared id never matches two people's own bots.
 
 ## Hotkeys
 

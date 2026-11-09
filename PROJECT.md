@@ -1598,9 +1598,11 @@ refused with a message saying how it is written now.
 **A browser tab area is found by its address**, since 2026-11-01: `FlowArea.TabAddress`, `tab <[
 address ]>` straight after the browser's process, and the area is the tab's page. It names its
 browser and no title, because a browser's title is its front tab's. `IBrowserTabService`
-(`BrowserTabService`, UI Automation) reads a window's address bar - the first text field outside a
-page - its tab items in the order they are drawn, and the page in front, and selects a tab; a page is
-never walked into. `TabAddressHelper` decides: the tab's address starts with the area's at a
+(`BrowserTabService`, UI Automation) reads a window's address bar - the first field with a value
+outside a page, a text field in Chromium's browsers and a combo box in Firefox - its tab items in the
+order they are drawn, and the page in front, and selects a tab; a page is never walked into. Firefox
+marks every page offscreen while another window is in front, so then the largest page is taken, its
+tabs' pages all filling the same space; a minimised window has none. `TabAddressHelper` decides: the tab's address starts with the area's at a
 boundary, `https://` and `www.` left out of both, since the address bar shows neither.
 `BrowserTabFinder` holds the rule for which tab: the resolver takes the front tab of each window of
 the browser only, so a search never switches tabs behind the user's back and a tab behind another is

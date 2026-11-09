@@ -9,13 +9,14 @@ namespace Platform.Windows.Accessibility
     /// <summary>
     /// A browser window's address bar, tab strip and page, from Windows' UI Automation. Chromium's
     /// browsers - Chrome, Edge, Brave - and Firefox show their tabs as tab items, and their address
-    /// bar as the first text field outside the page. A page is never walked into: what is in it is
-    /// the site's, and walking it would take as long as the page is big.
+    /// bar as the first field with a value outside the page: a text field in Chromium's, a combo box
+    /// in Firefox. A page is never walked into: what is in it is the site's, and walking it would
+    /// take as long as the page is big.
     ///
     /// Asking turns on the browser's accessibility tree if nothing had, so a first read can find
     /// less than the next. Each read walks the browser's own controls again, a few hundred at most.
     /// </summary>
-    public sealed class BrowserTabService : IBrowserTabService
+    public sealed partial class BrowserTabService : IBrowserTabService
     {
         private const int UIA_CONTROL_TYPE_PROPERTY_ID = 30003;
         private const int UIA_VALUE_VALUE_PROPERTY_ID = 30045;
@@ -24,12 +25,17 @@ namespace Platform.Windows.Accessibility
         private const int UIA_SELECTION_ITEM_PATTERN_ID = 10010;
         private const int UIA_LEGACY_IACCESSIBLE_PATTERN_ID = 10018;
 
+        private const int UIA_COMBO_BOX_CONTROL_TYPE_ID = 50003;
         private const int UIA_EDIT_CONTROL_TYPE_ID = 50004;
         private const int UIA_TAB_ITEM_CONTROL_TYPE_ID = 50019;
         private const int UIA_DOCUMENT_CONTROL_TYPE_ID = 50030;
 
         // Past this it is not a browser's own controls.
         private const int MAXIMUM_ELEMENTS = 3000;
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool IsIconic(IntPtr hWnd);
 
 
         // ================================================================
@@ -47,7 +53,11 @@ namespace Platform.Windows.Accessibility
             if (parts == null)
                 return Rectangle.Empty;
 
-            return parts.Page;
+            // A minimised window's pages keep where they were, far off screen.
+            if (AreaOf(parts.VisiblePage) == 0 && !IsIconic(window.Value))
+                return parts.Page;
+
+            return parts.VisiblePage;
         }
 
         public int TabCount(WindowHandle window)
@@ -103,19 +113,21 @@ namespace Platform.Windows.Accessibility
                     IUIAutomationElement element = waiting.Pop();
                     int controlType = Property(element, UIA_CONTROL_TYPE_PROPERTY_ID) is int type ? type : 0;
 
-                    // The page in front is the one on screen; one switched away is not.
+                    // The page in front is the one on screen; one switched away is not. Firefox marks
+                    // every page offscreen while another window is in front, and each of its tabs'
+                    // pages fills the same space, so then the largest is the front one's.
                     if (controlType == UIA_DOCUMENT_CONTROL_TYPE_ID)
                     {
-                        Rectangle bounds = VisibleBounds(element);
-                        if ((long)bounds.Width * bounds.Height > (long)parts.Page.Width * parts.Page.Height)
-                            parts.Page = bounds;
+                        parts.VisiblePage = Larger(parts.VisiblePage, VisibleBounds(element));
+                        parts.Page = Larger(parts.Page, Bounds(element));
                         continue;
                     }
 
                     if (controlType == UIA_TAB_ITEM_CONTROL_TYPE_ID)
                         parts.Tabs.Add(element);
 
-                    if (controlType == UIA_EDIT_CONTROL_TYPE_ID && parts.Address == null && Property(element, UIA_VALUE_VALUE_PROPERTY_ID) is string value && value.Length > 0)
+                    bool isField = controlType == UIA_EDIT_CONTROL_TYPE_ID || controlType == UIA_COMBO_BOX_CONTROL_TYPE_ID;
+                    if (isField && parts.Address == null && Property(element, UIA_VALUE_VALUE_PROPERTY_ID) is string value && value.Length > 0)
                         parts.Address = value;
 
                     List<IUIAutomationElement> children = new List<IUIAutomationElement>();
@@ -161,9 +173,26 @@ namespace Platform.Windows.Accessibility
             }
         }
 
+        private static Rectangle Larger(Rectangle current, Rectangle candidate)
+        {
+            if (AreaOf(candidate) > AreaOf(current))
+                return candidate;
+
+            return current;
+        }
+
+        private static long AreaOf(Rectangle bounds)
+        {
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+                return 0;
+
+            return (long)bounds.Width * bounds.Height;
+        }
+
         private sealed record BrowserParts
         {
             public string? Address { get; set; }
+            public Rectangle VisiblePage { get; set; } = Rectangle.Empty;
             public Rectangle Page { get; set; } = Rectangle.Empty;
             public List<IUIAutomationElement> Tabs { get; } = new List<IUIAutomationElement>();
         }

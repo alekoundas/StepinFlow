@@ -42,6 +42,12 @@ namespace Platform.Windows.Accessibility
             if (Property(element, UIA_IS_OFFSCREEN_PROPERTY_ID) is true)
                 return Rectangle.Empty;
 
+            return Bounds(element);
+        }
+
+        // Where it is, on screen or not, in physical pixels.
+        public static Rectangle Bounds(IUIAutomationElement element)
+        {
             if (Property(element, UIA_BOUNDING_RECTANGLE_PROPERTY_ID) is not double[] rectangle || rectangle.Length < 4)
                 return Rectangle.Empty;
 

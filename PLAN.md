@@ -104,7 +104,10 @@ the Application field, launching an area, and browser tabs.
       may need adjusting: the address bar taken as the first text field outside a page, a tab
       selected through its selection pattern, the page measured as the largest visible document,
       150 ms for the address bar to catch up, and Chrome building its accessibility tree only once
-      asked, so the first read can find no page.
+      asked, so the first read can find no page. Tried 2026-11-09 with a tab in front: Chrome reads
+      as written; Firefox's address bar is a combo box, and it marks every page offscreen while
+      another window is in front, both now handled. Edge, a tab behind, a group and none open are
+      left.
 - [ ] **A tab area on macOS and Linux.** macOS has AppleScript for Chrome and Safari - every tab's
       address, and setting the active one - and Linux has AT-SPI, which browsers support unevenly.
 - [ ] Epic's launcher has a link of its own, the way Steam's is found.
