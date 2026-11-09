@@ -29,6 +29,11 @@ import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-e
 import type { RecordingSetupDto } from "@/shared/models/recording-setup-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { RecordingScreenDto } from "@/shared/models/recording-screen-dto";
+import type {
+  RecordingGestureDecisionDto,
+  RecordingGestureDto,
+  RecordingGestureRuleDto,
+} from "@/shared/models/recording-gesture-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
 import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
 import type { RecordingDraftPositionDto } from "@/shared/models/recording-draft-position-dto";
@@ -314,6 +319,12 @@ export const backendApiService = {
       callNullable<RecordingScreenDto>("Recording.getScreen", actionIndex),
     // Once, as the tester continues from Review.
     review: (dto: ReviewedRecordingDto) => call<boolean>("Recording.review", dto),
+    // The gesture the recording is paused at, asking what it is for. Null once it no longer asks.
+    getGesture: () => callNullable<RecordingGestureDto>("Recording.getGesture"),
+    // An answer for Review to start from, or null to leave it for Review. Resumes the recording.
+    decideGesture: (dto: RecordingGestureDecisionDto) => call<boolean>("Recording.decideGesture", dto),
+    // As an execution would test it, against the words read on what the gesture pressed.
+    testGestureRule: (dto: RecordingGestureRuleDto) => call<boolean>("Recording.testGestureRule", dto),
     // The reviewed recording written into its flow with no model, as an imported file would be,
     // with what was saved for the Check page.
     importDraft: (flowId: number) =>

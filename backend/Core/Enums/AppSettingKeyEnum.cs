@@ -9,6 +9,9 @@ namespace Core.Enums
         RECORDING_HOTKEY_CHECK,
         RECORDING_HOTKEY_SUBSTITUTE,
 
+        /// <summary>Whether a gesture pauses the recording and asks what it is for, or leaves it for Review.</summary>
+        RECORDING_GESTURE_ASK,
+
 
         // Debugger hotkeys.
         HOTKEY_CONTINUE,

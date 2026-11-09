@@ -31,6 +31,9 @@ namespace Core.Models.Dtos
         /// <summary>Key into the session screenshot store, when one was captured.</summary>
         public int? ScreenshotIndex { get; set; }
 
+        /// <summary>For a gesture: the press it began with, which what the tester said it was for is kept by.</summary>
+        public int? PressIndex { get; set; }
+
         // Cursor
         public int LocationX { get; set; }
         public int LocationY { get; set; }

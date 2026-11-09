@@ -66,6 +66,7 @@ const OPTIONS = [
   "in",
   "opens",
   "with result of",
+  "through",
   "keep",
   "timeout",
   "no timeout",

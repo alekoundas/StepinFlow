@@ -51,9 +51,9 @@ namespace Business.Tests.Ai
             }
         }
 
-        // As an import would save it, its validation included. A Notify's Discord bot and a text
-        // search's OCR language are picked in the step's form and no file carries them, so every
-        // import is missing those two.
+        // As an import would save it, its validation included. A Discord bot is the machine's own, so
+        // no example names one, and a text search's OCR language is picked in the step's form, so
+        // every import is missing those two.
         [Theory]
         [MemberData(nameof(Examples))]
         public async Task Every_finished_example_imports_with_nothing_wrong_in_it(string document)

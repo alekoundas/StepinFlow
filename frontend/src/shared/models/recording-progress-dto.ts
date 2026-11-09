@@ -1,6 +1,7 @@
 import type { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import type { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum";
 import type { RecordingLiveActionDto } from "@/shared/models/recording-live-action-dto";
+import type { RecordingGestureAskDto } from "@/shared/models/recording-gesture-dto";
 
 /**
  * Where a recording is, from the first click to the review being ready. Sent whole on every
@@ -31,4 +32,7 @@ export interface RecordingProgressDto {
 
   /** Set when a stage failed. The recording is still READY, with less in it. */
   errorMessage?: string | null;
+
+  /** The gesture the recording paused itself to ask about, until it is answered. */
+  asking?: RecordingGestureAskDto | null;
 }

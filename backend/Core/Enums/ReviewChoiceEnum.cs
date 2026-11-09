@@ -19,5 +19,8 @@ namespace Core.Enums
         EXECUTE_COMMAND,    // A command, written in Review
         LAUNCH_APP,         // An application opened, its program written in Review
         TYPE_INPUT,         // An input's value typed, the input named in Review
+        NOTIFY,             // A message posted to Discord, through a bot picked for it
+        WAIT,               // A wait of a set time, for what the screen does not show
+        BEGIN_STAGE,        // A stage begun there, by the name given: no step of its own
     }
 }

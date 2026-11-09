@@ -167,14 +167,26 @@ namespace Business.Recording.Draft
         /// </summary>
         public FlowStep? AddSearchFor(RecordedActionDto action, ReviewedActionDto review, string prefix, string fallback, string suffix, SearchModeEnum mode)
         {
-            // Words left empty are no words, so it goes by the picture.
+            // Words left empty are no words, so it goes by the picture, unless its rule needs none.
             string words = Quotable(review.SearchText ?? string.Empty);
-            if (review.SearchBy == SearchByEnum.TEXT && words.Length > 0)
+            ConditionTypeEnum condition = review.ConditionType ?? ConditionTypeEnum.CONTAINS;
+            bool needsWords = condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY;
+
+            if (review.SearchBy == SearchByEnum.TEXT && (words.Length > 0 || !needsWords))
             {
-                string name = Name(NameFrom(prefix, words, fallback) + suffix);
+                // A number, a pattern or no words at all names nothing, so what was read on it does.
+                string named = words;
+                if (condition != ConditionTypeEnum.CONTAINS && condition != ConditionTypeEnum.EQUALS)
+                    named = TextOf(action);
+
+                string name = Name(NameFrom(prefix, named, fallback) + suffix);
                 FlowArea? area = TextArea(action, review, $"{name} area");
                 if (area == null)
                     return null;
+
+                string end = string.Empty;
+                if (condition == ConditionTypeEnum.BETWEEN)
+                    end = Quotable(review.ConditionTextEnd ?? string.Empty);
 
                 return AddWaiting(action, new FlowStep
                 {
@@ -182,8 +194,9 @@ namespace Business.Recording.Draft
                     Name = name,
                     SearchMode = mode,
                     FlowArea = area,
-                    ConditionType = ConditionTypeEnum.CONTAINS,
-                    ConditionText = words,
+                    ConditionType = condition,
+                    ConditionText = needsWords ? words : string.Empty,
+                    ConditionTextEnd = end,
                 });
             }
 
@@ -240,6 +253,27 @@ namespace Business.Recording.Draft
 
             Parent = success;
             return search;
+        }
+
+        /// <summary>
+        /// A step in a search's Failure branch, ahead of the End Execution the branch ends with, so
+        /// it is done before the execution stops.
+        /// </summary>
+        public FlowStep AddToFailure(FlowStep search, FlowStep step)
+        {
+            FlowStep failure = Schema.Steps.First(x => x.ParentFlowStep == search && x.FlowStepType == FlowStepTypeEnum.FAILURE);
+
+            foreach (FlowStep later in Schema.Steps.Where(x => x.ParentFlowStep == failure))
+                later.OrderNumber++;
+
+            _childCounts.TryGetValue(failure, out int count);
+            _childCounts[failure] = count + 1;
+
+            step.ParentFlowStep = failure;
+            step.OrderNumber = 0;
+            Schema.Steps.Add(step);
+
+            return step;
         }
 
         /// <summary>

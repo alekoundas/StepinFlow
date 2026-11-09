@@ -70,6 +70,9 @@ Inputs:
   <[ another input with a long name and a secret ]>  secret
   <[ mike plain ]>
 
+Discord Bots:
+  <[ Alerts ]>
+
 Templates:
   <[ Company logo.png ]>      click 2 2
   <[ template-a-file-name-longer-than-the-column.png ]>  click 1 1
@@ -939,6 +942,10 @@ Notify          <[ a blank line last ]>  <[  ]>
 Notify          <[  ]>  <[  ]>
 
 Notify          <[ two lines ]>  <[ and a result ]>   with result of <[ Source text ]>
+
+Notify          <[ through a bot ]>   through <[ Alerts ]>
+
+Notify          <[ through a bot ]>  <[ with a result ]>   through <[ Alerts ]>   with result of <[ Source text ]>
 
 Notify          <[ {{alpha default}} ]>  <[ # not a comment ]>  <[ with result of ]>  <[ Γειά σου κόσμε ]>
 

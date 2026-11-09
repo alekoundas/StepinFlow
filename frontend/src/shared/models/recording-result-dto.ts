@@ -4,6 +4,7 @@ import type { ClickGroupDto } from "@/shared/models/click-group-dto";
 import type { PressedElementDto } from "@/shared/models/pressed-element-dto";
 import type { ScreenChangeDto } from "@/shared/models/screen-change-dto";
 import type { ScreenDescriptionDto } from "@/shared/models/screen-description-dto";
+import type { ReviewedActionDto } from "@/shared/models/reviewed-action-dto";
 
 /** A stopped recording once worked through: what the review opens on. */
 export interface RecordingResultDto {
@@ -26,4 +27,7 @@ export interface RecordingResultDto {
 
   /** What the local model saw at the presses worth a look. Filled only as the recording goes to a model. */
   screenDescriptions: ScreenDescriptionDto[];
+
+  /** What the tester said a gesture was for while recording, by its action, for Review to start from. */
+  gestureAnswers: ReviewedActionDto[];
 }

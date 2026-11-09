@@ -7,6 +7,7 @@ using Business.Recording.Screens;
 using Business.Recording.Setup;
 using Core.Catalogs;
 using Core.Enums;
+using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
@@ -50,6 +51,13 @@ namespace Business.Recording.Session
     /// and the request pipe answers one call at a time. Never while recording, where the
     /// application being recorded would feel it. RECORDING_PROGRESS says which stage and how far,
     /// then READY, and GetResult has it.
+    ///
+    /// A gesture pauses the recording itself and asks what it is for, unless the setting leaves it
+    /// for Review: RECORDING_PROGRESS carries the question until it is answered, and a resume or a
+    /// stop meanwhile leaves it for Review. While it asks, what a check pressed is found - the CPU is
+    /// the tester's while paused - and the stop's finding takes it as it was found. The answer is
+    /// kept by the press, for Review to start from, and the window that had the keyboard gets it
+    /// back.
     /// </summary>
     public sealed class RecordingSessionService : IRecordingSessionService, IDisposable
     {
@@ -101,8 +109,10 @@ namespace Business.Recording.Session
         private readonly List<Task> _lookups = new List<Task>();
         private int _recordingNumber;
 
-        // The gestures this recording holds back, from the settings when it began.
+        // The gestures this recording holds back, from the settings when it began, and whether one
+        // pauses it to ask what it is for.
         private IReadOnlyList<PressGesture> _gestures = [];
+        private bool _isAskingAtGesture;
 
         // The browser window a website's tab was found in when the recording began.
         private WindowHandle _tabWindow = WindowHandle.None;
@@ -185,6 +195,9 @@ namespace Business.Recording.Session
             if (queue == null || !_filter.IsPaused)
                 return;
 
+            // From the bar or its hotkey while a gesture asks: left for Review.
+            _cache.Asking = null;
+
             // Marked, so the time spent paused is not read as a wait the flow has to make.
             RecordedInput resumed = new RecordedInput
             {
@@ -241,6 +254,10 @@ namespace Business.Recording.Session
             {
                 await EndAsync(ct);
                 await StopProcessingAsync();
+
+                // A gesture asked about may have loaded the detector, and no stop will let it go.
+                _clickedElementFinder.Unload();
+
                 _cache.Clear();
                 await SendProgressAsync();
             }
@@ -263,7 +280,65 @@ namespace Business.Recording.Session
                 ScreenChanges = _cache.ScreenChanges.ToList(),
                 ScreenLines = _cache.ScreenLines.ToList(),
                 PressedElements = PressedElementsOf(_cache.Actions),
+                GestureAnswers = GestureAnswersOf(_cache.Actions),
             };
+        }
+
+        public RecordingGestureDto? GetGesture()
+        {
+            RecordingGestureAsk? asking = _cache.Asking;
+            if (asking == null)
+                return null;
+
+            RecordedInput? press = _cache.GetInputs().ElementAtOrDefault(asking.PressIndex);
+            RecordedPress? kept = _cache.GetPress(asking.PressIndex);
+
+            RecordingGestureDto gesture = new RecordingGestureDto
+            {
+                PressIndex = asking.PressIndex,
+                Gesture = asking.Gesture,
+                LocationX = press?.PhysicalX ?? 0,
+                LocationY = press?.PhysicalY ?? 0,
+                Element = _cache.GetGestureElement(asking.PressIndex),
+                IsElementFound = _cache.HasLookedForGestureElement(asking.PressIndex),
+            };
+
+            if (kept != null)
+            {
+                gesture.Image = kept.Screenshot;
+                gesture.X = kept.MainAreaBounds.X;
+                gesture.Y = kept.MainAreaBounds.Y;
+                gesture.Width = kept.MainAreaBounds.Width;
+                gesture.Height = kept.MainAreaBounds.Height;
+                gesture.Dpi = kept.Dpi;
+            }
+
+            return gesture;
+        }
+
+        public ResultDto<bool> DecideGesture(RecordingGestureDecisionDto decision)
+        {
+            RecordingGestureAsk? asking = _cache.Asking;
+            if (asking == null || asking.PressIndex != decision.PressIndex)
+                return ResultDto<bool>.Failure("The recording is no longer asking about that.");
+
+            if (decision.Answer != null)
+                _cache.AddGestureAnswer(asking.PressIndex, decision.Answer);
+
+            Resume();
+
+            // Whichever window the question's window took the keyboard from. Not every system lets
+            // one application give another the keyboard, so this is a try.
+            if (asking.InFront.IsValid)
+                _windowService.FocusWindow(asking.InFront);
+
+            return ResultDto<bool>.Success(true);
+        }
+
+        public bool TestGestureRule(RecordingGestureRuleDto rule)
+        {
+            ClickedElementDto? element = _cache.GetGestureElement(rule.PressIndex);
+            return ConditionEvaluatorHelper.IsSatisfied(element?.Text, rule.ConditionType, rule.Text ?? string.Empty, rule.TextEnd ?? string.Empty);
         }
 
         public RecordingScreenDto? GetScreen(int actionIndex)
@@ -351,6 +426,9 @@ namespace Business.Recording.Session
 
             _gestures = await GesturesAsync(ct);
             _hotkeys.BindGestures(_gestures);
+
+            string ask = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingGestureAsk, ct);
+            _isAskingAtGesture = !bool.TryParse(ask, out bool isAsking) || isAsking;
 
             FlowArea? mainArea = await MainAreaOfAsync(flowId, ct);
             if (mainArea == null)
@@ -449,6 +527,9 @@ namespace Business.Recording.Session
             await _inputRecordService.StopRecordingAllAsync();
             _inputRecordService.ActionRecorded -= OnActionRecorded;
             _cache.EndedOn = _timeProvider.GetLocalNow().DateTime;
+
+            // Stopped while a gesture asked: left for Review.
+            _cache.Asking = null;
 
             // The hook stops publishing immediately but may still be inside a handler, so the
             // queue stays open long enough for those to land.
@@ -568,6 +649,74 @@ namespace Business.Recording.Session
 
             if (pending.Input.Type == RecordedInputTypeEnum.BUTTON_DOWN)
                 LookUpPressedElement(index, pending.Input);
+
+            if (pending.Input.Type == RecordedInputTypeEnum.BUTTON_DOWN && pending.Input.Gesture != null && _isAskingAtGesture)
+                Ask(index, pending.Input, pending.Input.Gesture.Value);
+        }
+
+        // Paused, so nothing the tester does in the question's window, or meanwhile, is recorded.
+        // The press's release is still held back: the hook holds back the button it held, whatever
+        // the pause does to the list.
+        private void Ask(int pressIndex, RecordedInput press, RecordingGestureEnum gesture)
+        {
+            if (_filter.IsPaused)
+                return;
+
+            TopLevelWindow inFront = _windowService.GetWindowInFront();
+            _cache.Asking = new RecordingGestureAsk { PressIndex = pressIndex, Gesture = gesture, InFront = inFront.Handle };
+
+            // A step that is not a click is looked at for nothing.
+            if (gesture == RecordingGestureEnum.CHECK)
+                FindGestureElement(pressIndex, press);
+            else
+                _cache.AddGestureElement(pressIndex, null);
+
+            Pause();
+        }
+
+        // Off the drain, which every input after this one waits on.
+        private void FindGestureElement(int pressIndex, RecordedInput press)
+        {
+            int recordingNumber = Volatile.Read(ref _recordingNumber);
+
+            _ = Task.Run(async () =>
+            {
+                ClickedElementDto? found = null;
+                try
+                {
+                    RecordedPress? kept = _cache.GetPress(pressIndex);
+                    if (kept != null)
+                        found = await _clickedElementFinder.FindAtAsync(kept, press.PhysicalX, press.PhysicalY, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"[Recording] Could not find what a check pressed while asking about it: {ex.Message}");
+                }
+
+                if (recordingNumber != Volatile.Read(ref _recordingNumber))
+                    return;
+
+                _cache.AddGestureElement(pressIndex, found);
+                await SendProgressAsync();
+            });
+        }
+
+        // Each answer by the action its press became.
+        private List<ReviewedActionDto> GestureAnswersOf(IReadOnlyList<RecordedActionDto> actions)
+        {
+            List<ReviewedActionDto> answers = new List<ReviewedActionDto>();
+
+            foreach (RecordedActionDto action in actions.Where(x => x.PressIndex != null))
+            {
+                ReviewedActionDto? answer = _cache.GetGestureAnswer(action.PressIndex!.Value);
+                if (answer == null)
+                    continue;
+
+                answer.ActionIndex = action.Index;
+                answers.Add(answer);
+            }
+
+            return answers;
         }
 
         // Asked at once, before the screen changes, and off the drain, which every input after this
@@ -820,7 +969,7 @@ namespace Business.Recording.Session
         {
             try
             {
-                _cache.ClickedElements = await _clickedElementFinder.FindAsync(actions, _cache.GetPress, (done, total) =>
+                _cache.ClickedElements = await _clickedElementFinder.FindAsync(actions, _cache.GetPress, _cache.GetGestureElements(), (done, total) =>
                 {
                     ReportStage(RecordingStageEnum.FINDING_ELEMENTS, done, total);
                 }, ct);

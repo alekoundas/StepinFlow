@@ -55,6 +55,13 @@ export const ElectronApiService = {
       window.electronApi.recordingBar.resizeWindow(width, height),
   },
 
+  recordingGesture: {
+    openWindow: (pressIndex: number, gesture: string) =>
+      window.electronApi.recordingGesture.openWindow(pressIndex, gesture),
+    closeWindow: () => window.electronApi.recordingGesture.closeWindow(),
+    resizeWindow: (height: number) => window.electronApi.recordingGesture.resizeWindow(height),
+  },
+
   // A cancelled dialog answers null.
   files: {
     chooseFolder: (defaultPath?: string) => window.electronApi.files.chooseFolder(defaultPath ?? null),

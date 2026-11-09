@@ -14,6 +14,7 @@
 import { BrowserWindow, ipcMain, screen } from "electron";
 import { IPC_CHANNELS } from "../../shared/channels.js";
 import { loadPage, PRELOAD_PATH } from "../../app-paths.js";
+import { closeRecordingGestureWindow } from "./recording-gesture-handler.js";
 
 // The toolbar alone. The page resizes it as soon as it has drawn.
 const INITIAL_WIDTH = 640;
@@ -40,6 +41,7 @@ export function registerRecordingBarHandler(mainWindow: BrowserWindow | null): v
       bar.once("closed", () => {
         barWindow = null;
         mainWindow?.removeListener("closed", closeWithMain);
+        closeRecordingGestureWindow();
         restore(mainWindow);
       });
 

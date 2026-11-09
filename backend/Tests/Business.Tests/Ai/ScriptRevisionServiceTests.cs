@@ -171,6 +171,20 @@ namespace Business.Tests.Ai
             result.Refused.ShouldContain(x => x.Code == DiagnosticCodeEnum.TEMPLATE_NOT_CUT);
         }
 
+        // A bot is a webhook on this machine, so one the model makes up is a bot nobody has.
+        [Fact]
+        public async Task A_discord_bot_the_script_did_not_name_is_refused()
+        {
+            Model(x => Answer(Sent(x).Replace("<[ Alerts ]>", "<[ Night shift ]>")));
+
+            ScriptRevisionResult result = await ReviseAsync();
+
+            result.IsRevised.ShouldBeFalse();
+            Diagnostic refused = result.Refused.ShouldHaveSingleItem();
+            refused.Code.ShouldBe(DiagnosticCodeEnum.DISCORD_BOT_NOT_GIVEN);
+            refused.Message.ShouldBe("<[ Night shift ]> is not a Discord bot the script named. Send only through these: Alerts.");
+        }
+
         [Fact]
         public async Task An_input_renamed_without_the_map_is_refused()
         {

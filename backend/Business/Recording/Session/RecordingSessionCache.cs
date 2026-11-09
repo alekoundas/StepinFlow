@@ -31,6 +31,8 @@ namespace Business.Recording.Session
         private readonly Queue<RecordingScreenshot> _recentScreenshots = new Queue<RecordingScreenshot>();
         private readonly ConcurrentDictionary<int, RecordedPress> _pressesByIndex = new ConcurrentDictionary<int, RecordedPress>();
         private readonly ConcurrentDictionary<int, AccessibleElement> _pressedElementsByIndex = new ConcurrentDictionary<int, AccessibleElement>();
+        private readonly ConcurrentDictionary<int, ReviewedActionDto> _gestureAnswersByIndex = new ConcurrentDictionary<int, ReviewedActionDto>();
+        private readonly ConcurrentDictionary<int, ClickedElementDto?> _gestureElementsByIndex = new ConcurrentDictionary<int, ClickedElementDto?>();
         private readonly Lock _inputsLock = new Lock();
         private readonly Lock _recentScreenshotsLock = new Lock();
 
@@ -43,6 +45,7 @@ namespace Business.Recording.Session
         private volatile RecordingScreenshot? _lastScreenshot;
         private volatile RecordingStageProgress? _stage;
         private volatile string? _errorMessage;
+        private volatile RecordingGestureAsk? _asking;
 
         public RecordingStateEnum State
         {
@@ -115,6 +118,13 @@ namespace Business.Recording.Session
             set { _errorMessage = value; }
         }
 
+        /// <summary>The gesture the recording is paused at, asking what it is for. Null when it asks nothing.</summary>
+        public RecordingGestureAsk? Asking
+        {
+            get { return _asking; }
+            set { _asking = value; }
+        }
+
         public int InputCount
         {
             get
@@ -136,6 +146,9 @@ namespace Business.Recording.Session
 
             _pressesByIndex.Clear();
             _pressedElementsByIndex.Clear();
+            _gestureAnswersByIndex.Clear();
+            _gestureElementsByIndex.Clear();
+            Asking = null;
             ClearRecentScreenshots();
             State = RecordingStateEnum.NONE;
             EndedOn = null;
@@ -191,6 +204,44 @@ namespace Business.Recording.Session
         {
             _pressedElementsByIndex.TryGetValue(index, out AccessibleElement? element);
             return element;
+        }
+
+
+        // What each gesture was said to be for while recording, and what it pressed, found as it asked
+        public void AddGestureAnswer(int pressIndex, ReviewedActionDto answer)
+        {
+            _gestureAnswersByIndex[pressIndex] = answer;
+        }
+
+        public ReviewedActionDto? GetGestureAnswer(int pressIndex)
+        {
+            _gestureAnswersByIndex.TryGetValue(pressIndex, out ReviewedActionDto? answer);
+            return answer;
+        }
+
+        /// <summary>What the press hit, or null when looking found nothing: either way, looked for.</summary>
+        public void AddGestureElement(int pressIndex, ClickedElementDto? element)
+        {
+            _gestureElementsByIndex[pressIndex] = element;
+        }
+
+        public bool HasLookedForGestureElement(int pressIndex)
+        {
+            return _gestureElementsByIndex.ContainsKey(pressIndex);
+        }
+
+        public ClickedElementDto? GetGestureElement(int pressIndex)
+        {
+            _gestureElementsByIndex.TryGetValue(pressIndex, out ClickedElementDto? element);
+            return element;
+        }
+
+        /// <summary>Every press's element found as it was asked about, by the press.</summary>
+        public IReadOnlyDictionary<int, ClickedElementDto> GetGestureElements()
+        {
+            return _gestureElementsByIndex
+                .Where(x => x.Value != null)
+                .ToDictionary(x => x.Key, x => x.Value!);
         }
 
 

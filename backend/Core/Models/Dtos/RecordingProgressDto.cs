@@ -32,5 +32,8 @@ namespace Core.Models.Dtos
 
         /// <summary>Set when a stage failed. The recording is still READY, with less in it.</summary>
         public string? ErrorMessage { get; set; }
+
+        /// <summary>The gesture the recording paused itself to ask about, until it is answered. In here, sent whole, because a window opened after it would miss a broadcast of its own.</summary>
+        public RecordingGestureAskDto? Asking { get; set; }
     }
 }

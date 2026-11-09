@@ -27,6 +27,9 @@ Inputs:
   <[ username ]>      default <[ standard_user ]>
   <[ password ]>      secret
 
+Discord Bots:
+  <[ Alerts ]>
+
 Templates:
   <[ template-u9d3n.png ]>    click 60 12   captured 1920x1080 at 120dpi
   <[ template-w2h6r.png ]>    click -4 10   at 96dpi
@@ -83,7 +86,7 @@ Launch          <[ Launch Game client ]>   opens <[ Game client ]>
 
 Focus Window    <[ Focus window ]>   <[ Game client ]>
 
-Notify          <[ done ]>
+Notify          <[ done ]>   through <[ Alerts ]>
 
 Loop            <[ Retry ]>   5 times
  Move            to point <[ Hamburger ]>

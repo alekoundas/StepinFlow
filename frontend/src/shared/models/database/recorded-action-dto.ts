@@ -29,6 +29,9 @@ export interface RecordedActionDto {
   /** Key into the session screenshot store, when one was captured. */
   screenshotIndex?: number | null;
 
+  /** For a gesture: the press it began with, which what the tester said it was for is kept by. */
+  pressIndex?: number | null;
+
   locationX: number;
   locationY: number;
   locationEndX: number;

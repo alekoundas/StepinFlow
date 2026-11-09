@@ -55,6 +55,11 @@ const IPC_CHANNELS = {
   RECORDING_BAR_CLOSE_WINDOW: "RECORDING_BAR_CLOSE_WINDOW",
   RECORDING_BAR_RESIZE_WINDOW: "RECORDING_BAR_RESIZE_WINDOW",
 
+  // ========== Recording gesture channels ==========
+  RECORDING_GESTURE_OPEN_WINDOW: "RECORDING_GESTURE_OPEN_WINDOW",
+  RECORDING_GESTURE_CLOSE_WINDOW: "RECORDING_GESTURE_CLOSE_WINDOW",
+  RECORDING_GESTURE_RESIZE_WINDOW: "RECORDING_GESTURE_RESIZE_WINDOW",
+
   // ========== Files channels ==========
   FILES_CHOOSE_FOLDER: "FILES_CHOOSE_FOLDER",
   FILES_CHOOSE_SCRIPT: "FILES_CHOOSE_SCRIPT",
@@ -165,6 +170,15 @@ const api: ElectronApi = {
       ipcRenderer.invoke(IPC_CHANNELS.RECORDING_BAR_CLOSE_WINDOW),
     resizeWindow: (width: number, height: number): void =>
       ipcRenderer.send(IPC_CHANNELS.RECORDING_BAR_RESIZE_WINDOW, width, height),
+  },
+
+  recordingGesture: {
+    openWindow: (pressIndex: number, gesture: string): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_GESTURE_OPEN_WINDOW, pressIndex, gesture),
+    closeWindow: (): Promise<void> =>
+      ipcRenderer.invoke(IPC_CHANNELS.RECORDING_GESTURE_CLOSE_WINDOW),
+    resizeWindow: (height: number): void =>
+      ipcRenderer.send(IPC_CHANNELS.RECORDING_GESTURE_RESIZE_WINDOW, height),
   },
 
   files: {

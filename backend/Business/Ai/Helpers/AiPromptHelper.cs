@@ -217,6 +217,8 @@ namespace Business.Ai.Helpers
               screen, which you have not seen, so you cannot make one.
             - Keep every input. Rename one only through inputRenames, and then change every
               {{name}} that uses it. Never add an input and never remove one.
+            - Send a Notify only through a bot under Discord Bots. A bot is a webhook on the
+              tester's machine, so you cannot make one.
 
             Kept as they were, whatever you write: the Description, which is the author's own words;
             the value of every input, which you are not shown; and what each line under Templates
@@ -254,6 +256,10 @@ namespace Business.Ai.Helpers
               the top of the flow rather than in a branch - so a page a stage begins on is not
               nested under the click before it. You may add a stage marker for a part they left
               unnamed; never move, rename or remove theirs.
+            - A Notify in the draft was asked for by the tester. Keep each one with its message and
+              its through as they are; one with result of a check stays in that check's Success or
+              Failure branch, reporting that check. You may add a Notify; never change or remove
+              theirs.
             - Comments that start with screen: are notes of what was read off the screen at that
               search, and words in them may be misread: where a new page began and what was on it,
               and what appeared and went after the click. Use them to name the steps for what the

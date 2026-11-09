@@ -14,6 +14,7 @@ import { BackendService, shouldSpawnBackend } from "./ipc/services/backend-servi
 import { setBackendQuitting } from "./ipc/services/backend-status-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
+import { registerRecordingGestureHandler } from "./ipc/handlers/recording-gesture-handler.js";
 import { registerFilesHandler } from "./ipc/handlers/files-handler.js";
 import { registerAutoUpdaterHandler } from "./ipc/handlers/auto-updater-handler.js";
 import { startAutoUpdaterChecks } from "./ipc/services/auto-updater-service.js";
@@ -78,6 +79,7 @@ app.whenReady().then(async () => {
     await registerOverlayCaptureHandler(mainWindow, request.invokeBackend);
     await registerImageEditorHandler(mainWindow);
     registerRecordingBarHandler(mainWindow);
+    registerRecordingGestureHandler(mainWindow);
     registerFilesHandler(mainWindow);
   } catch (err) {
     console.error("[Main]: Failed to register IPC handlers:", err);

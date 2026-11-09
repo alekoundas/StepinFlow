@@ -42,7 +42,6 @@ namespace Business.Tests.FlowScript
             [FlowStepTypeEnum.SEARCH_IMAGE] = [nameof(FlowStep.FlowStepReferenceId), nameof(FlowStep.MaxMatches), nameof(FlowStep.PollIntervalMilliseconds)],
             [FlowStepTypeEnum.SEARCH_TEXT] = [nameof(FlowStep.FlowStepReferenceId), nameof(FlowStep.OcrLanguage), nameof(FlowStep.PollIntervalMilliseconds)],
             [FlowStepTypeEnum.CURSOR_DRAG] = [nameof(FlowStep.CursorButtonType)],
-            [FlowStepTypeEnum.NOTIFY] = [nameof(FlowStep.DiscordBotId)],
             [FlowStepTypeEnum.SYSTEM_COMMAND] =
             [
                 nameof(FlowStep.ShellType),
@@ -452,12 +451,14 @@ namespace Business.Tests.FlowScript
             };
         }
 
-        // The file and its pictures on disk, as an export leaves them, with the flow it calls already here.
+        // The file and its pictures on disk, as an export leaves them, with the flow it calls and the
+        // bot it sends through already here.
         private async Task<FlowScriptImportResultDto> ImportGoldenAsync()
         {
             using (AppDbContext db = _database.CreateDbContext())
             {
                 db.Flows.Add(new Flow { Name = "Called flow", PublicId = CalledFlowId, IsSubFlow = true });
+                db.DiscordBots.Add(new DiscordBot { Name = "Alerts", WebhookUrl = "https://discord.example/hook" });
                 db.SaveChanges();
             }
 

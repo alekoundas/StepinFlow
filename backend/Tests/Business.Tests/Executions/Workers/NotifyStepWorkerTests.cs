@@ -151,6 +151,26 @@ namespace Business.Tests.Executions.Workers
             _queue.Queued.ShouldBeEmpty();
         }
 
+        // An import adds a bot its file named with no webhook, for the user to paste one in.
+        [Fact]
+        public async Task A_bot_with_no_webhook_yet_sends_nothing_and_passes_saying_so()
+        {
+            int botId;
+            using (AppDbContext db = _database.CreateDbContext())
+            {
+                DiscordBot bot = new DiscordBot { Name = "Alerts" };
+                db.DiscordBots.Add(bot);
+                db.SaveChanges();
+                botId = bot.Id;
+            }
+
+            ExecutionStep result = await Notify(new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.NOTIFY, DiscordBotId = botId });
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Message!.ShouldStartWith("\"Alerts\" has no webhook yet, so nothing was sent.");
+            _queue.Queued.ShouldBeEmpty();
+        }
+
         // A notification is never the reason an execution fails.
         [Fact]
         public async Task A_message_dropped_by_the_rate_limit_still_passes_and_says_so()

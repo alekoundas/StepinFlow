@@ -16,6 +16,9 @@ export const ReviewChoiceEnum = {
   EXECUTE_COMMAND: "EXECUTE_COMMAND", // A command, written in Review
   LAUNCH_APP: "LAUNCH_APP", // An application opened, its program written in Review
   TYPE_INPUT: "TYPE_INPUT", // An input's value typed, the input named in Review
+  NOTIFY: "NOTIFY", // A message posted to Discord, through a bot picked for it
+  WAIT: "WAIT", // A wait of a set time, for what the screen does not show
+  BEGIN_STAGE: "BEGIN_STAGE", // A stage begun there, by the name given: no step of its own
 } as const;
 
 export type ReviewChoiceEnum = (typeof ReviewChoiceEnum)[keyof typeof ReviewChoiceEnum];

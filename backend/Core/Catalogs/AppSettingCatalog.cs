@@ -33,15 +33,22 @@ namespace Core.Catalogs
             AppSettingKeyEnum.RECORDING_HOTKEY_CHECK,
             RecordingGestureEnum.CHECK,
             "Check here",
-            "Click something to check it is there, or that it goes. Review asks which.",
+            "Click something to check it is there, or that it goes, by its picture or its words.",
             "VcLeftControl+LEFT_BUTTON");
 
         public static readonly GestureAppSettingDefinition RecordingGestureSubstitute = new(
             AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE,
             RecordingGestureEnum.SUBSTITUTE,
             "Do something else here",
-            "Click anywhere for a step that is not a click: a command, an application opened, or an input's value typed. Review asks which.",
+            "Click anywhere for a step that is not a click: a command, an application opened, a notification, an input's value typed, a wait or a stage.",
             "VcLeftControl+RIGHT_BUTTON");
+
+        // The window takes the keyboard from the application, which may close an open menu.
+        public static readonly BoolAppSettingDefinition RecordingGestureAsk = new BoolAppSettingDefinition(
+            AppSettingKeyEnum.RECORDING_GESTURE_ASK,
+            "Ask at once",
+            "A check or a step marked pauses the recording and asks what it is for, in a window over the application. Off, it is only marked, and Review asks. Turn it off for an application that closes a menu or minimises when another window takes the keyboard.",
+            defaultValue: true);
 
 
         // Debugger hotkeys.
@@ -158,6 +165,7 @@ namespace Core.Catalogs
             RecordingHotkeyStage,
             RecordingGestureCheck,
             RecordingGestureSubstitute,
+            RecordingGestureAsk,
 
             HotkeyContinue,
             HotkeyStepInto,

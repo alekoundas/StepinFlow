@@ -21,8 +21,8 @@ export default function WhileYouRecordComponent() {
     { keys: pauseKeys, does: "Pause or resume" },
     { keys: stopKeys, does: "Stop and review" },
     { keys: stageKeys, does: "A stage of the test begins here, such as Delete customer: Review asks for its name" },
-    { keys: checkKeys, does: "Check what you click on: that it is there, or that it goes" },
-    { keys: substituteKeys, does: "A step that is not a click: a command, an application, an input" },
+    { keys: checkKeys, does: "Check what you click on: that it is there, or that it goes, and tell Discord" },
+    { keys: substituteKeys, does: "A step that is not a click: a command, an application, a notification, an input, a wait" },
   ];
 
   return (
@@ -64,9 +64,9 @@ export default function WhileYouRecordComponent() {
         className="text-xs"
         style={MUTED}
       >
-        They work whatever window is in front. The keys are never recorded, the two clicks never reach
-        the application, and Review asks what each click was for. All five are under Settings,
-        Recording keys.
+        They work whatever window is in front. The keys are never recorded, and the two clicks never
+        reach the application: the recording pauses and a window asks what each was for, or leaves it
+        for Review. All five, and whether the window asks, are under Settings, Recording keys.
       </span>
       <span
         className="text-xs"

@@ -42,11 +42,47 @@ Everything here is finished: phases 0 to 5.14 by 2026-10-09, Git by 2026-10-25, 
 | Tests 5 | The engine end to end on SQLite, by 2026-10-26: what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger | §15 |
 | Tests, machine-only | The match-mode table on real PNGs against the real OpenCV; every P/Invoke bound to its library; the live-desktop tests traited `Desktop` and left out by default; `probes/` deleted | §8, §15 |
 
-**Next:** phase 9, happy-path validation and the fix loop, in the order its last paragraph gives;
+**Next:** phase 7.1's checks by hand; then phase 9, happy-path validation and the fix loop, in the order its last paragraph gives;
 then phases 5.16 and 5.17, releasing and updates; then 5.15's click-throughs, apps and browser tabs, built
 2026-11-01; then phase 8, inputs, secrets and the CSV round trip; 5.8's
 sub-stages wait on the questions listed with them. A QA test's screen sizes, with what happens when it ends,
 wait in `TODO.md`, Recording.
+
+---
+
+## Recording
+
+### 7.1. A gesture asks what it is for, while recording
+
+Decided and built 2026-11-09 (`PROJECT.md` §6, Two gestures while recording), from the sketch at
+https://claude.ai/artifact/W9Ut1T3RmDMsjB3jeVCoPs: a Ctrl + click or a Ctrl + right click pauses the
+recording and asks what it is for, in a window of its own over the application, unless "Ask at
+once" is off. A check by its picture or by its words and Check Text's rule, tested against the words
+read on what was pressed, found while the window is open; Discord told when it succeeds, when it
+fails or both, through one bot, the one used last or a new one made there; six steps that are not a
+click; Add and keep recording, or Decide in Review, and no Cancel; the keyboard given back. Review
+starts from the answers with the same forms. On the way, a `Notify` line names its bot,
+`through <[ Alerts ]>`, one the header lists under `Discord Bots:`, so an export, a branch switch and
+a recording's draft keep it, and a model's draft keeps the tester's notifications. A bot a file
+names that is not here is added with no webhook, for the user to paste one in, and validation
+warns at each Notify through it until then. Verified by the build, the type check, the lint and the
+tests (1557); never by hand.
+
+Left:
+
+- [ ] **By hand.** A check by its words with each rule; a notification of each kind reaching Discord;
+      a new bot made from the window; Decide in Review, Stop while it asks, and the setting off. The
+      Firestone flow recorded again with its notifications made this way.
+- [ ] **The focus comes back.** Windows refuses a foreground change from a process that is not in
+      front, so try it on a browser and on the game, and fall back on how `Focus Window` brings a
+      window forward.
+- [ ] **macOS and Linux.** macOS needs the application activated again. On Linux
+      `setContentProtection` does nothing, so the window can be in a screenshot taken as it closes;
+      Wayland lets no application give another the focus; and the gesture reaches the application
+      there anyway.
+- [ ] Optional: F8 opens the window on Begin a stage, so a stage is named as it is marked.
+- [ ] Optional: Browse... beside Open an application's program, which the sketch had. A dialog of
+      the main window, which is minimised while recording, would open behind it.
 
 ---
 

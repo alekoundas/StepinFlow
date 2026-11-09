@@ -13,6 +13,7 @@ namespace Business.Tests.Flows.Validation
         private readonly List<FlowArea> _areas = new List<FlowArea>();
         private readonly List<FlowPoint> _points = new List<FlowPoint>();
         private readonly List<string> _inputs = new List<string>();
+        private readonly Dictionary<int, string> _webhooklessBots = new Dictionary<int, string>();
         private bool _isQaTest;
         private readonly FakeOcrService _ocr = new FakeOcrService();
 
@@ -53,7 +54,7 @@ namespace Business.Tests.Flows.Validation
         private FlowValidationResultDto Validate()
         {
             List<string> names = _areas.Select(x => x.Name).Concat(_points.Select(x => x.Name)).Concat(_inputs).ToList();
-            return new FlowValidationService(_ocr).Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _isQaTest);
+            return new FlowValidationService(_ocr).Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _webhooklessBots, _isQaTest);
         }
 
         private List<FlowValidationCodeEnum> CodesOn(FlowStep step)
@@ -307,6 +308,32 @@ namespace Business.Tests.Flows.Validation
             notify.Message = message;
 
             CodesOn(notify).ShouldContain(FlowValidationCodeEnum.QUOTE_INSIDE);
+        }
+
+        // An import adds a bot its file named with no webhook. Sending nothing stops nothing, so it is
+        // a warning, and it names the bot to fill in.
+        [Fact]
+        public void A_notify_through_a_bot_with_no_webhook_yet_is_a_warning_naming_it()
+        {
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell");
+            notify.DiscordBotId = 7;
+            _webhooklessBots[7] = "Alerts";
+
+            FlowValidationIssueDto issue = Validate().Issues.Single(x => x.FlowStepId == notify.Id);
+
+            issue.Code.ShouldBe(FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK);
+            issue.Severity.ShouldBe(ValidationSeverityEnum.WARNING);
+            issue.Message.ShouldStartWith("\"Alerts\" has no webhook yet");
+        }
+
+        [Fact]
+        public void A_notify_through_a_bot_with_a_webhook_is_fine()
+        {
+            FlowStep notify = Add(FlowStepTypeEnum.NOTIFY, "Tell");
+            notify.DiscordBotId = 8;
+            _webhooklessBots[7] = "Alerts";
+
+            CodesOn(notify).ShouldBeEmpty();
         }
 
         // The fields are checked together, but the end of one and the start of the next are not a quote.

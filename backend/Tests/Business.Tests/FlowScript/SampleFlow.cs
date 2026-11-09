@@ -96,7 +96,8 @@ namespace Business.Tests.FlowScript
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_RELOCATE, Name = "Move window", FlowArea = browser, FlowPoint = origin }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Launch Game client", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, FlowArea = gameClient }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.WINDOW_FOCUS, Name = "Focus window", FlowArea = gameClient }, null);
-            Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
+            FlowStep done = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "done" }, null);
+            schema.DiscordBots[done] = new DiscordBotReference { Name = "Alerts" };
 
             FlowStep loop = Step(new FlowStep { FlowStepType = FlowStepTypeEnum.LOOP, Name = "Retry", LoopCount = 5 }, null);
             Step(new FlowStep { FlowStepType = FlowStepTypeEnum.CURSOR_RELOCATE, FlowPoint = hamburger }, loop);

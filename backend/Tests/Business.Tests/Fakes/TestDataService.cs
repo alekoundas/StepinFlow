@@ -21,7 +21,8 @@ namespace Business.Tests.Fakes
                 new FlowAreaDataService(database, validation, repository),
                 new FlowPointDataService(database, validation, repository),
                 new FlowCsvColumnDataService(database, validation, repository),
-                new FlowTemplateDataService(database, validation, repository));
+                new FlowTemplateDataService(database, validation, repository),
+                new DiscordBotDataService(database));
         }
     }
 }

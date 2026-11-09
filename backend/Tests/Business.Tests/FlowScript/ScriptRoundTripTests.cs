@@ -254,6 +254,77 @@ namespace Business.Tests.FlowScript
             notify.FlowStepReference.ShouldBeSameAs(schema.Steps.Single(x => x.Name == "Read it"));
         }
 
+        // A bot is this machine's, so the header lists it by name for the import to find, and the line
+        // names it ahead of the result.
+        [Fact]
+        public void A_notify_names_a_bot_the_header_lists_and_prints_it_back_ahead_of_the_result()
+        {
+            string line = "Notify          <[ first ]>  <[ second ]>   through <[ Alerts ]>   with result of <[ Read it ]>";
+            FlowScriptSchema schema = new Scanner().Read(WithBots("Alerts") + "Shell           <[ Read it ]>   <[ echo 1 ]>\n Success:\n  " + line + "\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            FlowStep notify = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY);
+            notify.DiscordBot.ShouldBeNull();
+            schema.DiscordBots[notify].ShouldSatisfyAllConditions(
+                x => x.Name.ShouldBe("Alerts"),
+                x => x.Line.ShouldBe(9));
+
+            string printed = new Printer().Write(schema).ReplaceLineEndings("\n");
+            printed.ShouldContain("\nDiscord Bots:\n  <[ Alerts ]>\n\nSteps:\n");
+            printed.ShouldContain(line);
+        }
+
+        // Each Notify through a bot shares its one line, so the import finds it, and warns about it, once.
+        [Fact]
+        public void Notify_steps_through_one_bot_share_its_header_line()
+        {
+            FlowScriptSchema schema = new Scanner().Read(WithBots("Alerts") + "Notify          <[ first ]>   through <[ Alerts ]>\nNotify          <[ second ]>   through <[ alerts ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            List<FlowStep> notifies = schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY).ToList();
+            schema.DiscordBots[notifies[1]].ShouldBeSameAs(schema.DiscordBots[notifies[0]]);
+
+            List<string> printed = new Printer().Write(schema).ReplaceLineEndings("\n").Split('\n').ToList();
+            printed.ShouldContain("Notify          <[ second ]>   through <[ Alerts ]>");
+            printed.Count(x => x == "  <[ Alerts ]>").ShouldBe(1);
+        }
+
+        // Written from the steps, as the templates are, so a bot nothing sends through is not the flow's.
+        [Fact]
+        public void A_bot_no_notify_sends_through_is_not_written_back()
+        {
+            FlowScriptSchema schema = new Scanner().Read(WithBots("Alerts", "Night shift") + "Notify          <[ done ]>   through <[ Alerts ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            new Printer().Write(schema).ShouldNotContain("Night shift");
+        }
+
+        // A bot is named in Settings, not in the flow, so an area may have its name.
+        [Fact]
+        public void A_bot_may_share_its_name_with_an_area()
+        {
+            FlowScriptSchema schema = new Scanner().Read(WithBots("App") + "Notify          <[ done ]>   through <[ App ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+        }
+
+        // An empty quote is a bot saved with none, which the validator reports, as a step with no target is.
+        [Fact]
+        public void A_notify_through_an_empty_quote_has_no_bot()
+        {
+            FlowScriptSchema schema = new Scanner().Read(LanguageLine(WithArea) + "Notify          <[ done ]>   through <[  ]>\n");
+
+            schema.Diagnostics.ShouldBeEmpty();
+            schema.DiscordBots.ShouldBeEmpty();
+        }
+
+        private static string WithBots(params string[] names)
+        {
+            string bots = string.Concat(names.Select(x => $"  <[ {x} ]>\n"));
+
+            return LanguageLine(WithArea).Replace("Steps:\n", $"Discord Bots:\n{bots}\nSteps:\n", StringComparison.Ordinal);
+        }
+
         // A step moved out from under what it broke out of loses the link, and the validator reports it.
         [Fact]
         public void A_break_with_no_target_comes_back_with_none()

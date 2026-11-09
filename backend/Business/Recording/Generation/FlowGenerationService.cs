@@ -119,6 +119,7 @@ namespace Business.Recording.Generation
             HashSet<FlowCsvColumn> inputsBefore = flow.Inputs.ToHashSet();
 
             FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index, false);
+            await _dataService.DiscordBot.NameAsync(draft, ct);
 
             string script = _printer.Write(draft);
             FlowScriptSchema read = _scanner.Read(script);
@@ -198,6 +199,7 @@ namespace Business.Recording.Generation
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
             bool isQaTest = flow.Flow.IsQaTest;
             FlowScriptSchema draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null, true);
+            await _dataService.DiscordBot.NameAsync(draft, ct);
 
             string script = _printer.Write(draft);
             Dictionary<string, byte[]> templates = TemplatesOf(draft);
@@ -389,6 +391,9 @@ namespace Business.Recording.Generation
             CancellationToken ct)
         {
             FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null, false);
+
+            // The import finds each Notify's bot by the name its line gives.
+            await _dataService.DiscordBot.NameAsync(draft, ct);
 
             string script = _printer.Write(draft);
             Dictionary<string, byte[]> templates = TemplatesOf(draft);

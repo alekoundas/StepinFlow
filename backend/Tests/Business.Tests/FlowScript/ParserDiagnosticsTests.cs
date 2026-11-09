@@ -68,6 +68,11 @@ namespace Business.Tests.FlowScript
             { DiagnosticCodeEnum.TEMPLATE_NOT_PNG, "Templates:\n  <[ logo.jpg ]> click 1 2" },
             { DiagnosticCodeEnum.TEMPLATE_NOT_PNG, "Templates:\n  <[ logo.PNG ]> click 1 2" },
             { DiagnosticCodeEnum.TEMPLATE_NOT_PNG, "Templates:\n  <[ logo ]> click 1 2" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Discord Bots:\n  <[ Alerts ]> webhook" },
+            { DiagnosticCodeEnum.TOKEN_UNEXPECTED, "Discord Bots:\n  Alerts" },
+            { DiagnosticCodeEnum.DISCORD_BOT_UNDECLARED, "Steps:\nNotify <[ done ]> through <[ Alerts ]>" },
+            { DiagnosticCodeEnum.DISCORD_BOT_UNDECLARED, "Discord Bots:\n  <[ Alerts ]>\nSteps:\nNotify <[ done ]> through <[ Night shift ]>" },
+            { DiagnosticCodeEnum.DISCORD_BOT_DUPLICATE, "Discord Bots:\n  <[ Alerts ]>\n  <[ alerts ]>" },
             { DiagnosticCodeEnum.LEADING_SPACES_UNEXPECTED, "Steps:\nWait 800ms\n  Wait 800ms" },
             { DiagnosticCodeEnum.COMMENT_UNATTACHED, "Steps:\nWait 800ms\n# nothing below" },
             { DiagnosticCodeEnum.NAME_UNKNOWN, "Steps:\nMove to <[ Nobody ]>" },
@@ -124,7 +129,7 @@ namespace Business.Tests.FlowScript
         // clauses passed over on the way included.
         [Theory]
         [InlineData("Steps:\nNotify <[ never closes", "Unexpected end of the line, expected \"]>\".")]
-        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected \"<[\", \"with result of\" or the end of the line.")]
+        [InlineData("Steps:\nNotify <[ hi ]> there", "Unexpected \"there\", expected \"<[\", \"through\", \"with result of\" or the end of the line.")]
         [InlineData("Steps:\nFnid Image <[ x ]>", "Unexpected \"Fnid\".")]
         [InlineData("Steps:\nLoop <[ Retry ]> often", "Unexpected \"often\", expected \"forever\" or a whole number.")]
         [InlineData("Steps:\nWait soon", "Unexpected \"soon\", expected a number ending in \"ms\".")]
@@ -279,11 +284,15 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.SUB_FLOW_UNKNOWN);
             covered.Add(DiagnosticCodeEnum.SUB_FLOW_NOT_CALLABLE);
 
+            // Raised as the import links each bot under Discord Bots to one in the database (ScriptImportExportTests).
+            covered.Add(DiagnosticCodeEnum.DISCORD_BOT_UNKNOWN);
+
             // Raised by ScriptRevisionService, against the script the model was given (ScriptRevisionServiceTests).
             covered.Add(DiagnosticCodeEnum.ANSWER_UNREADABLE);
             covered.Add(DiagnosticCodeEnum.FLOW_CHANGED);
             covered.Add(DiagnosticCodeEnum.TEMPLATE_NOT_CUT);
             covered.Add(DiagnosticCodeEnum.INPUT_NOT_RENAMED);
+            covered.Add(DiagnosticCodeEnum.DISCORD_BOT_NOT_GIVEN);
 
             // Raised by FlowGenerationService, against a QA test's answer (FlowGenerationServiceTests).
             covered.Add(DiagnosticCodeEnum.STAGE_MARKER_MISSING);

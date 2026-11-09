@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 
+using Business.Flows.FlowValidationService;
 using Business.FlowScript;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
@@ -7,6 +8,7 @@ using Business.FlowScript.Text;
 using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
+using Core.Models.Dtos;
 using Core.Models.Dtos.FlowScript;
 using DataAccess;
 using static Business.Tests.TestToken;
@@ -424,6 +426,155 @@ namespace Business.Tests.FlowScript
 
             imported.Warnings.ShouldBeEmpty();
             SubFlowIdOf(shop).ShouldBe(checkout.Id);
+        }
+
+        // ================================================================
+        // Discord bots
+        // ================================================================
+
+        [Fact]
+        public async Task A_notify_line_links_the_bot_it_names()
+        {
+            int alerts = SeedBot("Alerts");
+            SeedBot("Night shift");
+
+            FlowScriptImportResultDto imported = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+
+            imported.Warnings.ShouldBeEmpty();
+            BotIdsOf(imported.FlowId).ShouldBe([alerts]);
+        }
+
+        // The same name exactly first, so two bots told apart only by case are each found.
+        [Fact]
+        public async Task A_bot_is_found_by_its_exact_name_before_one_in_another_case()
+        {
+            int shouting = SeedBot("ALERTS");
+            int alerts = SeedBot("Alerts");
+
+            FlowScriptImportResultDto exact = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+            List<int?> exactBots = BotIdsOf(exact.FlowId);
+            FlowScriptImportResultDto other = await ImportNotifyAsync("alerts", "Notify          <[ done ]>   through <[ alerts ]>");
+
+            exactBots.ShouldBe([alerts]);
+            BotIdsOf(other.FlowId).ShouldBe([shouting]);
+            other.Warnings.ShouldBeEmpty();
+        }
+
+        // Added rather than left out, so every step keeps the name and only the webhook is left to paste in.
+        [Fact]
+        public async Task A_bot_that_is_not_here_is_added_with_no_webhook_and_warned_about_once_at_its_line()
+        {
+            FlowScriptImportResultDto imported = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>\nNotify          <[ again ]>   through <[ Alerts ]>");
+
+            imported.IsSuccess.ShouldBeTrue();
+            FlowScriptErrorDto warning = imported.Warnings.ShouldHaveSingleItem();
+            (warning.Code, warning.Line).ShouldBe((nameof(DiagnosticCodeEnum.DISCORD_BOT_UNKNOWN), 5));
+            warning.Message.ShouldContain("\"Alerts\"");
+
+            using AppDbContext db = _database.CreateDbContext();
+            DiscordBot added = db.DiscordBots.ShouldHaveSingleItem();
+            (added.Name, added.WebhookUrl).ShouldBe(("Alerts", string.Empty));
+            BotIdsOf(imported.FlowId).ShouldBe([added.Id, added.Id]);
+            List<FlowValidationCodeEnum> codes = imported.Validation.ShouldNotBeNull().Issues.Select(x => x.Code).ToList();
+            codes.ShouldNotContain(FlowValidationCodeEnum.DISCORD_BOT_MISSING);
+            codes.Count(x => x == FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK).ShouldBe(2);
+        }
+
+        // The flow stops being warned about once the bot has its webhook.
+        [Fact]
+        public async Task A_bot_given_its_webhook_is_no_longer_warned_about()
+        {
+            FlowScriptImportResultDto imported = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+
+            using AppDbContext db = _database.CreateDbContext();
+            db.DiscordBots.Single().WebhookUrl = "https://discord.example/hook";
+            db.SaveChanges();
+
+            FlowValidationResultDto validation = await new FlowValidationService(new FakeOcrService()).ValidateAsync(db, imported.FlowId, Ct);
+            validation.Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK);
+        }
+
+        // The second finds the bot the first added, rather than adding another.
+        [Fact]
+        public async Task A_bot_added_by_one_import_is_found_by_the_next()
+        {
+            FlowScriptImportResultDto first = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+            FlowScriptImportResultDto second = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+
+            second.Warnings.ShouldBeEmpty();
+            using AppDbContext db = _database.CreateDbContext();
+            db.DiscordBots.Count().ShouldBe(1);
+            BotIdsOf(second.FlowId).ShouldBe(BotIdsOf(first.FlowId));
+        }
+
+        // A preview only reads, so what it warns about is added by the import, not by looking.
+        [Fact]
+        public async Task A_preview_adds_no_bot()
+        {
+            Directory.CreateDirectory(_folder);
+            string path = Path.Combine(_folder, "Shop.sflw");
+            await File.WriteAllTextAsync(path, NotifyScript("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>"), Ct);
+
+            FlowScriptPreviewService previewer = new FlowScriptPreviewService(new Scanner(), Exporter(), TestDataService.For(_database));
+            FlowScriptPreviewDto preview = await previewer.PreviewAsync(path, Ct);
+
+            preview.Warnings.ShouldHaveSingleItem().Code.ShouldBe(nameof(DiagnosticCodeEnum.DISCORD_BOT_UNKNOWN));
+            using AppDbContext db = _database.CreateDbContext();
+            db.DiscordBots.ShouldBeEmpty();
+        }
+
+        // Before the file named it, every export and every branch switch lost it.
+        [Fact]
+        public async Task A_notify_exported_and_imported_back_keeps_its_bot()
+        {
+            int alerts = SeedBot("Alerts");
+            FlowScriptImportResultDto first = await ImportNotifyAsync("Alerts", "Notify          <[ done ]>   through <[ Alerts ]>");
+
+            FlowScriptExportResultDto exported = await Exporter().ExportAsync(first.FlowId, _folder, Ct);
+            FlowScriptImportResultDto second = await Importer().ImportAsync(exported.ScriptPath, Ct);
+
+            exported.Script.ReplaceLineEndings("\n").ShouldContain("Discord Bots:\n  <[ Alerts ]>\n");
+            exported.Script.ShouldContain("through <[ Alerts ]>");
+            second.Warnings.ShouldBeEmpty();
+            BotIdsOf(second.FlowId).ShouldBe([alerts]);
+        }
+
+        private Task<FlowScriptImportResultDto> ImportNotifyAsync(string bot, string notifyLines)
+        {
+            return Importer().ImportTextAsync(NotifyScript(bot, notifyLines), new Dictionary<string, byte[]>(), Ct);
+        }
+
+        private static string NotifyScript(string bot, string notifyLines)
+        {
+            return
+                "Flow:    Shop\n" +
+                "Id:      9a1e2f3b-4c5d-4e6f-8a9b-0c1d2e3f4a5b\n\n" +
+                "Discord Bots:\n" +
+                $"  <[ {bot} ]>\n\n" +
+                "Steps:\n" +
+                notifyLines + "\n";
+        }
+
+        private int SeedBot(string name)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            DiscordBot bot = new DiscordBot { Name = name, WebhookUrl = "https://discord.example/hook" };
+            db.DiscordBots.Add(bot);
+            db.SaveChanges();
+
+            return bot.Id;
+        }
+
+        private List<int?> BotIdsOf(int flowId)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            return db.FlowSteps
+                .Where(x => x.RootId == flowId && x.FlowStepType == FlowStepTypeEnum.NOTIFY)
+                .OrderBy(x => x.OrderNumber)
+                .Select(x => x.DiscordBotId)
+                .ToList();
         }
 
         [Fact]

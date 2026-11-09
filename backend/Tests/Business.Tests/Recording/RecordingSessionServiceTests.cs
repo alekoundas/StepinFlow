@@ -364,6 +364,148 @@ namespace Business.Tests.Recording
         }
 
         // ================================================================
+        // Asking at a gesture
+        // ================================================================
+
+        private void Gesture(RecordingGestureEnum gesture, int x = 500, int y = 400)
+        {
+            CursorButtonTypeEnum button = gesture == RecordingGestureEnum.CHECK ? CursorButtonTypeEnum.LEFT_BUTTON : CursorButtonTypeEnum.RIGHT_BUTTON;
+
+            _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_DOWN, PhysicalX = x, PhysicalY = y, CursorButtonType = button, Gesture = gesture, CreatedOn = _clock.GetLocalNow().DateTime });
+            _hook.Raise(new RecordedInput { Type = RecordedInputTypeEnum.BUTTON_UP, PhysicalX = x, PhysicalY = y, CursorButtonType = button, Gesture = gesture, CreatedOn = _clock.GetLocalNow().DateTime });
+        }
+
+        private async Task<RecordingGestureAskDto> AskedAsync(bool isFound = true)
+        {
+            await WaitUntilAsync(() => LastProgress().Asking != null && (!isFound || LastProgress().Asking!.IsElementFound));
+            return LastProgress().Asking!;
+        }
+
+        [Fact]
+        public async Task A_check_pauses_the_recording_and_asks_with_what_it_pressed_found_meanwhile()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Gesture(RecordingGestureEnum.CHECK);
+            RecordingGestureAskDto asking = await AskedAsync();
+
+            (asking.PressIndex, asking.Gesture).ShouldBe((0, RecordingGestureEnum.CHECK));
+            LastProgress().State.ShouldBe(RecordingStateEnum.PAUSED);
+            _hook.HeldBack.ShouldBeEmpty();
+
+            RecordingGestureDto gesture = _session.GetGesture().ShouldNotBeNull();
+            (gesture.LocationX, gesture.LocationY, gesture.X, gesture.Width, gesture.Dpi).ShouldBe((500, 400, BOUNDS.X, BOUNDS.Width, 120));
+            gesture.Image.ShouldNotBeNull();
+            gesture.Element.ShouldNotBeNull().Text.ShouldBe("Checkout");
+        }
+
+        // Looked at for nothing: where it was marked does not matter.
+        [Fact]
+        public async Task A_step_that_is_not_a_click_asks_at_once_with_nothing_to_find()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Gesture(RecordingGestureEnum.SUBSTITUTE);
+            RecordingGestureAskDto asking = await AskedAsync(isFound: false);
+
+            asking.IsElementFound.ShouldBeTrue();
+            _session.GetGesture().ShouldNotBeNull().Element.ShouldBeNull();
+        }
+
+        [Fact]
+        public async Task With_the_setting_off_a_gesture_is_only_marked_for_Review()
+        {
+            _settings.Stored[AppSettingKeyEnum.RECORDING_GESTURE_ASK] = "false";
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            Gesture(RecordingGestureEnum.CHECK);
+            await _session.StopAsync(Ct);
+
+            AllProgress().ShouldAllBe(x => x.Asking == null && x.State != RecordingStateEnum.PAUSED);
+        }
+
+        // The time spent answering is no wait the flow has to make: the resume marks it.
+        [Fact]
+        public async Task An_answer_is_kept_for_Review_and_the_recording_resumes_with_the_keyboard_given_back()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Gesture(RecordingGestureEnum.CHECK);
+            RecordingGestureAskDto asking = await AskedAsync();
+            _windows.Actions.Clear();
+
+            ReviewedActionDto answer = new ReviewedActionDto { Choice = ReviewChoiceEnum.CHECK_GONE, NotifyOnFailure = true, DiscordBotId = 7, FailureMessage = "It stayed" };
+            ResultDto<bool> decided = _session.DecideGesture(new RecordingGestureDecisionDto { PressIndex = asking.PressIndex, Answer = answer });
+
+            decided.IsSuccess.ShouldBeTrue();
+            _session.IsPaused.ShouldBeFalse();
+            LastProgress().Asking.ShouldBeNull();
+            _windows.Actions.ShouldBe(["focus"]);
+
+            Raise(RecordedInputTypeEnum.BUTTON_DOWN);
+            Raise(RecordedInputTypeEnum.BUTTON_UP);
+            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe(
+            [
+                RecordedInputTypeEnum.BUTTON_DOWN,
+                RecordedInputTypeEnum.BUTTON_UP,
+                RecordedInputTypeEnum.RESUMED,
+                RecordedInputTypeEnum.BUTTON_DOWN,
+                RecordedInputTypeEnum.BUTTON_UP,
+            ]);
+
+            RecordingResultDto result = await WaitUntilReadyAsync();
+            ReviewedActionDto kept = result.GestureAnswers.ShouldHaveSingleItem();
+            (kept.ActionIndex, kept.Choice, kept.DiscordBotId, kept.FailureMessage).ShouldBe((0, ReviewChoiceEnum.CHECK_GONE, (int?)7, "It stayed"));
+            result.ClickedElements.Select(x => (x.ActionIndex, x.Text)).ShouldBe([(0, "Checkout"), (1, "Checkout")]);
+        }
+
+        [Fact]
+        public async Task A_resume_from_the_bar_while_it_asks_leaves_the_gesture_for_Review()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Gesture(RecordingGestureEnum.CHECK);
+            RecordingGestureAskDto asking = await AskedAsync();
+
+            _session.Resume();
+            ResultDto<bool> late = _session.DecideGesture(new RecordingGestureDecisionDto { PressIndex = asking.PressIndex, Answer = new ReviewedActionDto { Choice = ReviewChoiceEnum.CHECK_THERE } });
+
+            late.IsSuccess.ShouldBeFalse();
+            _session.GetGesture().ShouldBeNull();
+            await _session.StopAsync(Ct);
+            (await WaitUntilReadyAsync()).GestureAnswers.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public async Task A_stop_while_it_asks_leaves_the_gesture_for_Review()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Gesture(RecordingGestureEnum.SUBSTITUTE);
+            await AskedAsync(isFound: false);
+
+            await _session.StopAsync(Ct);
+
+            LastProgress().Asking.ShouldBeNull();
+            RecordingResultDto result = await WaitUntilReadyAsync();
+            result.Actions.ShouldHaveSingleItem().Kind.ShouldBe(RecordedActionKindEnum.SUBSTITUTE);
+            result.GestureAnswers.ShouldBeEmpty();
+        }
+
+        // As an execution tests it, against what was read on what the check pressed.
+        [Theory]
+        [InlineData(ConditionTypeEnum.CONTAINS, "check", "", true)]
+        [InlineData(ConditionTypeEnum.EQUALS, "Checkout", "", true)]
+        [InlineData(ConditionTypeEnum.MATCHES_REGEX, "^Check", "", true)]
+        [InlineData(ConditionTypeEnum.GREATER_THAN, "1", "", false)]
+        [InlineData(ConditionTypeEnum.IS_NOT_EMPTY, "", "", true)]
+        public async Task A_check_s_rule_is_tested_against_the_words_read_on_what_it_pressed(ConditionTypeEnum rule, string text, string end, bool passes)
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+            Gesture(RecordingGestureEnum.CHECK);
+            RecordingGestureAskDto asking = await AskedAsync();
+
+            _session.TestGestureRule(new RecordingGestureRuleDto { PressIndex = asking.PressIndex, ConditionType = rule, Text = text, TextEnd = end }).ShouldBe(passes);
+        }
+
+        // ================================================================
         // The recording bar's hotkeys
         // ================================================================
 

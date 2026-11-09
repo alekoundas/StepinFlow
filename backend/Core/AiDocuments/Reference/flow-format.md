@@ -329,6 +329,26 @@ encrypted value would need its key wherever the flow executes and stay in git hi
 What happens when a row leaves a value empty - error, fall back to the recorded default, or type
 nothing - is undecided, and gets settled when csv binding is built rather than guessed at now.
 
+### Discord Bots
+
+The bots the flow's `Notify` steps send through, by the names they have in Settings on this machine.
+
+```
+Discord Bots:
+  <[ Alerts ]>
+```
+
+Only the name. The webhook is the credential, so it never reaches a file, and the rest - the name
+it posts as, its avatar, its rate limit - is the bot's, shared by every flow on the machine. A
+`Notify` names one of these, and a name not listed here is `DISCORD_BOT_UNDECLARED`; one listed twice,
+in any case, is `DISCORD_BOT_DUPLICATE`. A bot's name is its own: an area or a step may have it too.
+The section is written from the steps, as Templates is, so a bot nothing sends through is not
+written back.
+
+A name no bot here has is `DISCORD_BOT_UNKNOWN`, a warning at its line: the import adds a bot by
+that name with no webhook, and its steps send through it, so they keep it. What they send goes
+nowhere until the webhook is pasted in under Settings, Discord bots.
+
 ---
 
 ## Steps
@@ -629,11 +649,13 @@ rather than trying for ever, and the part that repeats is the part indented unde
 ### Notify
 
 ```
-Notify   <[ the total looks wrong ]>   with result of <[ Read the total ]>
+Notify   <[ the total looks wrong ]>   through <[ Alerts ]>   with result of <[ Read the total ]>
 Notify   <[ the total looks wrong ]>  <[  ]>  <[ check the VPN first ]>
 ```
 
-Sends the message through the bot picked in the step's form, which the file does not carry. A quote
+Sends the message through the Discord bot `through` names, one under Discord Bots in the header.
+Keep the `through` a line has, and send only through a bot the header lists: a bot is a webhook on
+this machine, so one made up is a bot nobody has. A line with no `through` sends nothing. A quote
 ends with its line, so a message of several lines is a quote for each, a blank line an empty one.
 `with result of` puts what a check or command found at the top of the message - the text read, the
 template and its accuracy, the exit code - and names one the `Notify` sits under, in its `Success:`
@@ -800,7 +822,8 @@ half-replaced.
 have, are both errors with a line and a column - nothing is dropped and nothing is guessed. Every
 such error is one code, `TOKEN_UNEXPECTED`, because its message already names the token and what
 could have stood there. The other codes are kinds of problem rather than places in the grammar: a
-newer script language, a line indented too far, a template described twice, no `Flow:` line, a flow name that cannot be a
+newer script language, a line indented too far, a template described twice, a bot listed twice or
+not listed, no `Flow:` line, a flow name that cannot be a
 file name, a name nothing above declares, a name declared twice, an area inside one that is already
 inside another, a second `main` area.
 

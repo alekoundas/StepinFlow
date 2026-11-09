@@ -16,6 +16,11 @@ namespace Business.Recording.Generation
     /// the top of the flow where a marker is a stage. One the model adds, by another name, is not
     /// compared.
     ///
+    /// The draft's notifications are the tester's too, each kept with its message and its bot, and
+    /// one reporting a check stays in that check's branch, reporting it: a check's name is the
+    /// model's to change, so it is held by where it sits rather than by what it is called. One the
+    /// model adds is not compared.
+    ///
     /// A Find All Images' Success branch, or a loop's, is done once per hit or pass, so what it holds
     /// stands for one or more of it in a row in the draft: four clicks on one picture folded into a
     /// Find All Images are still the four. Typed text is compared as typed text, whatever it types,
@@ -25,6 +30,7 @@ namespace Business.Recording.Generation
     public static class RecordedActionsCheck
     {
         private const string KEEP = "Keep every click, drag, scroll, typed text and key the draft has, in its order: never add one, drop one or move one. Keep each of the draft's stage markers too, with its name, where it is and at the top of the flow, never in a branch.";
+        private const string KEEP_NOTIFICATIONS = "Keep each of the draft's Notify lines with its message and its through as they are, and one with result of a check in that check's Success or Failure branch, reporting that check.";
 
         public static List<Diagnostic> Check(FlowScriptSchema draft, FlowScriptSchema answer)
         {
@@ -40,10 +46,14 @@ namespace Business.Recording.Generation
             if (differs == null && end < drafted.Count)
                 differs = $"The answer leaves out the draft's action {end + 1}, {drafted[end].What}{Under(drafted[end])}, and every one after it.";
 
-            if (differs == null)
-                return [];
+            if (differs != null)
+                return [Diagnostic.Error(DiagnosticCodeEnum.ACTIONS_CHANGED, 1, 1, $"{differs} {KEEP}")];
 
-            return [Diagnostic.Error(DiagnosticCodeEnum.ACTIONS_CHANGED, 1, 1, $"{differs} {KEEP}")];
+            string? notification = NotificationDiffers(draft, answer);
+            if (notification != null)
+                return [Diagnostic.Error(DiagnosticCodeEnum.ACTIONS_CHANGED, 1, 1, $"{notification} {KEEP_NOTIFICATIONS}")];
+
+            return [];
         }
 
 
@@ -144,6 +154,45 @@ namespace Business.Recording.Generation
             }
 
             return items;
+        }
+
+        // Each of the draft's notifications, as many times as it has it, in the answer.
+        private static string? NotificationDiffers(FlowScriptSchema draft, FlowScriptSchema answer)
+        {
+            List<string> answered = answer.Steps
+                .Where(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY && !x.IsDisabled)
+                .Select(x => NotificationOf(answer, x))
+                .ToList();
+
+            foreach (FlowStep notify in draft.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY && !x.IsDisabled))
+            {
+                string drafted = NotificationOf(draft, notify);
+                if (!answered.Remove(drafted))
+                    return $"The answer drops or changes the draft's {drafted}.";
+            }
+
+            return null;
+        }
+
+        // What the tester said: the message, the bot, and for one reporting a check, which branch of
+        // that check it sits in.
+        private static string NotificationOf(FlowScriptSchema schema, FlowStep notify)
+        {
+            string bot = schema.DiscordBots.GetValueOrDefault(notify)?.Name ?? string.Empty;
+            string said = $"Notify <[ {notify.Message.ReplaceLineEndings(" / ")} ]> through <[ {bot} ]>";
+
+            if (notify.FlowStepReference == null)
+                return said;
+
+            FlowStep? branch = notify.ParentFlowStep;
+            bool isInItsBranch = branch != null && branch.ParentFlowStep == notify.FlowStepReference;
+            if (isInItsBranch && branch!.FlowStepType == FlowStepTypeEnum.SUCCESS)
+                return $"{said} when the check it reports succeeds";
+
+            if (isInItsBranch && branch!.FlowStepType == FlowStepTypeEnum.FAILURE)
+                return $"{said} when the check it reports fails";
+
+            return $"{said} reporting a step it is not in a branch of";
         }
 
         private static IEnumerable<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)

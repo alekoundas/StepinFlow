@@ -12,6 +12,11 @@ import type { RecordedActionDto } from "@/shared/models/database/recorded-action
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import { backendApiService } from "@/shared/services/backend-api-service";
 import ElementRectangleEditorComponent from "@/features/recording/review/ElementRectangleEditorComponent";
+import CheckNotifyFieldsComponent from "@/features/recording/gesture/CheckNotifyFieldsComponent";
+import CheckRuleFieldsComponent from "@/features/recording/gesture/CheckRuleFieldsComponent";
+import StepFieldsComponent from "@/features/recording/gesture/StepFieldsComponent";
+import { describeRule, isCheckChoice, isStepChoice, stepNote, toScriptName } from "@/features/recording/gesture/gesture";
+import { useNewDiscordBotDialog } from "@/features/recording/gesture/use-new-discord-bot-dialog";
 import {
   type ActionReview,
   describePressed,
@@ -58,6 +63,11 @@ export default function ReviewActionDetailComponent({ result, action, review, on
   const element = elementOf(result, action);
   const options = optionsFor(action, element, isQaTest);
   const position = listedActions(result).findIndex((x) => x.index === action.index) + 1;
+  const openNewBot = useNewDiscordBotDialog();
+  const newBot = () => openNewBot((discordBotId) => onChange({ ...review, discordBotId }));
+
+  const isCheck = action.kind === RecordedActionKindEnum.CHECK && isCheckChoice(review.choice);
+  const isStep = action.kind === RecordedActionKindEnum.SUBSTITUTE && isStepChoice(review.choice);
 
   const { data: screen } = useQuery({
     queryKey: ["recording", "screen", recordingKey, action.index],
@@ -164,7 +174,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
               if (e.value) onChange({ ...review, choice: e.value });
             }}
             allowEmpty={false}
-            className="align-self-start"
+            className="align-self-start flex flex-wrap"
           />
         </div>
 
@@ -183,7 +193,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
                 allowEmpty={false}
               />
             </div>
-            {review.searchBy === SearchByEnum.TEXT && (
+            {review.searchBy === SearchByEnum.TEXT && !isCheck && (
               <div
                 className="flex flex-column gap-2"
                 style={{ flex: "1 1 220px" }}
@@ -206,6 +216,30 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </div>
         )}
 
+        {isTemplate && isOwnScreen && isCheck && review.searchBy === SearchByEnum.TEXT && (
+          <CheckRuleFieldsComponent
+            fields={review}
+            onChange={(patch) => onChange({ ...review, ...patch })}
+            readText={element?.text || null}
+          />
+        )}
+
+        {isCheck && (
+          <CheckNotifyFieldsComponent
+            fields={review}
+            onChange={(patch) => onChange({ ...review, ...patch })}
+            onNewBot={newBot}
+          />
+        )}
+
+        {isStep && (
+          <StepFieldsComponent
+            fields={review}
+            onChange={(patch) => onChange({ ...review, ...patch })}
+            onNewBot={newBot}
+          />
+        )}
+
         {action.kind === RecordedActionKindEnum.STAGE && review.choice !== ReviewChoiceEnum.LEAVE_OUT && (
           <StageNameComponent
             label="Stage name"
@@ -214,7 +248,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           />
         )}
 
-        {action.kind !== RecordedActionKindEnum.STAGE && startsPage(result, action) && (
+        {action.kind !== RecordedActionKindEnum.STAGE && review.choice !== ReviewChoiceEnum.BEGIN_STAGE && startsPage(result, action) && (
           <StageNameComponent
             label="A new page begins here. Begin a stage too?"
             value={review.stageName}
@@ -234,7 +268,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
               <InputText
                 id="review-input-name"
                 value={review.inputName}
-                onChange={(e) => onChange({ ...review, inputName: toName(e.target.value) })}
+                onChange={(e) => onChange({ ...review, inputName: toScriptName(e.target.value) })}
                 style={{ width: 200, fontFamily: "ui-monospace, Consolas, monospace" }}
               />
             </div>
@@ -246,42 +280,6 @@ export default function ReviewActionDetailComponent({ result, action, review, on
               />
               <label htmlFor="review-input-secret">Secret: never written to a file</label>
             </div>
-          </div>
-        )}
-
-        {review.choice === ReviewChoiceEnum.TYPE_INPUT && (
-          <div className="flex flex-column gap-2">
-            <label
-              htmlFor="review-typed-input"
-              className="font-medium"
-            >
-              Input name
-            </label>
-            <InputText
-              id="review-typed-input"
-              value={review.inputName}
-              onChange={(e) => onChange({ ...review, inputName: toName(e.target.value) })}
-              style={{ width: 200, fontFamily: "ui-monospace, Consolas, monospace" }}
-            />
-          </div>
-        )}
-
-        {(review.choice === ReviewChoiceEnum.EXECUTE_COMMAND || review.choice === ReviewChoiceEnum.LAUNCH_APP) && (
-          <div className="flex flex-column gap-2">
-            <label
-              htmlFor="review-command"
-              className="font-medium"
-            >
-              {review.choice === ReviewChoiceEnum.EXECUTE_COMMAND ? "Command" : "Program"}
-            </label>
-            <InputText
-              id="review-command"
-              value={review.commandText}
-              placeholder={review.choice === ReviewChoiceEnum.EXECUTE_COMMAND ? "del /q C:\\Exports\\*.csv" : "notepad.exe, or the program's full path"}
-              onChange={(e) => onChange({ ...review, commandText: e.target.value })}
-              className="w-full"
-              style={{ fontFamily: "ui-monospace, Consolas, monospace" }}
-            />
           </div>
         )}
 
@@ -333,11 +331,6 @@ function FactComponent({ name, value }: { name: string; value: string }) {
   );
 }
 
-// Letters, digits and underscores: what a script's input names are.
-function toName(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9_]/g, "_");
-}
-
 function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: ActionReview): { name: string; value: string }[] {
   const facts: { name: string; value: string }[] = [];
   const element = elementOf(result, action);
@@ -387,17 +380,20 @@ function describeGroup(result: RecordingResultDto, actionIndexes: number[], isMo
 function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: string | null | undefined): string {
   const waitsUpTo = toSeconds(waitFor(action.waitedMilliseconds));
   const words = review.searchText.trim();
+  const rule = describeRule(review.conditionType, review.searchText, review.conditionTextEnd);
 
   if (isByWords(review)) {
     switch (review.choice) {
       case ReviewChoiceEnum.WAIT_AND_CLICK:
-        return `Becomes three steps: a wait until the area reads “${words}”, a move to the middle of the area, and a click there - so keep the area on what you clicked. Read by Windows, so Windows only for now.`;
+        return `Becomes three steps: a wait until the area reads “${words}”, a move to the middle of the area, and a click there - so keep the area on what you clicked.`;
       case ReviewChoiceEnum.CHECK_THERE:
-        return `Waits until the area reads “${words}”, up to ${waitsUpTo}, and the execution fails if it never does. Read by Windows, so Windows only for now.`;
+        return `Waits until the area ${rule}, up to ${waitsUpTo}, and the execution fails if it never does.`;
       case ReviewChoiceEnum.CHECK_GONE:
-        return `Waits until the area no longer reads “${words}”, up to ${waitsUpTo}, and the execution fails if it still does. Read by Windows, so Windows only for now.`;
+        return `Waits until the area no longer ${rule}, up to ${waitsUpTo}, and the execution fails if it still does.`;
     }
   }
+
+  if (isStepChoice(review.choice)) return stepNote(review.choice);
 
   switch (review.choice) {
     case ReviewChoiceEnum.WAIT_AND_CLICK:
@@ -416,12 +412,6 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
       return `Waits until it is there, up to ${waitsUpTo}, and the execution fails if it never comes. What you did next goes after it.`;
     case ReviewChoiceEnum.CHECK_GONE:
       return `Waits until it has gone, up to ${waitsUpTo}, and the execution fails if it is still there. What you did next goes after it.`;
-    case ReviewChoiceEnum.EXECUTE_COMMAND:
-      return "Executes the command in cmd and waits for it to finish. Windows only, as every command is for now.";
-    case ReviewChoiceEnum.LAUNCH_APP:
-      return "Opens the program and carries on without waiting for its window.";
-    case ReviewChoiceEnum.TYPE_INPUT:
-      return "Types the input's value. One the flow does not have yet is added with no value, to be given before it executes.";
     case ReviewChoiceEnum.LEAVE_OUT:
       if (isOutside(action)) return "Outside the window you picked, so it is left out. Keep it only if the flow really needs it.";
       return "Left out of the flow.";

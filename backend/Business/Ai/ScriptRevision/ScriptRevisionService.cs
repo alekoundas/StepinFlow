@@ -20,8 +20,8 @@ namespace Business.Ai.ScriptRevision
     ///
     /// The answer is JSON, so any model that can answer in it will do, with no tool calling. It is
     /// read back with the scanner as a file is, and checked against what the model may not change,
-    /// in code rather than in the prompt: the flow line and id, templates it cannot have seen, and
-    /// inputs renamed only through the map it answers with. What it got wrong goes back to it,
+    /// in code rather than in the prompt: the flow line and id, templates it cannot have seen, Discord
+    /// bots it cannot know, and inputs renamed only through the map it answers with. What it got wrong goes back to it,
     /// ATTEMPT_COUNT attempts at most.
     ///
     /// What the code owns is never taken from the answer: the input values, which are not even
@@ -188,7 +188,24 @@ namespace Business.Ai.ScriptRevision
             foreach (string name in TemplateNamesOf(revised).Where(x => !cut.Contains(x)))
                 refused.Add(Refusal(DiagnosticCodeEnum.TEMPLATE_NOT_CUT, $"<[ {name} ]> is not a template the script named. Name only these: {cutNames}."));
 
+            refused.AddRange(CheckDiscordBots(original, revised));
             refused.AddRange(CheckInputs(original, revised, renames));
+            return refused;
+        }
+
+        // A bot is a webhook on this machine, so one the model makes up is a bot nobody has.
+        private static List<Diagnostic> CheckDiscordBots(FlowScriptSchema original, FlowScriptSchema revised)
+        {
+            List<Diagnostic> refused = [];
+
+            HashSet<string> given = DiscordBotNamesOf(original);
+            string onlyThese = "The script names none, so a Notify you add has no through.";
+            if (given.Count > 0)
+                onlyThese = $"Send only through these: {string.Join(", ", given)}.";
+
+            foreach (string name in DiscordBotNamesOf(revised).Where(x => !given.Contains(x)))
+                refused.Add(Refusal(DiagnosticCodeEnum.DISCORD_BOT_NOT_GIVEN, $"<[ {name} ]> is not a Discord bot the script named. {onlyThese}"));
+
             return refused;
         }
 
@@ -285,6 +302,13 @@ namespace Business.Ai.ScriptRevision
             return schema.Steps
                 .SelectMany(x => x.FlowStepTemplates)
                 .Select(x => x.FlowTemplate.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static HashSet<string> DiscordBotNamesOf(FlowScriptSchema schema)
+        {
+            return schema.DiscordBots.Values
+                .Select(x => x.Name)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 

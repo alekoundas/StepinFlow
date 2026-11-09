@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
 
 import type { DataTableColumnDto } from "@/shared/models/lazy-data/datatable-column-dto";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
@@ -210,6 +211,16 @@ function PostsAsCell({ bot }: { bot: DiscordBotDto }) {
 
 function MaskedUrlCell({ url }: { url: string }) {
   const [isCopied, setIsCopied] = useState(false);
+
+  // An import adds a bot its file named that was not here, with no webhook for it to send through.
+  if (!url)
+    return (
+      <Tag
+        severity="warning"
+        value="No webhook yet"
+        icon="pi pi-exclamation-triangle"
+      />
+    );
 
   const masked =
     url.length > REVEALED_CHARACTERS

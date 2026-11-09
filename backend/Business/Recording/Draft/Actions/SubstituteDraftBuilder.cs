@@ -7,8 +7,10 @@ namespace Business.Recording.Draft.Actions
 {
     /// <summary>
     /// A step that is not a click, marked while recording where one would have been: a command, an
-    /// application opened, or an input's value typed. Where it was marked does not matter to any of
-    /// them. One Review left with nothing to execute, open or type is no step.
+    /// application opened, an input's value typed, a notification or a wait. Where it was marked
+    /// does not matter to any of them. One Review left with nothing to execute, open, type, send
+    /// through or wait for is no step. A stage begun there is none either: its name begins the stage
+    /// at the next search, as any action's does.
     /// </summary>
     public static class SubstituteDraftBuilder
     {
@@ -46,6 +48,24 @@ namespace Business.Recording.Draft.Actions
                         FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,
                         KeyboardInputType = KeyboardInputTypeEnum.TEXT,
                         KeyboardInputText = $"{{{{{input.Name}}}}}",
+                    });
+                    break;
+
+                // No result: it reports on nothing it sits under.
+                case ReviewChoiceEnum.NOTIFY when review.DiscordBotId != null:
+                    draft.Add(new FlowStep
+                    {
+                        FlowStepType = FlowStepTypeEnum.NOTIFY,
+                        Message = review.Message?.Trim() ?? string.Empty,
+                        DiscordBotId = review.DiscordBotId,
+                    });
+                    break;
+
+                case ReviewChoiceEnum.WAIT when review.WaitMilliseconds > 0:
+                    draft.Add(new FlowStep
+                    {
+                        FlowStepType = FlowStepTypeEnum.WAIT,
+                        WaitForMilliseconds = review.WaitMilliseconds,
                     });
                     break;
             }

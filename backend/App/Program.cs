@@ -128,6 +128,7 @@ namespace App
             builder.Services.AddSingleton<FlowPointDataService>();
             builder.Services.AddSingleton<FlowCsvColumnDataService>();
             builder.Services.AddSingleton<FlowTemplateDataService>();
+            builder.Services.AddSingleton<DiscordBotDataService>();
             builder.Services.AddSingleton<DataService>();
 
             // Flow script
@@ -302,6 +303,9 @@ namespace App
             builder.Services.AddTransient<GetRecordingResultHandler>();
             builder.Services.AddTransient<GetRecordingScreenHandler>();
             builder.Services.AddTransient<ReviewRecordingHandler>();
+            builder.Services.AddTransient<GetRecordingGestureHandler>();
+            builder.Services.AddTransient<DecideRecordingGestureHandler>();
+            builder.Services.AddTransient<TestRecordingGestureRuleHandler>();
             builder.Services.AddTransient<ImportRecordingDraftHandler>();
             builder.Services.AddTransient<InsertRecordingDraftHandler>();
             builder.Services.AddTransient<GenerateRecordingDraftHandler>();

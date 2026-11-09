@@ -63,6 +63,7 @@ export default function RecordingBarPage() {
   const [error, setError] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const askedRef = useRef<number | null>(null);
 
   useEffect(() => {
     const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
@@ -74,6 +75,22 @@ export default function RecordingBarPage() {
 
     return unsubscribe;
   }, []);
+
+  // A gesture's question gets a window of its own, open for as long as the recording asks it:
+  // answered there, or resumed or stopped from here or a hotkey, it closes.
+  useEffect(() => {
+    const asking = progress?.asking ?? null;
+
+    if (asking && askedRef.current !== asking.pressIndex) {
+      askedRef.current = asking.pressIndex;
+      void ElectronApiService.recordingGesture.openWindow(asking.pressIndex, asking.gesture);
+    }
+
+    if (!asking && askedRef.current !== null) {
+      askedRef.current = null;
+      void ElectronApiService.recordingGesture.closeWindow();
+    }
+  }, [progress]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 500);
@@ -336,7 +353,11 @@ export default function RecordingBarPage() {
             <Message
               severity="warn"
               className="w-full justify-content-start"
-              text="Paused. Nothing you do is recorded until you resume."
+              text={
+                progress?.asking
+                  ? "Paused while you say what that was for. Resume leaves it for Review."
+                  : "Paused. Nothing you do is recorded until you resume."
+              }
             />
           )}
 

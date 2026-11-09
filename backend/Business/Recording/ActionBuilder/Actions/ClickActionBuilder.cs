@@ -148,6 +148,7 @@ namespace Business.Recording.ActionBuilder.Actions
                 WindowTitle = press.WindowTitle,
                 Window = press.Window,
                 ScreenshotIndex = press.HasScreenshot ? press.Index : null,
+                PressIndex = press.Index,
                 LocationX = press.PhysicalX,
                 LocationY = press.PhysicalY,
                 CursorButtonType = press.CursorButtonType,

@@ -542,8 +542,100 @@ namespace Business.Tests.Recording
             Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "  ");
             Substitute(ReviewChoiceEnum.LAUNCH_APP);
             Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "");
+            Substitute(ReviewChoiceEnum.NOTIFY);
+            Substitute(ReviewChoiceEnum.WAIT);
 
             ChildrenOf(Build(), null).ShouldHaveSingleItem().Name.ShouldBe("Launch Browser");
+        }
+
+        // It reports on nothing it sits under, so it has no result.
+        [Fact]
+        public void A_notification_or_a_wait_marked_instead_of_a_click_is_its_step()
+        {
+            RecordedActionDto notify = Substitute(ReviewChoiceEnum.NOTIFY);
+            (Reviewed(notify).DiscordBotId, Reviewed(notify).Message) = (7, "  Order placed  ");
+            Reviewed(Substitute(ReviewChoiceEnum.WAIT)).WaitMilliseconds = 1_800_000;
+
+            List<FlowStep> added = ChildrenOf(Build(), null).Skip(1).ToList();
+
+            added.Select(x => (x.FlowStepType, x.DiscordBotId, x.Message, x.FlowStepReference, x.WaitForMilliseconds)).ShouldBe(
+            [
+                (FlowStepTypeEnum.NOTIFY, (int?)7, "Order placed", (FlowStep?)null, 0),
+                (FlowStepTypeEnum.WAIT, (int?)null, string.Empty, (FlowStep?)null, 1_800_000),
+            ]);
+        }
+
+        [Fact]
+        public void A_stage_begun_instead_of_a_click_is_no_step_and_begins_at_the_next_search()
+        {
+            Click(300, 200, "Email");
+            Reviewed(Substitute(ReviewChoiceEnum.BEGIN_STAGE)).StageName = "Sign in";
+            Click(300, 400, "Sign in");
+
+            FlowScriptSchema schema = Build();
+
+            RootsOf(schema).ShouldBe(["Launch Browser", "Find Email", "## Sign in", "Find Sign in"]);
+            schema.Steps.ShouldNotContain(x => x.ParentFlowStep != null && x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER);
+        }
+
+        // ================================================================
+        // A check's rule and what it tells Discord
+        // ================================================================
+
+        // A number or a pattern names nothing, so what was read on it does.
+        [Theory]
+        [InlineData(ConditionTypeEnum.CONTAINS, "Remove", "", "Check Remove", "Remove", "")]
+        [InlineData(ConditionTypeEnum.EQUALS, "Remove", "", "Check Remove", "Remove", "")]
+        [InlineData(ConditionTypeEnum.MATCHES_REGEX, "Remove|Removed", "", "Check Total 120", "Remove|Removed", "")]
+        [InlineData(ConditionTypeEnum.GREATER_THAN, "100", "", "Check Total 120", "100", "")]
+        [InlineData(ConditionTypeEnum.BETWEEN, "100", "200", "Check Total 120", "100", "200")]
+        [InlineData(ConditionTypeEnum.IS_NOT_EMPTY, "", "ignored", "Check Total 120", "", "")]
+        public void A_check_by_its_words_waits_for_them_to_follow_its_rule(ConditionTypeEnum rule, string words, string end, string name, string text, string textEnd)
+        {
+            RecordedActionDto action = Click(400, 300, "Total 120", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            ByText(action, words);
+            (Reviewed(action).ConditionType, Reviewed(action).ConditionTextEnd) = (rule, end);
+
+            FlowStep check = Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+
+            (check.Name, check.ConditionType, check.ConditionText, check.ConditionTextEnd).ShouldBe((name, rule, text, textEnd));
+        }
+
+        [Fact]
+        public void A_check_tells_discord_first_when_it_succeeds_and_before_the_end_when_it_fails_with_its_result()
+        {
+            RecordedActionDto action = Click(400, 300, "Paid", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            ReviewedActionDto review = Reviewed(action);
+            (review.NotifyOnSuccess, review.NotifyOnFailure, review.DiscordBotId) = (true, true, 7);
+            (review.SuccessMessage, review.FailureMessage) = ("  It paid  ", "Never paid");
+            Key(RecordedActionKindEnum.KEY_COMBINATION, "Enter");
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep check = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            List<FlowStep> success = ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.SUCCESS));
+            List<FlowStep> failure = ChildrenOf(schema, BranchOf(schema, check, FlowStepTypeEnum.FAILURE));
+
+            success.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.NOTIFY, FlowStepTypeEnum.KEYBOARD_INPUT]);
+            failure.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.NOTIFY, FlowStepTypeEnum.END_EXECUTION]);
+            (success[0].Message, success[0].DiscordBotId, success[0].FlowStepReference).ShouldBe(("It paid", (int?)7, (FlowStep?)check));
+            (failure[0].Message, failure[0].DiscordBotId, failure[0].FlowStepReference).ShouldBe(("Never paid", (int?)7, (FlowStep?)check));
+            failure.Select(x => x.OrderNumber).ShouldBe([0, 1]);
+        }
+
+        // Asked for and given no bot, it has nothing to send through.
+        [Fact]
+        public void A_check_s_notifications_with_no_bot_are_none()
+        {
+            RecordedActionDto action = Click(400, 300, "Paid", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            (Reviewed(action).NotifyOnSuccess, Reviewed(action).NotifyOnFailure) = (true, true);
+
+            Build().Steps.ShouldNotContain(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY);
+        }
+
+        private ReviewedActionDto Reviewed(RecordedActionDto action)
+        {
+            return _reviewed.Actions.Single(x => x.ActionIndex == action.Index);
         }
 
         // ================================================================
@@ -625,12 +717,25 @@ namespace Business.Tests.Recording
             Substitute(ReviewChoiceEnum.EXECUTE_COMMAND, commandText: "del /q C:\\Exports\\*.csv");
             Substitute(ReviewChoiceEnum.LAUNCH_APP, commandText: "notepad.exe");
             Substitute(ReviewChoiceEnum.TYPE_INPUT, inputName: "email");
+            RecordedActionDto total = Click(400, 360, "Total 120", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK);
+            ByText(total, "100");
+            (Reviewed(total).ConditionType, Reviewed(total).NotifyOnSuccess, Reviewed(total).NotifyOnFailure, Reviewed(total).DiscordBotId) = (ConditionTypeEnum.GREATER_THAN, true, true, 7);
+            (Reviewed(total).SuccessMessage, Reviewed(total).FailureMessage) = ("Over a hundred", "The total never came\nLook at the cart");
+            RecordedActionDto told = Substitute(ReviewChoiceEnum.NOTIFY);
+            (Reviewed(told).DiscordBotId, Reviewed(told).Message) = (7, "Exporting now");
+            Reviewed(Substitute(ReviewChoiceEnum.WAIT)).WaitMilliseconds = 30_000;
+            Reviewed(Substitute(ReviewChoiceEnum.BEGIN_STAGE)).StageName = "Check the total";
             Stage("Download the export");
             ByText(Click(400, 380, "Download"), "Download");
             ByText(Click(400, 420, "Saved", ReviewChoiceEnum.CHECK_THERE, kind: RecordedActionKindEnum.CHECK), "Saved");
             Stage("Exported");
 
             FlowScriptSchema draft = Build();
+
+            // As FlowGenerationService names them from the database, before it prints.
+            foreach (FlowStep notify in draft.Steps.Where(x => x.DiscordBotId != null))
+                draft.DiscordBots[notify] = new DiscordBotReference { Name = "Alerts" };
+
             string script = new Printer().Write(draft);
             FlowScriptSchema read = new Scanner().Read(script);
 
@@ -643,6 +748,8 @@ namespace Business.Tests.Recording
             read.Steps.Count.ShouldBe(draft.Steps.Count - emptyBranches, script);
             read.Points.Count.ShouldBe(draft.Points.Count, script);
             read.Inputs.Count.ShouldBe(2, script);
+            read.DiscordBots.Values.Select(x => x.Name).ShouldBe(["Alerts", "Alerts", "Alerts"], script);
+            script.ShouldContain("through <[ Alerts ]>   with result of <[ Check Total 120 ]>");
             new Printer().Write(read).ShouldBe(script);
         }
     }

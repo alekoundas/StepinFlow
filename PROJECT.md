@@ -834,7 +834,8 @@ what it becomes - wait for the element then click it, click the exact spot, an i
 as written, or left out; a click outside the main area starts left out - and typed text is named
 from the field clicked before it, secret when that field reads as a password. What was read under a
 click, how long the tester waited and the wait that becomes - three times that, at least ten
-seconds, at most sixty - and the clicks on the same picture are shown beside it. Nothing goes to the
+seconds, at most sixty - and the clicks on the same picture are shown beside it. A gesture shows the
+forms its window asks with (below), starting from what the tester answered there. Nothing goes to the
 backend until the draft is asked for, which sends it all in one call (`Recording.review`) for the
 draft to be built from.
 
@@ -960,7 +961,7 @@ recording needs - for a person or the assistant, never the request. Firestone is
 thirteen notifications, one of each pattern, at about 13,000 characters beside the reference's
 39,000. `FlowExamplesTests` imports every finished example as a file is imported, validation
 included, so a format change cannot leave the model learning lines the app refuses; the only issue
-allowed is a Notify's Discord bot, which no file carries.
+allowed is a Notify with no Discord bot: a bot is the machine's own, and no example names one.
 
 The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
 do, with no tool calling. It is read back with the scanner as a file is, and checked in code rather
@@ -1084,27 +1085,61 @@ screen (`TODO.md`, Recording). What it wrote never executes on its own (§10).
 
 **Two gestures while recording**, in either kind of flow. Each is a setting under Recording keys,
 Ctrl + click and Ctrl + right click by default; a real Ctrl + click is recorded once they are
-rebound. Nothing is asked while recording, so nothing appears over the application: Review asks
-what each one was for.
+rebound. Since 2026-11-09 a gesture pauses the recording and asks what it is for, in a window of its
+own over the application (below); with "Ask at once" off (`RECORDING_GESTURE_ASK`), it only marks,
+and Review asks, as before.
 
 - **Ctrl + click marks a check at that spot**, where the position matters, which is why it is the
-  left button. Review asks whether the flow waits until it is there or until it has gone - every
-  recorded check waits, so "it must be there" and "wait until it appears" are one step - and the
-  draft makes it a `Wait For Image` or a `Wait Until No Image` on the element's rectangle, its
-  Failure ending the execution and what came next in its Success branch, as after a click's search
-  (`Business/Recording/Draft/Actions/CheckDraftBuilder`). A check keeps a template of its own: one
-  shared with clicks could be folded into their `Find All Images`.
+  left button: by its picture, or by its words and a rule they follow - Check Text's contains, is
+  exactly, matches a pattern, a number above, below or between, not empty - waiting until it is
+  there or until it has gone. Every recorded check waits, so "it must be there" and "wait until it
+  appears" are one step. The draft makes it a `Wait For Image`, a `Wait Until No Image`, or a `Wait
+  For Text` or `Wait Until No Text` on an area of its own, its Failure ending the execution and what
+  came next in its Success branch, as after a click's search
+  (`Business/Recording/Draft/Actions/CheckDraftBuilder`). A rule that compares a number or a pattern
+  names the check from what was read on the element, not from the rule. A check keeps a template of
+  its own: one shared with clicks could be folded into their `Find All Images`.
+- **A check can tell Discord** when it succeeds, when it fails, or both, each with a message of its
+  own, through one bot. A success's `Notify` is the first step of its Success branch, a failure's
+  comes before the `End Execution failed` already in its Failure branch
+  (`RecordingDraft.AddToFailure`), each `with result of` the check, so what it found, or why it
+  failed, goes with the message and there is nothing to pick for it.
 - **Ctrl + right click marks a step that is not a click** where one would have been: a command, an
-  application opened, or an input's value typed, which Review asks for - a `Shell`, a `Launch` or a
-  `Type {{input}}` (`SubstituteDraftBuilder`). Where it was marked does not matter, which is why it is
-  the right button. An input the flow does not have yet is added with no value.
+  application opened, a notification through a bot (no result), an input's value typed, a wait of a
+  set time, or a stage begun there - a `Shell`, a `Launch`, a `Notify`, a `Type {{input}}`, a `Wait`,
+  or no step, its name beginning the stage at the next search as any action's does
+  (`SubstituteDraftBuilder`). Where it was marked does not matter, which is why it is the right
+  button. An input the flow does not have yet is added with no value.
+- **Asked at once.** The session pauses itself at the gesture's press, as it is drained - the release
+  is still held back, since the hook holds back the button rather than the list - notes the window
+  in front, and `RECORDING_PROGRESS` carries `Asking` until it is answered: in the progress, sent
+  whole, because the question's window opens after it. The bar opens that window
+  (`electron/ipc/handlers/recording-gesture-handler.ts`, `windows/recording-gesture/`): frameless, on
+  top, left out of screenshots, and focusable where the bar is not, since its forms are typed into.
+  The choices one under the other, then the form of the one picked with a way back; the forms are
+  the ones Review shows (`features/recording/gesture/`). For a check, `ClickedElementFinder.FindAtAsync`
+  finds what was pressed while the window is open - the CPU is the tester's while paused - and
+  `Recording.testGestureRule` tests the rule against the words read there with
+  `ConditionEvaluatorHelper`, the code an execution tests it with. The detector stays loaded for the
+  next gesture, and the stop's finding takes each press found already as it was and lets the
+  detector go.
+- **Add and keep recording, or Decide in Review.** `Recording.decideGesture` keeps the answer by the
+  press, or none, resumes, and gives the keyboard back to the window that had it
+  (`IWindowService.FocusWindow`); a resume or a stop from the bar or a hotkey meanwhile leaves it for
+  Review. There is no Cancel: the gesture marked a moment of the recording, and the application may
+  have changed since, losing the keyboard among other things, so the marker stays for Review to keep
+  or leave out. `RecordingResultDto.GestureAnswers` carries the answers by action
+  (`RecordedActionDto.PressIndex`), Review starts from them and has the last word, and the bar's live
+  list says what each was answered as. The time spent asking is no wait: the resume marks it.
 - **Neither click reaches the application** - a Ctrl + right click would open its menu, a Ctrl +
   click a link in a new tab. The hook's handlers run on a thread of their own, too late to hold an
   input back, so `Platform.Shared/Input/GestureGlobalHook`, SharpHook's event loop written again
   because that one is sealed, decides on the hook's own thread whether a press is a gesture's
   modifiers and button, holds it and its release back, and marks both. The recorder leaves out the
   modifiers held for it, as it does a hotkey's (`RecordingHotkeyReader`). Paused, nothing is held
-  back. Windows and macOS only: on Linux the press reaches the application too (`TODO.md`).
+  back. Windows and macOS only: on Linux the press reaches the application too (`TODO.md`), the
+  question's window can be in a screenshot taken as it closes, since `setContentProtection` does
+  nothing there, and Wayland lets no application give another the keyboard back.
 
 **The tester names the stages**, since what they are testing is the one thing no model can work
 out. F8, or Stage on the bar, marks where one begins - paused as well, while the next part is made
@@ -2240,7 +2275,20 @@ refused. A recording names
 the ones it adds (`SubstituteDraftBuilder`), and the `NameUnnamedSteps` migration named the ones
 saved without one. Before it, a check reading a command's output exported as `{{System Command}}` with nothing in the
 file called that, and the file did not import back. `Notify` writes the step whose result it
-includes, `with result of <[ … ]>`; it did not before, and an export lost the pick.
+includes, `with result of <[ … ]>`; it did not before, and an export lost the pick. Since
+2026-11-09 it names its Discord bot too, `through <[ Alerts ]>`, one the header lists under
+`Discord Bots:` by name only, as the templates are listed: a bot is a webhook kept on the machine,
+so the file carries its name and the import finds it, the same name exactly first, else in any case,
+a sub-flow's way. A `through` the header does not list is `DISCORD_BOT_UNDECLARED`, an error. A
+name no bot has is `DISCORD_BOT_UNKNOWN`, a warning at its header line, and the import adds a bot by
+that name with no webhook, saved with the steps (`DiscordBotDataService.LinkAsync`; its `NameAsync`
+is the way back, for an export and for a recording's draft), so they
+keep the name through every export and the user only pastes the webhook in under Settings, where
+the bot says "No webhook yet"; until then a `Notify` through it sends nothing and says so, and the
+flow's validation warns at each one, `DISCORD_BOT_NO_WEBHOOK` - which is what a branch switch, whose
+import warnings go nowhere, leaves to say it. A preview adds nothing. The model's revisions may send only through a bot the script it was given lists
+(`DISCORD_BOT_NOT_GIVEN`). Before, every export, every branch switch and every recording's draft
+lost the bot.
 
 A window step can be pointed at, by a `Break` out of it or a `Notify` reporting it, so its name is
 the first thing on its line, read by its own parser as Image Search's is. The file cannot leave a
@@ -2875,14 +2923,14 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1507 tests, all passing, in eight projects under `backend/Tests/` - one
+1557 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1124 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action and the tester's stages, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 1174 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action, the tester's stages and their notifications, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 47 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |

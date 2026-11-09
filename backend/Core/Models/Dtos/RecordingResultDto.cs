@@ -22,5 +22,8 @@ namespace Core.Models.Dtos
 
         /// <summary>What the local model saw at the presses worth a look. Filled only as the recording goes to a model.</summary>
         public List<ScreenDescriptionDto> ScreenDescriptions { get; set; } = [];
+
+        /// <summary>What the tester said a gesture was for while recording, by its action, for Review to start from. None for one left for Review.</summary>
+        public List<ReviewedActionDto> GestureAnswers { get; set; } = [];
     }
 }

@@ -246,5 +246,62 @@ namespace Business.Tests.Recording
             refused.Code.ShouldBe(DiagnosticCodeEnum.ACTIONS_CHANGED);
             refused.Message.ShouldContain("the stage <[ Sign in ]>");
         }
+
+        // ================================================================
+        // The tester's notifications
+        // ================================================================
+
+        // The draft with a check that tells Discord when it fails, reporting itself, and a message
+        // marked instead of a click after it. The check's name is the model's to change.
+        private static FlowScriptSchema Notifying(string checkName, string failureMessage, string bot, bool isInSuccess = false)
+        {
+            FlowScriptSchema schema = new FlowScriptSchema();
+            FlowStep success = Search(schema, null, checkName);
+            FlowStep check = success.ParentFlowStep!;
+            FlowStep failure = schema.Steps.Single(x => x.ParentFlowStep == check && x.FlowStepType == FlowStepTypeEnum.FAILURE);
+
+            FlowStep reporting = new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = failureMessage, FlowStepReference = check };
+            Add(schema, isInSuccess ? success : failure, reporting);
+            schema.DiscordBots[reporting] = new DiscordBotReference { Name = bot };
+
+            FlowStep marked = Add(schema, success, new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "Order placed" });
+            schema.DiscordBots[marked] = new DiscordBotReference { Name = "Alerts" };
+
+            return schema;
+        }
+
+        [Fact]
+        public void The_tester_s_notifications_kept_with_the_check_renamed_pass_beside_one_the_model_added()
+        {
+            FlowScriptSchema answer = Notifying("Check the cart is empty", "Remove never showed", "Alerts");
+            Add(answer, null, new FlowStep { FlowStepType = FlowStepTypeEnum.NOTIFY, Message = "the model's own" });
+
+            RecordedActionsCheck.Check(Notifying("Check Remove", "Remove never showed", "Alerts"), answer).ShouldBeEmpty();
+        }
+
+        [Theory]
+        [InlineData("Remove did not show", "Alerts", false)]
+        [InlineData("Remove never showed", "Night shift", false)]
+        [InlineData("Remove never showed", "Alerts", true)]
+        public void The_tester_s_notification_changed_sent_elsewhere_or_moved_to_the_other_branch_is_refused(string message, string bot, bool isInSuccess)
+        {
+            FlowScriptSchema draft = Notifying("Check Remove", "Remove never showed", "Alerts");
+
+            Diagnostic refused = RecordedActionsCheck.Check(draft, Notifying("Check Remove", message, bot, isInSuccess)).ShouldHaveSingleItem();
+
+            refused.Code.ShouldBe(DiagnosticCodeEnum.ACTIONS_CHANGED);
+            refused.Message.ShouldStartWith("The answer drops or changes the draft's Notify <[ Remove never showed ]> through <[ Alerts ]> when the check it reports fails.");
+        }
+
+        [Fact]
+        public void A_notification_marked_instead_of_a_click_dropped_is_refused()
+        {
+            FlowScriptSchema answer = Notifying("Check Remove", "Remove never showed", "Alerts");
+            answer.Steps.Remove(answer.Steps.Single(x => x.Message == "Order placed"));
+
+            Diagnostic refused = RecordedActionsCheck.Check(Notifying("Check Remove", "Remove never showed", "Alerts"), answer).ShouldHaveSingleItem();
+
+            refused.Message.ShouldStartWith("The answer drops or changes the draft's Notify <[ Order placed ]> through <[ Alerts ]>.");
+        }
     }
 }

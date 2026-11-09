@@ -55,11 +55,18 @@ const SECTIONS: Section[] = [
     label: "Recording keys",
     icon: "video",
     content: (
-      <HotkeysPanelComponent
-        header="Recording keys"
-        description="Pressed while you are recording another application, so these are matched system wide and never recorded. The keys still reach that application, so rebind any it uses. The two clicks do not: it never gets them."
-        keyPrefix="RECORDING_HOTKEY_"
-      />
+      <div className="flex flex-column gap-3">
+        <HotkeysPanelComponent
+          header="Recording keys"
+          description="Pressed while you are recording another application, so these are matched system wide and never recorded. The keys still reach that application, so rebind any it uses. The two clicks do not: it never gets them."
+          keyPrefix="RECORDING_HOTKEY_"
+        />
+        <AppSettingsPanelComponent
+          header="When you mark a check or a step"
+          description="What happens at a Ctrl + click or a Ctrl + right click while recording."
+          keyPrefix="RECORDING_GESTURE_"
+        />
+      </div>
     ),
   },
   {

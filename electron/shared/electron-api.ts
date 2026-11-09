@@ -73,6 +73,14 @@ export interface ElectronApi {
     resizeWindow: (width: number, height: number) => void;
   };
 
+  recordingGesture: {
+    // The window a gesture asks in, while the recording is paused at it. One at a time.
+    openWindow: (pressIndex: number, gesture: string) => Promise<void>;
+    closeWindow: () => Promise<void>;
+    // What the page shows, in CSS pixels. The width stays.
+    resizeWindow: (height: number) => void;
+  };
+
   // The system's file dialogs and file manager. A cancelled dialog answers null.
   files: {
     chooseFolder: (defaultPath?: string | null) => Promise<string | null>;

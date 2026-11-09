@@ -17,12 +17,16 @@ namespace Business.Recording.Elements
     ///
     /// A press outside the main area is not looked at: there is no screenshot of where it landed.
     /// Read text is screen data, so it reaches a cloud model only through the screen data gate.
+    ///
+    /// A check's press is found while the recording is paused to ask about it, and the stop's
+    /// finding takes it as it was. One at a time, since the detector reads one image at once.
     /// </summary>
-    public sealed class ClickedElementFinder : IClickedElementFinder
+    public sealed class ClickedElementFinder : IClickedElementFinder, IDisposable
     {
         private readonly IElementLocator _elementLocator;
         private readonly IOcrService _ocrService;
         private readonly IScreenshotService _screenshotService;
+        private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
 
         public ClickedElementFinder(IElementLocator elementLocator, IOcrService ocrService, IScreenshotService screenshotService)
         {
@@ -39,6 +43,7 @@ namespace Business.Recording.Elements
         public async Task<IReadOnlyList<ClickedElementDto>> FindAsync(
             IReadOnlyList<RecordedActionDto> actions,
             Func<int, RecordedPress?> pressOf,
+            IReadOnlyDictionary<int, ClickedElementDto> foundByPress,
             Action<int, int> onProgress,
             CancellationToken ct = default)
         {
@@ -46,18 +51,26 @@ namespace Business.Recording.Elements
             List<ClickedElementDto> elements = new List<ClickedElementDto>();
 
             onProgress(0, clicks.Count);
-            if (clicks.Count == 0)
-                return elements;
 
-            _elementLocator.Load();
-
+            await _gate.WaitAsync(ct);
             try
             {
                 for (int done = 0; done < clicks.Count; done++)
                 {
                     ct.ThrowIfCancellationRequested();
 
-                    ClickedElementDto? found = await FindOneAsync(clicks[done], pressOf, ct);
+                    RecordedActionDto click = clicks[done];
+                    ClickedElementDto? found;
+                    if (click.PressIndex != null && foundByPress.TryGetValue(click.PressIndex.Value, out ClickedElementDto? asked))
+                    {
+                        found = ForAction(asked, click.Index);
+                    }
+                    else
+                    {
+                        _elementLocator.Load();
+                        found = await FindOneAsync(click, pressOf, ct);
+                    }
+
                     if (found != null)
                         elements.Add(found);
 
@@ -66,10 +79,44 @@ namespace Business.Recording.Elements
             }
             finally
             {
+                // Hundreds of megabytes the app has no use for between recordings, loaded here or by a gesture.
                 _elementLocator.Unload();
+                _gate.Release();
             }
 
             return elements;
+        }
+
+        public async Task<ClickedElementDto?> FindAtAsync(RecordedPress press, int screenX, int screenY, CancellationToken ct = default)
+        {
+            await _gate.WaitAsync(ct);
+            try
+            {
+                _elementLocator.Load();
+                return await FindAtPressAsync(press, screenX, screenY, -1, ct);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        public void Unload()
+        {
+            _gate.Wait();
+            try
+            {
+                _elementLocator.Unload();
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        public void Dispose()
+        {
+            _gate.Dispose();
         }
 
 
@@ -84,13 +131,18 @@ namespace Business.Recording.Elements
         }
 
         // One screenshot decoded at a time: a recording's worth of them would be hundreds of megabytes.
-        private async Task<ClickedElementDto?> FindOneAsync(RecordedActionDto action, Func<int, RecordedPress?> pressOf, CancellationToken ct)
+        private Task<ClickedElementDto?> FindOneAsync(RecordedActionDto action, Func<int, RecordedPress?> pressOf, CancellationToken ct)
         {
             RecordedPress press = pressOf(action.ScreenshotIndex!.Value)!;
+            return FindAtPressAsync(press, action.LocationX, action.LocationY, action.Index, ct);
+        }
+
+        private async Task<ClickedElementDto?> FindAtPressAsync(RecordedPress press, int screenX, int screenY, int actionIndex, CancellationToken ct)
+        {
             RawImage image = _screenshotService.Decode(press.Screenshot);
             Rectangle whole = new Rectangle(0, 0, image.Width, image.Height);
 
-            Point point = new Point(action.LocationX - press.MainAreaBounds.X, action.LocationY - press.MainAreaBounds.Y);
+            Point point = new Point(screenX - press.MainAreaBounds.X, screenY - press.MainAreaBounds.Y);
             if (!whole.Contains(point))
                 return null;
 
@@ -100,7 +152,7 @@ namespace Business.Recording.Elements
 
             return new ClickedElementDto
             {
-                ActionIndex = action.Index,
+                ActionIndex = actionIndex,
                 X = element.Bounds.X,
                 Y = element.Bounds.Y,
                 Width = element.Bounds.Width,
@@ -109,6 +161,23 @@ namespace Business.Recording.Elements
                 FoundBy = element.FoundBy,
                 Note = element.Note,
                 Image = _screenshotService.Encode(crop, ScreenshotFormatEnum.PNG, 100),
+            };
+        }
+
+        // Found before its action had a number.
+        private static ClickedElementDto ForAction(ClickedElementDto found, int actionIndex)
+        {
+            return new ClickedElementDto
+            {
+                ActionIndex = actionIndex,
+                X = found.X,
+                Y = found.Y,
+                Width = found.Width,
+                Height = found.Height,
+                Text = found.Text,
+                FoundBy = found.FoundBy,
+                Note = found.Note,
+                Image = found.Image,
             };
         }
 

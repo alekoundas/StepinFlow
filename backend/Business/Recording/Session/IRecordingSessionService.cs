@@ -50,5 +50,17 @@ namespace Business.Recording.Session
 
         /// <summary>The main area at a press, or null when it kept none.</summary>
         RecordedPress? GetPress(int index);
+
+        /// <summary>The gesture the recording is paused at, asking what it is for, with what it pressed once found. Null when it asks nothing.</summary>
+        RecordingGestureDto? GetGesture();
+
+        /// <summary>
+        /// Keeps what the tester said the gesture was for, or nothing for one left for Review, and
+        /// resumes, giving the keyboard back to the window that had it. Refused once it no longer asks.
+        /// </summary>
+        ResultDto<bool> DecideGesture(RecordingGestureDecisionDto decision);
+
+        /// <summary>Whether the words read on what the gesture pressed pass the rule, as an execution would test them. False with nothing read.</summary>
+        bool TestGestureRule(RecordingGestureRuleDto rule);
     }
 }

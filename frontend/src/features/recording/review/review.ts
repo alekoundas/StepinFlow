@@ -8,6 +8,15 @@ import type { ClickGroupDto } from "@/shared/models/click-group-dto";
 import type { PressedElementDto } from "@/shared/models/pressed-element-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
+import {
+  blankFields,
+  describeRule,
+  fromReviewed,
+  type GestureFields,
+  isCheckChoice,
+  ruleNeedsWords,
+  toReviewedFields,
+} from "@/features/recording/gesture/gesture";
 
 // A wait is three times what the tester waited, and never under 10 s, because the machine a flow
 // executes on is often slower than the one it was recorded on; never over 60 s either.
@@ -25,22 +34,15 @@ export interface ElementRectangle {
   height: number;
 }
 
-/** What the tester has decided about one action so far. */
-export interface ActionReview {
-  choice: ReviewChoiceEnum;
+/**
+ * What the tester has decided about one action so far: what a gesture's window asks, and for any
+ * action the template's rectangle and whether typed text is a secret. A search goes by the picture
+ * cut along the rectangle, or by the words read inside it; a stage's name is of a stage marked
+ * while recording, or one beginning at this action.
+ */
+export interface ActionReview extends GestureFields {
   element: ElementRectangle | null;
-  inputName: string;
   isSecret: boolean;
-
-  /** For a command, what it executes; for an application, its program. */
-  commandText: string;
-
-  /** For a search: by the picture cut along the rectangle, or by these words read inside it. */
-  searchBy: SearchByEnum;
-  searchText: string;
-
-  /** A stage's name: of a stage marked while recording, or one beginning at this action. */
-  stageName: string;
 }
 
 export interface ReviewOption {
@@ -129,7 +131,10 @@ export function optionsFor(
     return [
       { label: "A command", value: ReviewChoiceEnum.EXECUTE_COMMAND },
       { label: "Open an application", value: ReviewChoiceEnum.LAUNCH_APP },
+      { label: "A notification", value: ReviewChoiceEnum.NOTIFY },
       { label: "Type an input", value: ReviewChoiceEnum.TYPE_INPUT },
+      { label: "A wait", value: ReviewChoiceEnum.WAIT },
+      { label: "A stage begins", value: ReviewChoiceEnum.BEGIN_STAGE },
       leaveOut,
     ];
 
@@ -172,7 +177,10 @@ export function optionsFor(
   return [{ label: "Press it", value: ReviewChoiceEnum.KEEP }, leaveOut];
 }
 
-/** Each action's first option, with typed text named from the field it went into. */
+/**
+ * Each action's first option, with typed text named from the field it went into, and a gesture as
+ * the tester answered it while recording.
+ */
 export function initialReviews(result: RecordingResultDto): Record<number, ActionReview> {
   const reviews: Record<number, ActionReview> = {};
   const usedNames = new Set<string>();
@@ -184,17 +192,19 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
     let inputName = "";
     if (action.kind === RecordedActionKindEnum.TYPING) inputName = uniqueName(toInputName(label), usedNames);
 
-    reviews[action.index] = {
-      // The first option is the same in either kind of flow.
-      choice: optionsFor(action, element, false)[0].value,
+    // The first option is the same in either kind of flow.
+    const fields = blankFields(optionsFor(action, element, false)[0].value);
+
+    const review: ActionReview = {
+      ...fields,
       element: element ? { x: element.x, y: element.y, width: element.width, height: element.height } : null,
       inputName,
       isSecret: isSecretFieldBefore(result, action, label),
-      commandText: "",
-      searchBy: SearchByEnum.IMAGE,
       searchText: element?.text ?? "",
-      stageName: "",
     };
+
+    const answer = result.gestureAnswers?.find((x) => x.actionIndex === action.index);
+    reviews[action.index] = answer ? { ...review, ...fromReviewed(answer, review) } : review;
   }
 
   return reviews;
@@ -285,28 +295,50 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
     return `becomes the input ${review.inputName}${review.isSecret ? " · secret" : ""}`;
   }
 
-  if (review.choice === ReviewChoiceEnum.CHECK_THERE) return `until it is there${byWords(review)}`;
-  if (review.choice === ReviewChoiceEnum.CHECK_GONE) return `until it has gone${byWords(review)}`;
+  if (review.choice === ReviewChoiceEnum.CHECK_THERE) return `until it is there${byWords(review)}${tellsDiscord(review)}`;
+  if (review.choice === ReviewChoiceEnum.CHECK_GONE) return `until it has gone${byWords(review)}${tellsDiscord(review)}`;
 
-  // With nothing to execute, open or type it is no step, so the list says so.
+  // With nothing to execute, open, type or send through it is no step, so the list says so.
   const command = review.commandText.trim();
   if (review.choice === ReviewChoiceEnum.EXECUTE_COMMAND) return command ? command : "no command yet, so no step";
   if (review.choice === ReviewChoiceEnum.LAUNCH_APP) return command ? `opens ${command}` : "no program yet, so no step";
   if (review.choice === ReviewChoiceEnum.TYPE_INPUT)
     return review.inputName ? `types {{${review.inputName}}}` : "no input yet, so no step";
+  if (review.choice === ReviewChoiceEnum.NOTIFY) return review.discordBotId !== null ? "tells Discord" : "no bot yet, so no step";
+  if (review.choice === ReviewChoiceEnum.WAIT) return `waits ${toSeconds(review.waitMilliseconds)}`;
+  if (review.choice === ReviewChoiceEnum.BEGIN_STAGE) {
+    const name = review.stageName.trim();
+    return name ? `## ${name}` : "no name yet, so no stage";
+  }
 
   if (isPointed(action) && action.waitedMilliseconds > 0)
     return `after ${toSeconds(action.waitedMilliseconds)}${isTemplateChoice(review.choice) ? byWords(review) : ""}`;
   return "";
 }
 
-/** Whether a search goes by the words, which an empty field does not. */
+/**
+ * Whether a search goes by the words, which an empty field does not, unless a check's rule
+ * compares none. A click's search always waits for words it contains.
+ */
 export function isByWords(review: ActionReview): boolean {
-  return review.searchBy === SearchByEnum.TEXT && review.searchText.trim().length > 0;
+  if (review.searchBy !== SearchByEnum.TEXT) return false;
+  if (isCheckChoice(review.choice) && !ruleNeedsWords(review.conditionType)) return true;
+
+  return review.searchText.trim().length > 0;
 }
 
 function byWords(review: ActionReview): string {
-  return isByWords(review) ? ` · reads “${review.searchText.trim()}”` : "";
+  if (!isByWords(review)) return "";
+  if (!isCheckChoice(review.choice)) return ` · reads “${review.searchText.trim()}”`;
+
+  return ` · ${describeRule(review.conditionType, review.searchText, review.conditionTextEnd)}`;
+}
+
+function tellsDiscord(review: ActionReview): string {
+  if (!review.notifyOnSuccess && !review.notifyOnFailure) return "";
+  if (review.discordBotId === null) return " · no bot to tell yet";
+
+  return " · tells Discord";
 }
 
 /** The first option that keeps it, for a checkbox ticked back on. */
@@ -319,23 +351,17 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
     actions: listedActions(result).map((action) => {
       const review = reviews[action.index];
       const isInput = review.choice === ReviewChoiceEnum.INPUT;
-      const isNamed = isInput || review.choice === ReviewChoiceEnum.TYPE_INPUT;
-      const isCommand = review.choice === ReviewChoiceEnum.EXECUTE_COMMAND || review.choice === ReviewChoiceEnum.LAUNCH_APP;
-      const stageName = review.stageName.trim();
+      const fields = toReviewedFields(review);
 
       return {
+        ...fields,
         actionIndex: action.index,
-        choice: review.choice,
         elementX: review.element?.x ?? null,
         elementY: review.element?.y ?? null,
         elementWidth: review.element?.width ?? null,
         elementHeight: review.element?.height ?? null,
-        searchBy: review.searchBy,
-        searchText: review.searchBy === SearchByEnum.TEXT ? review.searchText : null,
-        inputName: isNamed ? review.inputName : null,
+        inputName: isInput ? review.inputName : fields.inputName,
         isSecret: isInput && review.isSecret,
-        commandText: isCommand ? review.commandText : null,
-        stageName: stageName.length > 0 ? stageName : null,
       };
     }),
   };

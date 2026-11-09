@@ -36,6 +36,7 @@ import DialogRootComponent from "@/shared/components/modal-component/DialogRootC
 import OverlayCapturePage from "@/windows/overlay/OverlayCapturePage";
 import ImageEditorPage from "@/windows/image-editor/ImageEditorPage";
 import RecordingBarPage from "@/windows/recording-bar/RecordingBarPage";
+import RecordingGesturePage from "@/windows/recording-gesture/RecordingGesturePage";
 
 const router = createHashRouter([
   {
@@ -116,6 +117,10 @@ const router = createHashRouter([
   {
     path: "/recording-bar",
     element: <RecordingBarPage />,
+  },
+  {
+    path: "/recording-gesture",
+    element: <RecordingGesturePage />,
   },
 ]);
 

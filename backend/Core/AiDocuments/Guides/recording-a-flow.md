@@ -47,6 +47,29 @@ Stage marks where a part of what you are testing begins - "Sign in", "Delete cus
 the one thing no model can work out. Nothing is typed then: Review asks for its name. Typed text shows in the
 bar as a count, "Typed 15 characters", never as the text.
 
+## Marking a check or a step while recording
+
+Two clicks mark something rather than click it, and never reach the application: **Ctrl + click**
+marks a check on what you click, and **Ctrl + right click** a step that is not a click. Either
+pauses the recording and opens a window over the application that asks what it is for. The window
+takes the keyboard, so an application may close an open menu meanwhile; when it closes, the window
+you were in gets the keyboard back.
+
+- **A check** goes by its picture, or by its words and a rule they follow: contain, are exactly,
+  match a pattern, are a number above, below or between, or are not empty. It waits until it is
+  there or until it has gone. While the window is open, StepinFlow finds what you clicked and reads
+  the words on it, a second or two, and says whether the rule passes on the screen as it is. It can
+  tell Discord when it succeeds, when it fails, or both, each with a message of its own, through
+  one of your bots or a new one made there; what the check found, or why it failed, goes with it.
+- **A step** is a command, an application opened, a notification through a bot, an input's value
+  typed, a wait of a set time, or a stage begun and named there.
+
+**Add and keep recording** keeps the answer; **Decide in Review** keeps none, and Review asks
+instead. Either resumes the recording, and so do Resume and Stop, which leave it for Review. The
+time spent in the window is not a wait the flow makes. Review starts from every answer and can
+change it. Turn off "Ask at once" under Settings, Recording keys, for an application that cannot
+lose the keyboard: a mark then only marks, and Review asks.
+
 ## What each click hit
 
 When the recording stops, StepinFlow looks at the screenshot from before each click and finds the
@@ -77,6 +100,10 @@ to change it. Each action says what it becomes:
   its default; or the text as written. A field Windows says is a password field, or that reads as
   one, makes the input secret, which is never written to a file.
 - **A key, a scroll**: kept, or left out.
+- **A check you marked**: until it is there or until it has gone, by its picture or by its words and
+  their rule, and what it tells Discord.
+- **A step you marked**: which step, and what it needs - the command, the program, the bot and the
+  message, the input, how long to wait, the stage's name.
 - **A stage you marked**: its name. With none it is no stage. Where the screen showed a new page,
   Review offers to begin a stage there as well, and the list marks it "new page".
 
@@ -95,6 +122,9 @@ and which other clicks hit the same picture. "What it should do" can be edited h
 - A search is named from the text on the element, such as "Find Invoices", or "Find icon".
 - Clicks that hit the same picture share one template.
 - Typed text types its input, such as {{email}}. A pause is not a step; it sizes the next wait.
+- A check is a wait for it, or for it to go; what came after it goes in its Success branch. Its
+  notification when it succeeds is the first step there, and when it fails it comes before the
+  execution ends, each `with result of` the check.
 - A stage you named is `##` and its name over the next search, at the top of the flow.
 
 The draft is written the way an imported script is, so a draft that does not read cleanly leaves the
@@ -115,8 +145,9 @@ goes on. About two seconds a look on a graphics card, and much slower without on
 
 The answer is read the way an imported file is. When it does not read cleanly, or changes something
 it may not - the flow's name and id, a template, an input other than by renaming it, a click, drag,
-scroll, typed text or key you recorded, added, left out or moved, or a stage you named moved,
-renamed or left out - it is sent back with what was wrong, three times at most. It may add stages
+scroll, typed text or key you recorded, added, left out or moved, a stage you named moved,
+renamed or left out, or a notification you asked for changed, left out or moved off its check - it
+is sent back with what was wrong, three times at most. It may add stages
 of its own for parts you did not name. Nothing is saved until an answer reads cleanly. When none does, or
 the model cannot be reached, the plain draft is saved instead, and the page says why.
 

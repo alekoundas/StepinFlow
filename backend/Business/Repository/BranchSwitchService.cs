@@ -140,6 +140,7 @@ namespace Business.Repository
 
                 FlowScriptSchema schema = schemas[i];
                 await FlowDataService.LinkSubFlowsAsync(dbContext, schema, ct);
+                await DiscordBotDataService.LinkAsync(dbContext, schema, ct);
 
                 ResultDto<(int FlowId, FlowValidationResultDto Validation)> replaced = await _dataService.Flow.ReplaceAsync(dbContext, schema, ct);
                 if (!replaced.IsSuccess)

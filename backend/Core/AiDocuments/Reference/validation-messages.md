@@ -118,6 +118,10 @@ with nothing around it, a point measured from nothing, or anything inside such a
 on this screen and lands somewhere else on any other. Put the region inside a window or a monitor,
 or measure the point from one.
 
+**DISCORD_BOT_NO_WEBHOOK** — a notify step sends through a bot with no webhook yet, so it sends
+nothing. An import adds a bot like that when the flow's file names one this machine does not have,
+so the steps keep it. Paste the webhook in under Settings, Discord bots.
+
 **KEYS_NOT_RELEASED** — a `KEYBOARD_INPUT` step holds keys and nothing below it lets go of the same
 keys, so they stay down for the rest of the execution and every key typed after them reads as a
 shortcut. Add a step that releases them after the steps they are held for. The engine lets go of

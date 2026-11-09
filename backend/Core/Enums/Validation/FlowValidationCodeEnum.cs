@@ -60,6 +60,9 @@ namespace Core.Enums
         // Notifications
         DISCORD_BOT_MISSING,
 
+        /// <summary>Picked, but the bot has no webhook yet: an import added it by the name its file gave.</summary>
+        DISCORD_BOT_NO_WEBHOOK,
+
         /// <summary>Set, but the step whose result it includes is no longer one it sits under.</summary>
         REPORTED_STEP_UNREACHABLE,
 
