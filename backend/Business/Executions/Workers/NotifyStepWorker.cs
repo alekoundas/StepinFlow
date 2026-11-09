@@ -34,6 +34,10 @@ namespace Business.Executions.Workers
             if (bot == null)
                 return ExecutionStep.Success(message: "That bot no longer exists.");
 
+            // One an import added by the name its file gave, until the webhook is pasted in.
+            if (string.IsNullOrWhiteSpace(bot.WebhookUrl))
+                return ExecutionStep.Success(message: $"\"{bot.Name}\" has no webhook yet, so nothing was sent. Paste it in under Settings, Discord bots.");
+
             // A step's result is kept for everything under it, and this one sits under it.
             FlowStep? reportedStep = null;
             ExecutionStep? reportedResult = null;

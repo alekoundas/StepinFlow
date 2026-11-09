@@ -29,6 +29,7 @@ namespace Business.FlowScript.Text
             WriteAreas(builder, schema);
             WritePoints(builder, schema);
             WriteCsvColumns(builder, schema);
+            WriteDiscordBots(builder, schema);
             WriteTemplates(builder, schema);
 
             // FlowSteps
@@ -37,11 +38,14 @@ namespace Business.FlowScript.Text
             return builder.ToString();
         }
 
-        public string WriteStep(FlowStep step, SubFlowReference? subFlow)
+        public string WriteStep(FlowStep step, SubFlowReference? subFlow, DiscordBotReference? discordBot)
         {
             FlowScriptSchema schema = new FlowScriptSchema();
             if (subFlow != null)
                 schema.SubFlows[step] = subFlow;
+
+            if (discordBot != null)
+                schema.DiscordBots[step] = discordBot;
 
             StringBuilder builder = new StringBuilder();
             WriteComment(builder, step, 0);
@@ -104,7 +108,8 @@ namespace Business.FlowScript.Text
                     return new SubFlowWriter(step, subFlow);
 
                 case FlowStepTypeEnum.NOTIFY:
-                    return new NotifyWriter(step);
+                    DiscordBotReference? discordBot = schema.DiscordBots.GetValueOrDefault(step);
+                    return new NotifyWriter(step, discordBot);
 
                 case FlowStepTypeEnum.END_EXECUTION:
                     return new EndExecutionWriter(step);
@@ -224,6 +229,31 @@ namespace Business.FlowScript.Text
             foreach (FlowCsvColumn input in schema.Inputs.OrderBy(x => x.OrderNumber))
             {
                 string line = new CsvColumnWriter(input).Write();
+                builder.Append("  ").AppendLine(line);
+            }
+
+            builder.AppendLine();
+        }
+
+        // The bots the steps send through, once each, as the templates are: a bot no step uses is not
+        // the flow's.
+        private static void WriteDiscordBots(StringBuilder builder, FlowScriptSchema schema)
+        {
+            List<string> names = schema.DiscordBots.Values
+                .Select(x => x.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.Ordinal)
+                .ToList();
+
+            if (names.Count == 0)
+                return;
+
+            string heading = new SectionWriter(ScriptSymbolEnum.DISCORD_BOTS).Write();
+            builder.AppendLine(heading);
+
+            foreach (string name in names)
+            {
+                string line = new DiscordBotWriter(name).Write();
                 builder.Append("  ").AppendLine(line);
             }
 

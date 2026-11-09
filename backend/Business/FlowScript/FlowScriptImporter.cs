@@ -53,9 +53,12 @@ namespace Business.FlowScript
             if (!schema.IsValid)
                 return Failed(schema.Diagnostics);
 
-            // A sub-flow it does not find leaves its step empty, as a warning beside the result.
+            // A sub-flow it does not find leaves its step empty, and a bot is added with no webhook, each as a warning beside the result.
             List<Diagnostic> unlinked = await _dataService.Flow.LinkSubFlowsAsync(schema, ct);
             schema.Diagnostics.AddRange(unlinked);
+
+            List<Diagnostic> botless = await _dataService.DiscordBot.LinkAsync(schema, ct);
+            schema.Diagnostics.AddRange(botless);
 
             // A missing image is reported, and the template is kept without one.
             List<FlowTemplate> pictures = TemplatesOf(schema);

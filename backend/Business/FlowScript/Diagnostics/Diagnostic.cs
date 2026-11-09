@@ -48,12 +48,19 @@ namespace Business.FlowScript.Diagnostics
         SUB_FLOW_UNKNOWN,
         SUB_FLOW_NOT_CALLABLE,
 
+        // Discord bots: one a Notify names that Discord Bots above does not list, one listed twice,
+        // and, found as the file is imported, one no bot on this machine is called.
+        DISCORD_BOT_UNDECLARED,
+        DISCORD_BOT_DUPLICATE,
+        DISCORD_BOT_UNKNOWN,
+
         // A model's answer: not the JSON asked for, a flow line or id it changed, a template the
-        // draft did not cut, an input it did not rename through the map.
+        // draft did not cut, an input it did not rename through the map, a bot the draft did not name.
         ANSWER_UNREADABLE,
         FLOW_CHANGED,
         TEMPLATE_NOT_CUT,
         INPUT_NOT_RENAMED,
+        DISCORD_BOT_NOT_GIVEN,
 
         // A model's answer for a QA test: no stage marker, no End Execution passed, a value typed
         // wrong on purpose no longer typed as it is.

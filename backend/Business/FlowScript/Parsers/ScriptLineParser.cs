@@ -61,7 +61,7 @@ namespace Business.FlowScript.Parsers
             if (_section != ScriptSymbolEnum.STEPS || IsSection(symbol))
                 ReportUnattachedComments();
 
-            // Change section if symbol == DESCRIPTION,AREAS,POINTS,CSV_COLUMNS,TEMPLATES,STEPS
+            // Change section if symbol == DESCRIPTION,AREAS,POINTS,CSV_COLUMNS,DISCORD_BOTS,TEMPLATES,STEPS
             if (IsSection(symbol))
             {
                 _section = new SectionParser(line.Tokens).Parse();
@@ -89,6 +89,10 @@ namespace Business.FlowScript.Parsers
 
                 case ScriptSymbolEnum.CSV_COLUMNS:
                     AddInput(line);
+                    break;
+
+                case ScriptSymbolEnum.DISCORD_BOTS:
+                    AddDiscordBot(line);
                     break;
 
                 case ScriptSymbolEnum.TEMPLATES:
@@ -202,6 +206,15 @@ namespace Business.FlowScript.Parsers
             _scope.Declare(input, TokenOf(input.Name, line.Tokens));
         }
 
+        // Kept with its line, so a bot this machine does not have is warned about where it is listed.
+        private void AddDiscordBot(ScriptLine line)
+        {
+            DiscordBotReference bot = new DiscordBotParser(line.Tokens).Parse();
+            bot.Line = line.Number;
+
+            _scope.Declare(bot, TokenOf(bot.Name, line.Tokens));
+        }
+
         private void AddTemplate(ScriptLine line)
         {
             FlowTemplate template = new TemplateParser(line.Tokens).Parse();
@@ -252,6 +265,13 @@ namespace Business.FlowScript.Parsers
 
                 _flowScriptSchema.SubFlows[step] = subFlow;
                 step.SubFlow = null;
+            }
+
+            // A bot is this machine's, so the header's line for it is kept for the import to find it by.
+            if (step.DiscordBot != null)
+            {
+                _flowScriptSchema.DiscordBots[step] = _scope.DeclaredDiscordBot(step.DiscordBot.Name);
+                step.DiscordBot = null;
             }
 
             step.IsDisabled = isDisabled;
@@ -405,6 +425,7 @@ namespace Business.FlowScript.Parsers
                 || symbol == ScriptSymbolEnum.AREAS
                 || symbol == ScriptSymbolEnum.POINTS
                 || symbol == ScriptSymbolEnum.CSV_COLUMNS
+                || symbol == ScriptSymbolEnum.DISCORD_BOTS
                 || symbol == ScriptSymbolEnum.TEMPLATES
                 || symbol == ScriptSymbolEnum.STEPS;
         }

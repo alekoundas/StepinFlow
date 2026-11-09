@@ -21,6 +21,7 @@ namespace Business.FlowScript.Catalogs
         AREAS,
         POINTS,
         CSV_COLUMNS,
+        DISCORD_BOTS,
         TEMPLATES,
         STEPS,
 
@@ -62,6 +63,7 @@ namespace Business.FlowScript.Catalogs
         OPENS,
         WITH,
         WITH_RESULT_OF,
+        THROUGH,
         KEEP,
         TIMEOUT,
         NO_TIMEOUT,

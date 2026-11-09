@@ -44,13 +44,18 @@ namespace Business.FlowScript
             if (step.SubFlow != null)
                 subFlow = new SubFlowReference { Name = step.SubFlow.Name, PublicId = step.SubFlow.PublicId };
 
+            DiscordBot? bot = await FindAsync(dbContext.DiscordBots, step.DiscordBotId, ct);
+            DiscordBotReference? discordBot = null;
+            if (bot != null)
+                discordBot = new DiscordBotReference { Name = bot.Name };
+
             string name = step.Name;
             if (FlowStepNameHelper.IsNamedBySettings(step.FlowStepType))
                 name = FlowStepNameHelper.NameOf(step);
 
             return new FlowStepScriptLineDto
             {
-                Script = _printer.WriteStep(step, subFlow),
+                Script = _printer.WriteStep(step, subFlow, discordBot),
                 Name = name,
                 AreaName = step.FlowArea?.Name,
                 PointName = step.FlowPoint?.Name,

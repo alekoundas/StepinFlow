@@ -59,6 +59,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),
             new ScriptKeyword("Inputs:", ScriptSymbolEnum.CSV_COLUMNS),
+            new ScriptKeyword("Discord Bots:", ScriptSymbolEnum.DISCORD_BOTS),
             new ScriptKeyword("Templates:", ScriptSymbolEnum.TEMPLATES),
             new ScriptKeyword("Steps:", ScriptSymbolEnum.STEPS),
 
@@ -100,6 +101,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("opens", ScriptSymbolEnum.OPENS),
             new ScriptKeyword("with", ScriptSymbolEnum.WITH),
             new ScriptKeyword("with result of", ScriptSymbolEnum.WITH_RESULT_OF),
+            new ScriptKeyword("through", ScriptSymbolEnum.THROUGH),
             new ScriptKeyword("keep", ScriptSymbolEnum.KEEP),
             new ScriptKeyword("timeout", ScriptSymbolEnum.TIMEOUT),
             new ScriptKeyword("no timeout", ScriptSymbolEnum.NO_TIMEOUT),

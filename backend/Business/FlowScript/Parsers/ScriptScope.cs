@@ -1,4 +1,5 @@
 using Business.FlowScript.Diagnostics;
+using Business.FlowScript.Models;
 using Business.FlowScript.Models.Text;
 using Core.Helpers;
 using Core.Models.Database;
@@ -6,7 +7,7 @@ using Core.Models.Database;
 namespace Business.FlowScript.Parsers
 {
     /// <summary>
-    /// Store the related data defined in the script header. (Steps, areas, points and csvColumns)
+    /// Store the related data defined in the script header. (Steps, areas, points, csvColumns, templates and Discord bots)
     ///
     /// A name nothing above declares is reported at the token it was read from.
     /// </summary>
@@ -19,6 +20,7 @@ namespace Business.FlowScript.Parsers
         private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowTemplate> _templates = new Dictionary<string, FlowTemplate>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DiscordBotReference> _discordBots = new Dictionary<string, DiscordBotReference>(StringComparer.OrdinalIgnoreCase); // Named in Settings, not in the flow, so apart from the shared names.
 
         public ScriptScope(List<Diagnostic> diagnostics)
         {
@@ -63,6 +65,15 @@ namespace Business.FlowScript.Parsers
 
             if (!_templates.TryAdd(template.Name, template))
                 Report(DiagnosticCodeEnum.TEMPLATE_DUPLICATE, at, $"\"{template.Name}\" is already described above.");
+        }
+
+        public void Declare(DiscordBotReference bot, ScriptToken at)
+        {
+            if (string.IsNullOrWhiteSpace(bot.Name))
+                return;
+
+            if (!_discordBots.TryAdd(bot.Name, bot))
+                Report(DiagnosticCodeEnum.DISCORD_BOT_DUPLICATE, at, $"\"{bot.Name}\" is already under Discord Bots above.");
         }
 
 
@@ -120,6 +131,22 @@ namespace Business.FlowScript.Parsers
             Report(DiagnosticCodeEnum.TEMPLATE_UNKNOWN, at, $"\"{fileName}\" has no line under Templates above, so nothing says where it is clicked.");
 
             return null;
+        }
+
+        public DiscordBotReference? DiscordBot(string name, ScriptToken at)
+        {
+            if (_discordBots.TryGetValue(name, out DiscordBotReference? bot))
+                return bot;
+
+            Report(DiagnosticCodeEnum.DISCORD_BOT_UNDECLARED, at, $"\"{name}\" is not under Discord Bots above, where a flow lists the bots it sends through.");
+
+            return null;
+        }
+
+        // Only for a name DiscordBot already found, so never a miss.
+        public DiscordBotReference DeclaredDiscordBot(string name)
+        {
+            return _discordBots[name];
         }
 
 

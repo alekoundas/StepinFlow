@@ -1,4 +1,5 @@
 using Business.FlowScript.Catalogs;
+using Business.FlowScript.Models;
 using Core.Enums;
 using Core.Models.Database;
 
@@ -6,16 +7,26 @@ namespace Business.FlowScript.Text.Steps
 {
     internal sealed class NotifyWriter : BaseStepWriter
     {
-        public NotifyWriter(FlowStep step) : base(step)
+        private readonly DiscordBotReference? _discordBot;
+
+        public NotifyWriter(FlowStep step, DiscordBotReference? discordBot) : base(step)
         {
+            _discordBot = discordBot;
         }
 
         protected override void Compose()
         {
-            // Notify  <[ message ]>  <[ its next line ]>   [with result of <[ a step ]>]
+            // Notify  <[ message ]>  <[ its next line ]>   [through <[ a bot ]>]   [with result of <[ a step ]>]
             WriteKeyword(FlowStepTypeEnum.NOTIFY);
             WriteGapUntil(KEYWORD_GAP_UNTIL);
             WriteMessage();
+
+            if (_discordBot != null)
+            {
+                WriteGap();
+                WriteKeyword(ScriptSymbolEnum.THROUGH);
+                WriteQuote(_discordBot.Name);
+            }
 
             if (Step.FlowStepReference == null)
                 return;

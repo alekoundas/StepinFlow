@@ -7,6 +7,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Business.FlowScript.Models;
 using Business.FlowScript.Text;
+using Business.Flows.DataService.DataHandlers;
 
 namespace Business.FlowScript
 {
@@ -181,6 +182,7 @@ namespace Business.FlowScript
                 step.FlowStepTemplates = templates.Where(x => x.FlowStepId == step.Id).ToList();
 
             await AddSubFlowsAsync(dbContext, schema, ct);
+            await DiscordBotDataService.NameAsync(dbContext, schema, ct);
 
             return schema;
         }

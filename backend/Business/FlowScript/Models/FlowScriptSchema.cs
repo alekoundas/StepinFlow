@@ -23,6 +23,9 @@ namespace Business.FlowScript.Models
         /// <summary>A sub-flow is another flow, which nothing in this file declares, so what each line names is kept for the import to find.</summary>
         public Dictionary<FlowStep, SubFlowReference> SubFlows { get; } = new Dictionary<FlowStep, SubFlowReference>();
 
+        /// <summary>The bot each Notify sends through, as its line under Discord Bots: what the import links, and what that section is written from.</summary>
+        public Dictionary<FlowStep, DiscordBotReference> DiscordBots { get; } = new Dictionary<FlowStep, DiscordBotReference>();
+
         /// <summary>Whether the file had a <c>Kind:</c> line. One without it keeps what the flow already was.</summary>
         public bool HasKind { get; set; }
 

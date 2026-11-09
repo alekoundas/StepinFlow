@@ -45,9 +45,12 @@ namespace Business.FlowScript
             FlowScriptFile file = await FlowScriptFile.ReadAsync(scriptPath, ct);
             FlowScriptSchema schema = _scanner.Read(file.Script);
 
-            // The sub-flows the import would not find are warned about before it, not after.
+            // The sub-flows and bots the import would not find are warned about before it, not after.
             List<Diagnostic> unlinked = await _dataService.Flow.LinkSubFlowsAsync(schema, ct);
             schema.Diagnostics.AddRange(unlinked);
+
+            List<Diagnostic> botless = await _dataService.DiscordBot.LinkAsync(schema, ct);
+            schema.Diagnostics.AddRange(botless);
 
             preview.Script = file.Script;
             preview.TemplateFolderPath = file.TemplateFolderPath;
