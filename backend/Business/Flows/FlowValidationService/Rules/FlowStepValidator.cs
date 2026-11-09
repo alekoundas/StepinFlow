@@ -29,6 +29,7 @@ namespace Business.Flows.FlowValidationService.Rules
             IReadOnlyDictionary<int, int> templateCountByStepId,
             IReadOnlyList<FlowArea> areas,
             IReadOnlySet<string> installedReaders,
+            IReadOnlyDictionary<int, string> webhooklessBots,
             FlowValidationResultDto result)
         {
             Dictionary<int, FlowArea> areasById = areas.ToDictionary(x => x.Id);
@@ -83,6 +84,8 @@ namespace Business.Flows.FlowValidationService.Rules
                     case FlowStepTypeEnum.NOTIFY:
                         if (step.DiscordBotId == null)
                             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.DISCORD_BOT_MISSING, "Pick the bot to send through.");
+                        else if (webhooklessBots.TryGetValue(step.DiscordBotId.Value, out string? bot))
+                            result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK, $"\"{bot}\" has no webhook yet, so this sends nothing. Paste it in under Settings, Discord bots.");
                         break;
 
                     case FlowStepTypeEnum.CHECK_VALUE:

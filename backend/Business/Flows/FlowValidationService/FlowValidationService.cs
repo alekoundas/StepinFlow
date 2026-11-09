@@ -35,7 +35,7 @@ namespace Business.Flows.FlowValidationService
             LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
             Flow flow = loaded.Flows[flowId];
 
-            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), flow.IsQaTest);
+            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Business.Flows.FlowValidationService
             Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
 
             foreach (Flow flow in loaded.Flows.Values)
-                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), flow.IsQaTest);
+                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
 
             return results;
         }
@@ -61,6 +61,7 @@ namespace Business.Flows.FlowValidationService
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
             IReadOnlyList<string> flowNames,
+            IReadOnlyDictionary<int, string> webhooklessBots,
             bool isQaTest)
         {
             FlowValidationResultDto result = new FlowValidationResultDto();
@@ -87,7 +88,7 @@ namespace Business.Flows.FlowValidationService
             Dictionary<int, StepChainNode> byStepId = steps.ToDictionary(x => x.Id, x => new StepChainNode(x.Id, x.ParentFlowStepId, x.FlowStepType, x.Name, x.OrderNumber, x.SearchMode));
             ILookup<int?, FlowStep> childrenByParentId = steps.ToLookup(x => x.ParentFlowStepId);
 
-            FlowStepValidator.Validate(authored, templateCountByStepId, areas, InstalledReaders(authored), result);
+            FlowStepValidator.Validate(authored, templateCountByStepId, areas, InstalledReaders(authored), webhooklessBots, result);
             FlowStructureValidator.Validate(authored, everyAuthored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
 
@@ -224,7 +225,14 @@ namespace Business.Flows.FlowValidationService
             foreach (int flowId in flowIds.Where(x => !flows.ContainsKey(x)))
                 flows[flowId] = new Flow { Id = flowId };
 
-            return new LoadedFlows(flows, steps.ToLookup(x => x.RootId), templateCounts);
+            // By name, for the warning. Only the bots these steps send through, never their webhooks.
+            List<int> botIds = steps.Where(x => x.DiscordBotId != null).Select(x => x.DiscordBotId!.Value).Distinct().ToList();
+            Dictionary<int, string> webhooklessBots = await dbContext.DiscordBots
+                .AsNoTracking()
+                .Where(x => botIds.Contains(x.Id) && x.WebhookUrl.Trim() == string.Empty)
+                .ToDictionaryAsync(x => x.Id, x => x.Name, ct);
+
+            return new LoadedFlows(flows, steps.ToLookup(x => x.RootId), templateCounts, webhooklessBots);
         }
 
         // Areas, points and csv columns need to be unique between them.
@@ -242,6 +250,6 @@ namespace Business.Flows.FlowValidationService
         // Private records
         // ================================================================
 
-        private sealed record LoadedFlows(Dictionary<int, Flow> Flows, ILookup<int, FlowStep> StepsByFlow, Dictionary<int, int> TemplateCounts);
+        private sealed record LoadedFlows(Dictionary<int, Flow> Flows, ILookup<int, FlowStep> StepsByFlow, Dictionary<int, int> TemplateCounts, Dictionary<int, string> WebhooklessBots);
     }
 }

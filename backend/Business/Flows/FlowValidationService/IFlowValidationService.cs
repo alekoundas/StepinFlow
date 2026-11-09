@@ -25,6 +25,7 @@ namespace Business.Flows.FlowValidationService
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
             IReadOnlyList<string> flowNames,
+            IReadOnlyDictionary<int, string> webhooklessBots,
             bool isQaTest);
     }
 }

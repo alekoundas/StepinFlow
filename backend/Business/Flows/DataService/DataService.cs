@@ -13,8 +13,9 @@ namespace Business.Flows.DataService
         public FlowPointDataService FlowPoint { get; }
         public FlowCsvColumnDataService FlowCsvColumn { get; }
         public FlowTemplateDataService FlowTemplate { get; }
+        public DiscordBotDataService DiscordBot { get; }
 
-        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowCsvColumnDataService flowCsvColumn, FlowTemplateDataService flowTemplate)
+        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowCsvColumnDataService flowCsvColumn, FlowTemplateDataService flowTemplate, DiscordBotDataService discordBot)
         {
             Flow = flow;
             FlowStep = flowStep;
@@ -22,6 +23,7 @@ namespace Business.Flows.DataService
             FlowPoint = flowPoint;
             FlowCsvColumn = flowCsvColumn;
             FlowTemplate = flowTemplate;
+            DiscordBot = discordBot;
         }
     }
 }
