@@ -81,8 +81,8 @@
       </div>
     </div>
     <script>
-      // The overlay, the image editor and the recording bar load this page too, and most of them are transparent.
-      if (!/^#\/(overlay-|image-editor|recording-bar)/.test(location.hash))
+      // The overlay, the image editor, the recording bar and the gesture window load this page too, and most of them are transparent.
+      if (!/^#\/(overlay-|image-editor|recording-bar|recording-gesture)/.test(location.hash))
         document.getElementById("startup-screen").style.display = "flex";
     </script>
 
