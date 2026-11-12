@@ -12,10 +12,15 @@ namespace Business.Tests.Executions.Workers
     /// </summary>
     public static class WorkerCache
     {
-        public static async Task<ExecutionCacheService> ForAsync(params FlowStep[] steps)
+        public static Task<ExecutionCacheService> ForAsync(params FlowStep[] steps)
+        {
+            return WithInputsAsync(new Dictionary<string, string>(), steps);
+        }
+
+        public static async Task<ExecutionCacheService> WithInputsAsync(IReadOnlyDictionary<string, string> inputValues, params FlowStep[] steps)
         {
             ExecutionCacheService cache = new ExecutionCacheService(null!, new FakeScreenshotService(), TimeProvider.System);
-            await cache.ResetAsync(steps.ToDictionary(x => x.Id), keepsScreenshots: false, TestContext.Current.CancellationToken);
+            await cache.ResetAsync(steps.ToDictionary(x => x.Id), inputValues, keepsScreenshots: false, TestContext.Current.CancellationToken);
             return cache;
         }
 

@@ -28,6 +28,6 @@ namespace Core.Models.Dtos
         public IEnumerable<FlowAreaDto> FlowAreas { get; set; } = new Collection<FlowAreaDto>();
         public IEnumerable<FlowPointDto> FlowPoints { get; set; } = new Collection<FlowPointDto>();
 
-        public IEnumerable<FlowCsvColumnDto> FlowCsvColumns { get; set; } = new Collection<FlowCsvColumnDto>();
+        public IEnumerable<FlowInputDto> FlowInputs { get; set; } = new Collection<FlowInputDto>();
     }
 }

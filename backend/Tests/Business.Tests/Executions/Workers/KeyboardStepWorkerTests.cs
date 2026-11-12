@@ -33,6 +33,18 @@ namespace Business.Tests.Executions.Workers
             _input.Actions.ShouldBe(["type hello alex"]);
         }
 
+        // An input and a step share one namespace, so either fills {{name}}.
+        [Fact]
+        public async Task Text_is_typed_with_the_flows_inputs_filled_in()
+        {
+            FlowStep type = new FlowStep { Id = 1, FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputType = KeyboardInputTypeEnum.TEXT, KeyboardInputText = "{{email}}" };
+            ExecutionCacheService cache = await WorkerCache.WithInputsAsync(new Dictionary<string, string> { ["email"] = "ops@example.com" }, type);
+
+            await Keyboard(type, cache);
+
+            _input.Actions.ShouldBe(["type ops@example.com"]);
+        }
+
         // Typing "{{password}}" into a password box and calling it a pass is the failure this prevents.
         [Fact]
         public async Task Text_with_a_variable_nothing_has_filled_types_nothing_and_fails()

@@ -414,8 +414,8 @@ Always called a template image or a screenshot; never a "frame" and never a "sea
 **Screenshot** — what the app captures off the screen. An output, per-execution, never checked into
 a repository.
 
-**FlowCsvColumn** — one input to the flow, with the value it was recorded with. Ten rows of CSV
-means ten executions.
+**FlowInput** — one input to the flow, `{{name}}` in a step's text, with the value it was recorded
+with. A secret's value is kept apart, in the database only.
 
 **Execution** — one complete walk of a flow, with one row of data. The word is
 always "execution"; "run" is not used in this codebase.
@@ -537,7 +537,7 @@ default mode that was a journal file made and deleted every time. The database i
 | `Flows` | The test. Name, `PublicId`, description. |
 | `FlowAreas` | Named rectangle owned by a flow, with what it scales with and its DPI. `IsMain` marks the window the flow works in. |
 | `FlowPoints` | Named point owned by a flow, with the DPI it was captured at. |
-| `FlowCsvColumns` | One input column and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default. |
+| `FlowInputs` | One input and its recorded default. `IsSecret` means the value never reaches a file, so a secret has no default; its value is `SecretValue`, which only the execution reads. |
 | `FlowSteps` | One node of the tree. Wide table, one column set per step type. |
 | `FlowTemplates` | A template image of a flow: its file name, the blob and its thumbnail, click point, and captured size and DPI. Steps link to it, so one picture serves every step that looks for it. |
 | `FlowStepTemplates` | A step's link to a template, with the step's own accuracy and order. |
@@ -960,8 +960,8 @@ comes after the steps the flow already has - the setup's Launch step first.
   `FlowNameHelper.MakeUnique`, in the one namespace steps, areas, points and inputs share; found by
   its words, from those.
 - Typed text is an input with what was typed as its default, and the step types `{{email}}`; a
-  secret keeps no value anywhere, to be supplied when the flow executes. Typed as written, the text
-  is on the line. A key is a `Press`, held and released around a click as it was recorded.
+  secret keeps no value in the draft, and is typed once on the Inputs tab. Typed as written, the
+  text is on the line. A key is a `Press`, held and released around a click as it was recorded.
 - A pause is no step at all: it sizes the next wait. What was left out in Review is no step either.
 
 The draft is a flow on its own, so with no model configured it is what the tester checks and then
@@ -1215,8 +1215,8 @@ model's words reach: a model can only propose one before a search where none beg
 the flow is meant to prove (above), and failure paths written by provoking them rather than
 imagining them. The tester types a wrong value on purpose, marks the application's rejection with
 Ctrl + click, and in Review makes the typed text **Wrong on purpose**, offered only in a QA test.
-The draft types it as written - never an input, which a CSV row could put right, and never a
-secret, which keeps no value - with the comment `# wrong on purpose: the application should reject
+The draft types it as written - never an input, which changing its value could put right, and
+never a secret - with the comment `# wrong on purpose: the application should reject
 it` (`TypingDraftBuilder`), and the model is told to give it a stage of its own, "Rejects a wrong
 password", with the check after it as that stage's check. The screen sizes to test at and what
 happens when an execution ends wait in `TODO.md`.
@@ -1256,7 +1256,7 @@ Script Language: v1
 Flow:    Login and add to cart
 Id:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b111
 Description:
-  # Signs in to Swag Labs with the account the CSV row names.
+  # Signs in to Swag Labs with the account its inputs name.
 
 Areas:
   <[ Browser ]>       main   window process <[ chrome.exe ]> title contains <[ Swag Labs ]>   scales with dpi   at 120dpi
@@ -1511,9 +1511,10 @@ a key on the flow: the key it replaced, `Flow.AppUnderTestAreaId`, was `NoAction
 cycle, so an import that deleted the old areas would have failed the moment one was set. Two are
 `AREA_MAIN_DUPLICATE`; `main inside` is refused by the grammar, as the main area is a root.
 
-**An input carries its recorded value**, `default <[ v ]>`, and a CSV row overrides it. A secret
-writes none: a hash cannot be typed back, and an encrypted value would need its key wherever the
-flow executes. So `secret` and `default` never stand on one line.
+**An input carries its recorded value**, `default <[ v ]>`. A secret writes none: a hash cannot be
+typed back, and an encrypted value would need its key wherever the flow executes. So `secret` and
+`default` never stand on one line. Its value is typed on the Inputs tab and kept in the database,
+and an import keeps it for a secret of the same name, since the import writes the inputs anew.
 
 **Every step is a line, and the line says everything the step does.** A click and a scroll act
 where the cursor is, so the script writes the position as a step of its own: `Move to <[ X ]>`, then
@@ -1912,16 +1913,19 @@ Two kinds of name translate through one helper, `VariableTranslator`:
 
 | written | translates from |
 |---|---|
-| `{{username}}` | a CSV column |
+| `{{username}}` | an input: its default, or a secret's saved value |
 | `{{Read the total}}` | what a step it sits under read or printed |
 
-There are **two substitution mechanisms**, because there are two different needs. A keyboard step in
-column mode holds a `FlowCsvColumnId` — a foreign key, not text — because the whole value is one
-column, and a foreign key is what makes renaming a column safe. Free text fields hold `{{name}}`
-variables, because a notify message like `"Login failed: {{Login error}}"` mixes literal and
-variable and that mixing is the point. Renaming a column rewrites the variables across that flow's
-steps in one transaction; the validator catches a variable that names nothing, a step that keeps no
-value, or a step this one does not sit under, at save rather than at execution. The writer emits `{{username}}` either way, so the script reads the same.
+**One mechanism**: every text field holds `{{name}}`, since a notify message like `"Login failed:
+{{Login error}}"` mixes literal and variable and that mixing is the point. A Type step's form puts
+an input in at the end of its text, or adds a new one, but the text stays free. `ExecutionEngine`
+loads the value of every input of the flows the execution reaches - the flow started first, so its
+value wins over a sub-flow's input of the same name - and `ExecutionCacheService` fills them in
+before the steps' results. An empty value is none, and the step says which name has nothing. The
+validator catches, at save rather than at execution, a variable that names nothing, a step that
+keeps no value, a step this one does not sit under, and an input a step types with no value
+(`INPUT_VALUE_MISSING`, on the input, so the Issues tab opens its row). Renaming an input does not
+rewrite the steps; the validator says which still use the old name.
 
 ### Coordinates
 
@@ -2433,8 +2437,20 @@ Resolution order, most specific first:
 CI argument  >  environment variable  >  local secrets file  >  stored value
 ```
 
-`FlowCsvColumn.IsSecret` means the value is never stored in any file. A password in a repository is
+`FlowInput.IsSecret` means the value is never stored in any file. A password in a repository is
 a leak.
+
+**What is built.** A secret's value is typed once on the Inputs tab and kept in
+`FlowInput.SecretValue`. Nothing sends it back: the form only ever sends a new one
+(`NewSecretValue`, empty keeps the saved one) and is told only `HasSecretValue`; the exporter's rows,
+so the script and what a model is sent, leave it out; the validator loads whether there is one,
+never what. Only `ExecutionEngine` reads it. An import writes a flow's inputs anew from a script, so
+it keeps the saved value of a secret still called the same - a branch switch, a model's change and
+an import of the file again all go through it. A secret a step types with no value saved is an
+error on that input, and the flow does not start.
+
+**Not encrypted yet**: the value is plain text in the SQLite file, which only this account can read.
+The rest of this section is the plan for phase 8.
 
 Stored values are encrypted at rest under a master password. Not DPAPI — that is Windows-only and
 this has to work on Linux. Plain AES-256, composed from .NET's own primitives:
@@ -2667,7 +2683,7 @@ edits the one picked; a splitter between them remembers its place.
   user on this machine, not in the database.
 - **Areas, Locations, Inputs:** a list, regions under their window, each with how many steps use
   it, and the picked one's form. Each is created, saved and deleted on its own
-  (`FlowArea.*`, `FlowPoint.*`, `FlowCsvColumn.*`), so `Flow.update` no longer touches them. An
+  (`FlowArea.*`, `FlowPoint.*`, `FlowInput.*`), so `Flow.update` no longer touches them. An
   application area's **Application** lists one row an app, its open windows' titles under it,
   because the area matches on the process and a title would promise a window it never picks; the
   field shows the saved app whether it is open or not.
@@ -2682,7 +2698,8 @@ loaded and opened down to it. The Flow tab is hidden rather than unmounted while
 so the tree keeps its open branches and a half-edited step its edits.
 
 Renaming an input does not rename it in the steps that type it; the validator says which ones still
-use the old name. A secret keeps no value, whichever form saves it.
+use the old name. A secret keeps no default, whichever form saves it; its value field is shown as
+dots, empty with "Saved" or "Not set yet", and ticking Secret moves the default into it.
 
 ### The tree
 
@@ -2980,15 +2997,15 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1566 tests, all passing, in eight projects under `backend/Tests/` - one
+1577 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1183 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
-| `DataAccess.Tests` | 47 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
+| `Business.Tests` | 1192 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `DataAccess.Tests` | 49 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
 | `Platform.Windows.Tests` | 1 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |

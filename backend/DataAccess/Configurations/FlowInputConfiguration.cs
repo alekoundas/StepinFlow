@@ -4,16 +4,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DataAccess.Configurations
 {
-    public class FlowCsvColumnConfiguration : IEntityTypeConfiguration<FlowCsvColumn>
+    public class FlowInputConfiguration : IEntityTypeConfiguration<FlowInput>
     {
-        public void Configure(EntityTypeBuilder<FlowCsvColumn> builder)
+        public void Configure(EntityTypeBuilder<FlowInput> builder)
         {
             builder.HasKey(x => x.Id);
 
 
             // Relationship with Flow (one-to-many)
             builder.HasOne(x => x.Flow)
-                .WithMany(x => x.FlowCsvColumns)
+                .WithMany(x => x.FlowInputs)
                 .HasForeignKey(x => x.FlowId)
                 .OnDelete(DeleteBehavior.Cascade); // Delete if parent is removed
 

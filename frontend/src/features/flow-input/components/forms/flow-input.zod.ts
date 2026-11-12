@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const FlowCsvColumnZod = z.object({
+export const FlowInputZod = z.object({
   name: z
     .string()
     .trim()
@@ -9,4 +9,5 @@ export const FlowCsvColumnZod = z.object({
     .refine((x) => !x.includes("{") && !x.includes("}"), "Without braces: a step adds those around it"),
   defaultValue: z.string().max(500, "Keep it under 500 characters"),
   isSecret: z.boolean(),
+  newSecretValue: z.string().max(500, "Keep it under 500 characters"),
 });

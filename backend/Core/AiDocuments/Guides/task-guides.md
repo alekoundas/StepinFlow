@@ -85,8 +85,8 @@ is saved: a new flow, when no flow has the file's `Id`; the flow with that `Id` 
 has - its executions are kept, and the page shows it beside the file; or nothing, when the file does
 not read cleanly or another flow already has its name. Its errors and warnings are marked at their
 lines in the script. A template the file names that is not a PNG in the folder beside it is imported
-without a picture, and a secret input has no value in the file: it is asked for when the flow
-executes.
+without a picture, and a secret input has no value in the file: one already saved for it on this
+machine is kept, and a new one has an error until its value is typed on the Inputs tab.
 
 ## Keeping a flow's history and seeing what changed
 

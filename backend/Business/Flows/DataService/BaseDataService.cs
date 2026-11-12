@@ -33,7 +33,7 @@ namespace Business.Flows.DataService
         // Protected methods - rules that span the flow's tables
         // ================================================================
 
-        // Steps, areas, points and csv columns are one namespace, because the script refers to all
+        // Steps, areas, points and inputs are one namespace, because the script refers to all
         // of them by name.
         protected static Task<HashSet<string>> TakenNamesAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {
@@ -56,7 +56,7 @@ namespace Business.Flows.DataService
                     .AsNoTracking()
                     .Where(x => x.FlowId == flowId)
                     .Select(x => x.Name))
-                .Concat(dbContext.FlowCsvColumns
+                .Concat(dbContext.FlowInputs
                     .AsNoTracking()
                     .Where(x => x.FlowId == flowId)
                     .Select(x => x.Name))

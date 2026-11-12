@@ -28,13 +28,17 @@ namespace App.AutoMapper
                 .ForMember(x => x.FlowSteps, o => o.Ignore())
                 .ForMember(x => x.FlowAreas, o => o.Ignore())
                 .ForMember(x => x.FlowPoints, o => o.Ignore())
-                .ForMember(x => x.FlowCsvColumns, o => o.Ignore());
+                .ForMember(x => x.FlowInputs, o => o.Ignore());
 
-            // FlowCsvColumn
-            CreateMap<FlowCsvColumn, FlowCsvColumnDto>();
-            CreateMap<FlowCsvColumnDto, FlowCsvColumn>()
+            // FlowInput
+            // A secret's value goes in and never comes back out.
+            CreateMap<FlowInput, FlowInputDto>()
+                .ForMember(x => x.HasSecretValue, o => o.MapFrom(x => x.SecretValue.Length > 0))
+                .ForMember(x => x.NewSecretValue, o => o.Ignore());
+            CreateMap<FlowInputDto, FlowInput>()
                 .ForMember(x => x.CreatedOn, o => o.Ignore())
-                .ForMember(x => x.Flow, o => o.Ignore());
+                .ForMember(x => x.Flow, o => o.Ignore())
+                .ForMember(x => x.SecretValue, o => o.MapFrom(x => x.NewSecretValue));
 
             // FlowStep
             CreateMap<FlowStep, FlowStepDto>();

@@ -61,7 +61,7 @@ namespace Business.FlowScript.Parsers
             if (_section != ScriptSymbolEnum.STEPS || IsSection(symbol))
                 ReportUnattachedComments();
 
-            // Change section if symbol == DESCRIPTION,AREAS,POINTS,CSV_COLUMNS,DISCORD_BOTS,TEMPLATES,STEPS
+            // Change section if symbol == DESCRIPTION,AREAS,POINTS,INPUTS,DISCORD_BOTS,TEMPLATES,STEPS
             if (IsSection(symbol))
             {
                 _section = new SectionParser(line.Tokens).Parse();
@@ -87,7 +87,7 @@ namespace Business.FlowScript.Parsers
                     AddPoint(line);
                     break;
 
-                case ScriptSymbolEnum.CSV_COLUMNS:
+                case ScriptSymbolEnum.INPUTS:
                     AddInput(line);
                     break;
 
@@ -199,7 +199,7 @@ namespace Business.FlowScript.Parsers
 
         private void AddInput(ScriptLine line)
         {
-            FlowCsvColumn input = new CsvColumnParser(line.Tokens).Parse();
+            FlowInput input = new InputParser(line.Tokens).Parse();
             input.OrderNumber = _flowScriptSchema.Inputs.Count;
 
             _flowScriptSchema.Inputs.Add(input);
@@ -424,7 +424,7 @@ namespace Business.FlowScript.Parsers
             return symbol == ScriptSymbolEnum.FLOWFIELD_DESCRIPTION
                 || symbol == ScriptSymbolEnum.AREAS
                 || symbol == ScriptSymbolEnum.POINTS
-                || symbol == ScriptSymbolEnum.CSV_COLUMNS
+                || symbol == ScriptSymbolEnum.INPUTS
                 || symbol == ScriptSymbolEnum.DISCORD_BOTS
                 || symbol == ScriptSymbolEnum.TEMPLATES
                 || symbol == ScriptSymbolEnum.STEPS;

@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { backendApiService } from "@/shared/services/backend-api-service";
-import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
+import type { FlowInputDto } from "@/shared/models/database/flow-input-dto";
 
 // Mutation CRUD
-export function useFlowCsvColumnMutations() {
+export function useFlowInputMutations() {
   const queryClient = useQueryClient();
 
   // The inputs come with the flow, and a renamed one can leave a step typing a name nothing has.
@@ -14,24 +14,24 @@ export function useFlowCsvColumnMutations() {
       queryClient.invalidateQueries({ queryKey: ["flowValidation"] }),
     ]);
 
-  const createFlowCsvColumnMutation = useMutation({
-    mutationFn: (dto: FlowCsvColumnDto) => backendApiService.FlowCsvColumn.create(dto),
+  const createFlowInputMutation = useMutation({
+    mutationFn: (dto: FlowInputDto) => backendApiService.FlowInput.create(dto),
     onSuccess: invalidate,
   });
 
-  const updateFlowCsvColumnMutation = useMutation({
-    mutationFn: (dto: FlowCsvColumnDto) => backendApiService.FlowCsvColumn.update(dto),
+  const updateFlowInputMutation = useMutation({
+    mutationFn: (dto: FlowInputDto) => backendApiService.FlowInput.update(dto),
     onSuccess: invalidate,
   });
 
-  const deleteFlowCsvColumnMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.FlowCsvColumn.delete(id),
+  const deleteFlowInputMutation = useMutation({
+    mutationFn: (id: number) => backendApiService.FlowInput.delete(id),
     onSuccess: invalidate,
   });
 
   return {
-    createFlowCsvColumnMutation,
-    updateFlowCsvColumnMutation,
-    deleteFlowCsvColumnMutation,
+    createFlowInputMutation,
+    updateFlowInputMutation,
+    deleteFlowInputMutation,
   };
 }

@@ -42,7 +42,7 @@ namespace Business.Recording.Draft.Actions
                     break;
 
                 case ReviewChoiceEnum.TYPE_INPUT when inputName.Length > 0:
-                    FlowCsvColumn input = draft.InputNamed(inputName);
+                    FlowInput input = draft.InputNamed(inputName);
                     draft.Add(new FlowStep
                     {
                         FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT,

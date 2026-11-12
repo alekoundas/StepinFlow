@@ -23,7 +23,7 @@ namespace Core.Models.Database
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();
         public IEnumerable<FlowPoint> FlowPoints { get; set; } = new Collection<FlowPoint>();
-        public IEnumerable<FlowCsvColumn> FlowCsvColumns { get; set; } = new Collection<FlowCsvColumn>();
+        public IEnumerable<FlowInput> FlowInputs { get; set; } = new Collection<FlowInput>();
         public IEnumerable<FlowTemplate> FlowTemplates { get; set; } = new Collection<FlowTemplate>();
     }
 }

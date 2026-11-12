@@ -281,25 +281,81 @@ namespace Business.Tests.Flows
             int flowId = await NewFlowAsync();
             await _dataService.FlowArea.CreateAsync(new FlowArea { FlowId = flowId, Name = "email", Type = FlowAreaTypeEnum.MONITOR }, Ct);
 
-            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "email" }, Ct)).Data;
+            int inputId = (await _dataService.FlowInput.CreateAsync(new FlowInput { FlowId = flowId, Name = "email" }, Ct)).Data;
 
             using AppDbContext db = _database.CreateDbContext();
-            db.FlowCsvColumns.Single(x => x.Id == inputId).Name.ShouldBe("email 2");
+            db.FlowInputs.Single(x => x.Id == inputId).Name.ShouldBe("email 2");
         }
 
-        // What was typed for a secret is never stored, whichever form sends it.
+        // A secret has no default, whichever form sends one: its value is kept apart, never written
+        // to the script.
         [Fact]
-        public async Task A_secret_input_keeps_no_value()
+        public async Task A_secret_input_keeps_no_default()
         {
             int flowId = await NewFlowAsync();
-            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "password", DefaultValue = "hunter2" }, Ct)).Data;
+            int inputId = (await _dataService.FlowInput.CreateAsync(new FlowInput { FlowId = flowId, Name = "password", DefaultValue = "hunter2" }, Ct)).Data;
 
-            await _dataService.FlowCsvColumn.UpdateAsync(new FlowCsvColumnDto { Id = inputId, FlowId = flowId, Name = "password", DefaultValue = "hunter2", IsSecret = true }, Ct);
+            await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "password", DefaultValue = "hunter2", IsSecret = true }, Ct);
 
             using AppDbContext db = _database.CreateDbContext();
-            FlowCsvColumn saved = db.FlowCsvColumns.Single(x => x.Id == inputId);
+            FlowInput saved = db.FlowInputs.Single(x => x.Id == inputId);
             saved.IsSecret.ShouldBeTrue();
             saved.DefaultValue.ShouldBeEmpty();
+            saved.SecretValue.ShouldBeEmpty();
+        }
+
+        // Its form never holds the saved value, so a save without a new one keeps it, and what
+        // comes back only says there is one.
+        [Fact]
+        public async Task A_secrets_value_is_saved_once_and_kept_by_a_save_without_one()
+        {
+            int flowId = await NewFlowAsync();
+            int inputId = (await _dataService.FlowInput.CreateAsync(new FlowInput { FlowId = flowId, Name = "password", IsSecret = true, SecretValue = "hunter2" }, Ct)).Data;
+
+            await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "password", IsSecret = true }, Ct);
+
+            using AppDbContext db = _database.CreateDbContext();
+            db.FlowInputs.Single(x => x.Id == inputId).SecretValue.ShouldBe("hunter2");
+        }
+
+        [Fact]
+        public async Task A_secret_given_a_new_value_keeps_the_new_one_and_one_no_longer_secret_keeps_none()
+        {
+            int flowId = await NewFlowAsync();
+            int inputId = (await _dataService.FlowInput.CreateAsync(new FlowInput { FlowId = flowId, Name = "password", IsSecret = true, SecretValue = "hunter2" }, Ct)).Data;
+
+            await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "password", IsSecret = true, NewSecretValue = "correct horse" }, Ct);
+            string renewed;
+            using (AppDbContext db = _database.CreateDbContext())
+                renewed = db.FlowInputs.Single(x => x.Id == inputId).SecretValue;
+
+            await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "password", DefaultValue = "visible" }, Ct);
+
+            renewed.ShouldBe("correct horse");
+            using AppDbContext after = _database.CreateDbContext();
+            FlowInput saved = after.FlowInputs.Single(x => x.Id == inputId);
+            saved.SecretValue.ShouldBeEmpty();
+            saved.DefaultValue.ShouldBe("visible");
+        }
+
+        // A branch switch, a model's change or an import of the file again writes the inputs anew
+        // from a script, which never holds a secret's value.
+        [Fact]
+        public async Task An_import_over_a_flow_keeps_a_secrets_saved_value()
+        {
+            const string SCRIPT = "Flow:    Imported\nId:      8f14e45f-ea2b-4c3f-9f1a-77f0d2a3b121\n\nInputs:\n  <[ password ]>    secret\n\nSteps:\nType  <[ {{password}} ]>\n";
+            FlowScriptImporter importer = new FlowScriptImporter(new Scanner(), _dataService);
+            int flowId = (await importer.ImportTextAsync(SCRIPT, new Dictionary<string, byte[]>(), Ct)).FlowId;
+            int inputId;
+            using (AppDbContext db = _database.CreateDbContext())
+                inputId = db.FlowInputs.Single(x => x.FlowId == flowId).Id;
+            await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "password", IsSecret = true, NewSecretValue = "hunter2" }, Ct);
+
+            FlowScriptImportResultDto again = await importer.ImportTextAsync(SCRIPT, new Dictionary<string, byte[]>(), Ct);
+
+            again.FlowId.ShouldBe(flowId);
+            using AppDbContext after = _database.CreateDbContext();
+            after.FlowInputs.Single(x => x.FlowId == flowId).SecretValue.ShouldBe("hunter2");
         }
 
         // Its own name is not in its way, so saving an input unchanged keeps its name.
@@ -307,9 +363,9 @@ namespace Business.Tests.Flows
         public async Task An_input_saved_under_its_own_name_keeps_it()
         {
             int flowId = await NewFlowAsync();
-            int inputId = (await _dataService.FlowCsvColumn.CreateAsync(new FlowCsvColumn { FlowId = flowId, Name = "email" }, Ct)).Data;
+            int inputId = (await _dataService.FlowInput.CreateAsync(new FlowInput { FlowId = flowId, Name = "email" }, Ct)).Data;
 
-            ResultDto<FlowCsvColumn> updated = await _dataService.FlowCsvColumn.UpdateAsync(new FlowCsvColumnDto { Id = inputId, FlowId = flowId, Name = "email", DefaultValue = "ops@example.com" }, Ct);
+            ResultDto<FlowInput> updated = await _dataService.FlowInput.UpdateAsync(new FlowInputDto { Id = inputId, FlowId = flowId, Name = "email", DefaultValue = "ops@example.com" }, Ct);
 
             updated.Data!.Name.ShouldBe("email");
             updated.Data.DefaultValue.ShouldBe("ops@example.com");

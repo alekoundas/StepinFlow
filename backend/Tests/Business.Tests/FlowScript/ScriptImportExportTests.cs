@@ -153,9 +153,9 @@ namespace Business.Tests.FlowScript
             RoundTrip trip = await ExportImportExportAsync();
 
             trip.After.Inputs.Count.ShouldBe(trip.Before.Inputs.Count);
-            foreach (FlowCsvColumn input in trip.Before.Inputs)
+            foreach (FlowInput input in trip.Before.Inputs)
             {
-                FlowCsvColumn? match = trip.After.Inputs.FirstOrDefault(x => x.Name == input.Name);
+                FlowInput? match = trip.After.Inputs.FirstOrDefault(x => x.Name == input.Name);
                 ScriptRows.Differences(input, match).ShouldBeEmpty(input.Name);
             }
         }
@@ -695,9 +695,9 @@ namespace Business.Tests.FlowScript
             FlowPoint menu = new FlowPoint { Name = "Menu", FlowId = flow.Id, FlowAreaId = browser.Id, OffsetMode = AreaSizingModeEnum.ABSOLUTE_PX, LocationX = 40, LocationY = 8, AuthoredDpi = 120 };
             db.FlowPoints.AddRange(hamburger, origin, menu);
 
-            db.FlowCsvColumns.AddRange(
-                new FlowCsvColumn { FlowId = flow.Id, Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
-                new FlowCsvColumn { FlowId = flow.Id, Name = "password", OrderNumber = 1, IsSecret = true });
+            db.FlowInputs.AddRange(
+                new FlowInput { FlowId = flow.Id, Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
+                new FlowInput { FlowId = flow.Id, Name = "password", OrderNumber = 1, IsSecret = true });
 
             db.SaveChanges();
 

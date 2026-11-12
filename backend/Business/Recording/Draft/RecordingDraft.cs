@@ -46,7 +46,7 @@ namespace Business.Recording.Draft
         private readonly HashSet<string> _templateNames;
         private readonly Dictionary<int, FlowTemplate> _groupTemplates = new Dictionary<int, FlowTemplate>();
         private readonly List<string> _stages = new List<string>();
-        private readonly List<FlowCsvColumn> _addedInputs = new List<FlowCsvColumn>();
+        private readonly List<FlowInput> _addedInputs = new List<FlowInput>();
 
         private int _actionIndex = -1;
 
@@ -78,7 +78,7 @@ namespace Business.Recording.Draft
         public List<DraftItem> Items { get; } = [];
 
         /// <summary>The inputs this recording added, which the flow did not have.</summary>
-        public IReadOnlyList<FlowCsvColumn> AddedInputs { get { return _addedInputs; } }
+        public IReadOnlyList<FlowInput> AddedInputs { get { return _addedInputs; } }
 
 
         // ================================================================
@@ -338,10 +338,10 @@ namespace Business.Recording.Draft
             return point;
         }
 
-        /// <summary>An input with what was typed as its default. A secret keeps no value at all.</summary>
-        public FlowCsvColumn Input(string desired, string value, bool isSecret)
+        /// <summary>An input with what was typed as its default. A secret keeps none here: it is set once on the Inputs tab.</summary>
+        public FlowInput Input(string desired, string value, bool isSecret)
         {
-            FlowCsvColumn input = new FlowCsvColumn
+            FlowInput input = new FlowInput
             {
                 Name = FreeInputName(desired),
                 DefaultValue = isSecret ? string.Empty : value,
@@ -356,9 +356,9 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>The input by that name, the flow's or one this recording added, or a new one with no value yet.</summary>
-        public FlowCsvColumn InputNamed(string name)
+        public FlowInput InputNamed(string name)
         {
-            FlowCsvColumn? input = Schema.Inputs.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+            FlowInput? input = Schema.Inputs.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
             if (input != null)
                 return input;
 
@@ -410,7 +410,7 @@ namespace Business.Recording.Draft
         /// Another name for an input this recording added, with every step that types it. False for
         /// one the flow already had, or a name already taken.
         /// </summary>
-        public bool RenameInput(FlowCsvColumn input, string desired)
+        public bool RenameInput(FlowInput input, string desired)
         {
             bool isTaken = Schema.Inputs.Any(x => x != input && string.Equals(x.Name, desired, StringComparison.OrdinalIgnoreCase));
             if (!_addedInputs.Contains(input) || isTaken || desired.Length == 0)

@@ -7,6 +7,20 @@ the history.
 
 ## Execution
 
+- [ ] **Not tried by hand: inputs and secrets.** Built 2026-11-12 (PLAN.md phase 8), checked by the
+      tests, the type check and the lint. Record a sign-in into a password field: the flow shows
+      "This secret has no value yet" on the input, the Issues tab opens its row, the value field is
+      dots and says "Not set yet". Set it, start the flow, and both fields are typed. Edit and save
+      the input without touching the value: it says "Saved" and still types. Tick Secret on an input
+      with a value: the value moves into the dots. Switch branch and back, or ask the model for a
+      change: the secret is still set. On a Type step, "Insert an input" adds `{{name}}` at the end
+      and "New input" adds one and puts it in.
+- [ ] **Extracting a sub-flow leaves the inputs behind.** Found 2026-11-12.
+      `FlowDataService.CopyAreasAndPointsAsync` copies the areas and points the moved steps use, not
+      the inputs, so a moved step typing `{{username}}` is `VARIABLE_UNKNOWN` in the sub-flow and
+      Start refuses the flow. Copy them the same way, and a secret's saved value with it, since it
+      is the same value on the same machine.
+
 - [ ] **Not tried by hand: Test now's Details.** Verified by the type check, the lint and the
       build, 2026-11-01. Test a step with several templates, one found and one not: the used row,
       each strip, the solid hit with its click dot and the dashed closest place; the template beside
@@ -412,8 +426,9 @@ the history.
       should be a checkbox on the chat rather than a global setting, so the same question can be
       asked both ways and compared. Off by default. Only worth showing when the model reports the
       `thinking` capability, which `/api/show` already returns.
-- [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings. Use the same master
-      password scheme `PROJECT.md` section 11 settles for input secrets - key derivation plus `AesGcm`,
+- [ ] **Encrypt the stored API key.** It sits in plaintext in AppSettings, and since 2026-11-12 so
+      does a secret input's value, `FlowInput.SecretValue`. Use the same master password scheme
+      `PROJECT.md` section 11 settles for input secrets - key derivation plus `AesGcm`,
       not DPAPI, which is Windows only and would become a porting blocker. One mechanism for every
       secret the app holds, or there will be two half-solutions.
 - [ ] **Remove what the old Explain left behind.** Explain is a question in the chat now, and the page
@@ -457,6 +472,12 @@ the history.
       `clearDownloadState` stays, as the dismiss.
 
 ## Recording
+
+- [ ] **A recorded secret could keep what was typed.** Since 2026-11-12 a secret's value is kept
+      in the database, but the draft still leaves it out, so a recorded sign-in has an error until
+      the password is typed again on the Inputs tab. The recording had the value: it could be saved
+      as the secret's value once the flow is, never through the script, the outline or a model. The
+      question is whether a tester expects a password typed while recording to be kept at all.
 
 - [ ] **Recording into a flow that already exists, with a model: talk it through.** Raised
       2026-10-15. The editor's "Record steps here" is disabled until this is decided. Its plain

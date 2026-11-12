@@ -9,15 +9,16 @@ using Microsoft.EntityFrameworkCore;
 namespace Business.Flows.DataService.DataHandlers
 {
     /// <summary>
-    /// Every change to a flow's inputs. A secret keeps no value: what was typed is never stored.
+    /// Every change to a flow's inputs. A secret's value is kept here, in the database only, and
+    /// never sent back.
     /// </summary>
-    public sealed class FlowCsvColumnDataService : BaseDataService
+    public sealed class FlowInputDataService : BaseDataService
     {
         private const string NAME_MISSING = "An input needs a name: the steps type it as {{name}}.";
 
         private readonly IGitRepositoryService _gitRepositoryService;
 
-        public FlowCsvColumnDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, IGitRepositoryService gitRepositoryService)
+        public FlowInputDataService(IDbContextFactory<AppDbContext> dbContextFactory, IFlowValidationService flowValidationService, IGitRepositoryService gitRepositoryService)
             : base(dbContextFactory, flowValidationService)
         {
             _gitRepositoryService = gitRepositoryService;
@@ -28,7 +29,7 @@ namespace Business.Flows.DataService.DataHandlers
         // Public methods
         // ================================================================
 
-        public async Task<ResultDto<int>> CreateAsync(FlowCsvColumn input, CancellationToken ct)
+        public async Task<ResultDto<int>> CreateAsync(FlowInput input, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(input.Name))
                 return ResultDto<int>.Failure(NAME_MISSING);
@@ -41,8 +42,10 @@ namespace Business.Flows.DataService.DataHandlers
 
             if (input.IsSecret)
                 input.DefaultValue = string.Empty;
+            else
+                input.SecretValue = string.Empty;
 
-            dbContext.FlowCsvColumns.Add(input);
+            dbContext.FlowInputs.Add(input);
             await dbContext.SaveChangesAsync(ct);
             _gitRepositoryService.Changed(input.FlowId);
 
@@ -51,16 +54,16 @@ namespace Business.Flows.DataService.DataHandlers
 
         // Renaming does not rename it in the steps that type it. The validator says which ones
         // still use the old name.
-        public async Task<ResultDto<FlowCsvColumn>> UpdateAsync(FlowCsvColumnDto dto, CancellationToken ct)
+        public async Task<ResultDto<FlowInput>> UpdateAsync(FlowInputDto dto, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
-                return ResultDto<FlowCsvColumn>.Failure(NAME_MISSING);
+                return ResultDto<FlowInput>.Failure(NAME_MISSING);
 
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            FlowCsvColumn? input = await dbContext.FlowCsvColumns.FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
+            FlowInput? input = await dbContext.FlowInputs.FirstOrDefaultAsync(x => x.Id == dto.Id, ct);
             if (input == null)
-                return ResultDto<FlowCsvColumn>.Failure("Entity doesnt exist in the Database!");
+                return ResultDto<FlowInput>.Failure("Entity doesnt exist in the Database!");
 
             HashSet<string> taken = await TakenNamesAsync(dbContext, input.FlowId, ct);
             taken.Remove(input.Name);
@@ -69,22 +72,31 @@ namespace Business.Flows.DataService.DataHandlers
             input.IsSecret = dto.IsSecret;
             input.DefaultValue = dto.DefaultValue;
 
+            // A secret's form never holds the saved value, so leaving it empty keeps it.
             if (input.IsSecret)
+            {
                 input.DefaultValue = string.Empty;
+                if (dto.NewSecretValue.Length > 0)
+                    input.SecretValue = dto.NewSecretValue;
+            }
+            else
+            {
+                input.SecretValue = string.Empty;
+            }
 
             await dbContext.SaveChangesAsync(ct);
             _gitRepositoryService.Changed(input.FlowId);
 
-            return ResultDto<FlowCsvColumn>.Success(input);
+            return ResultDto<FlowInput>.Success(input);
         }
 
         public async Task<ResultDto<bool>> DeleteAsync(int id, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            int? flowId = await dbContext.FlowCsvColumns.Where(x => x.Id == id).Select(x => (int?)x.FlowId).FirstOrDefaultAsync(ct);
+            int? flowId = await dbContext.FlowInputs.Where(x => x.Id == id).Select(x => (int?)x.FlowId).FirstOrDefaultAsync(ct);
 
-            int count = await dbContext.FlowCsvColumns.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
+            int count = await dbContext.FlowInputs.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
             if (count <= 0 || flowId == null)
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
 
@@ -100,7 +112,7 @@ namespace Business.Flows.DataService.DataHandlers
 
         private static async Task<int> NextOrderNumberAsync(AppDbContext dbContext, int flowId, CancellationToken ct)
         {
-            int? last = await dbContext.FlowCsvColumns
+            int? last = await dbContext.FlowInputs
                 .Where(x => x.FlowId == flowId)
                 .MaxAsync(x => (int?)x.OrderNumber, ct);
 

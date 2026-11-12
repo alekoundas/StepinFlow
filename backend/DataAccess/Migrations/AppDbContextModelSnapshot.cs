@@ -364,7 +364,7 @@ namespace DataAccess.Migrations
                     b.ToTable("FlowAreas");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowCsvColumn", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowInput", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -390,14 +390,19 @@ namespace DataAccess.Migrations
                     b.Property<int>("OrderNumber")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SecretValue")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FlowId");
+                    b.HasIndex("FlowId", "Name")
+                        .IsUnique();
 
-                    b.ToTable("FlowCsvColumns");
+                    b.ToTable("FlowInputs");
                 });
 
             modelBuilder.Entity("Core.Models.Database.FlowPoint", b =>
@@ -777,10 +782,10 @@ namespace DataAccess.Migrations
                     b.Navigation("ParentFlowArea");
                 });
 
-            modelBuilder.Entity("Core.Models.Database.FlowCsvColumn", b =>
+            modelBuilder.Entity("Core.Models.Database.FlowInput", b =>
                 {
                     b.HasOne("Core.Models.Database.Flow", "Flow")
-                        .WithMany("FlowCsvColumns")
+                        .WithMany("FlowInputs")
                         .HasForeignKey("FlowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -915,7 +920,7 @@ namespace DataAccess.Migrations
                 {
                     b.Navigation("FlowAreas");
 
-                    b.Navigation("FlowCsvColumns");
+                    b.Navigation("FlowInputs");
 
                     b.Navigation("FlowPoints");
 

@@ -146,7 +146,7 @@ namespace Business.Flows.DataService.DataHandlers
         /// New steps saved at once from a recording, with the inputs they type. Only new rows are
         /// written: the flow's steps keep their ids and their history.
         /// </summary>
-        public async Task<ResultDto<int>> CreateTreeAsync(int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowCsvColumn> inputs, CancellationToken ct)
+        public async Task<ResultDto<int>> CreateTreeAsync(int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowInput> inputs, CancellationToken ct)
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
@@ -212,7 +212,7 @@ namespace Business.Flows.DataService.DataHandlers
             return ResultDto<int>.Success(source.Id);
         }
 
-        private static async Task<ResultDto<int>> InsertTreeAsync(AppDbContext dbContext, int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowCsvColumn> inputs, CancellationToken ct)
+        private static async Task<ResultDto<int>> InsertTreeAsync(AppDbContext dbContext, int? flowId, int? parentFlowStepId, int targetIndex, IReadOnlyList<FlowStep> steps, IReadOnlyList<FlowInput> inputs, CancellationToken ct)
         {
             int? rootId = flowId;
             if (parentFlowStepId != null)
@@ -257,14 +257,14 @@ namespace Business.Flows.DataService.DataHandlers
             List<FlowStep> landing = rows.Where(x => x.ParentFlowStep == null).ToList();
             await PlaceAtTargetAsync(dbContext, landing, rootId.Value, parentFlowStepId, targetIndex, ct);
 
-            foreach (FlowCsvColumn input in inputs)
+            foreach (FlowInput input in inputs)
             {
                 input.Id = 0;
                 input.FlowId = rootId.Value;
             }
 
             dbContext.FlowSteps.AddRange(rows);
-            dbContext.FlowCsvColumns.AddRange(inputs);
+            dbContext.FlowInputs.AddRange(inputs);
             await dbContext.SaveChangesAsync(ct);
 
             return ResultDto<int>.Success(rootId.Value);

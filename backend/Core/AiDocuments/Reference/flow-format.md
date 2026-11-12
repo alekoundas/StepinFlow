@@ -310,8 +310,8 @@ validator warns about.
 
 ### Inputs
 
-The values a flow needs, by name, each with the value it was recorded with. A row of the CSV beside
-the file overrides it, so the file is a flow that executes on its own and the CSV is the data set.
+The values a flow needs, by name, each with the value it was recorded with, so the file is a flow
+that executes on its own.
 
 ```
 Inputs:
@@ -322,12 +322,13 @@ Inputs:
 `default` is the recorded value, kept so a clone and a model's round trip still have it. A default is
 quoted text, so like any other it cannot hold `]>`.
 
-`secret` means the value is never written to any file and resolves from the environment. So a secret
-has no `default`, and writing both is an error: a hash cannot be typed back into a field, and an
-encrypted value would need its key wherever the flow executes and stay in git history for good.
+`secret` means the value is never written to any file: it is typed once on the Inputs tab and kept
+in this machine's database, and an import keeps a secret's saved value when its name stays the same.
+So a secret has no `default`, and writing both is an error: a hash cannot be typed back into a field,
+and an encrypted value would need its key wherever the flow executes and stay in git history for good.
 
-What happens when a row leaves a value empty - error, fall back to the recorded default, or type
-nothing - is undecided, and gets settled when csv binding is built rather than guessed at now.
+An input a step types with no value - a secret not set yet, or an empty default - is an error on that
+input, so the flow does not start.
 
 ### Discord Bots
 
@@ -748,7 +749,6 @@ past a problem: a step that fails is reported, not switched off.
 ```
 flows/
   login.sflw
-  login.csv            ← values, committed: a secret is never in it
   login/
     template-l8p4w.png
     template-u9d3n.png

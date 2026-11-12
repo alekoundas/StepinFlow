@@ -98,7 +98,8 @@ to change it. Each action says what it becomes:
   anything; or leave it out. A click outside the window you picked starts left out.
 - **Typed text**: an input, named from the field you clicked before typing, with what you typed as
   its default; or the text as written. A field Windows says is a password field, or that reads as
-  one, makes the input secret, which is never written to a file.
+  one, makes the input secret, which is never written to a file: its value is typed once on the
+  Inputs tab, and the flow does not start until it has one.
 - **A key, a scroll**: kept, or left out.
 - **A check you marked**: until it is there or until it has gone, by its picture or by its words and
   their rule, and what it tells Discord.

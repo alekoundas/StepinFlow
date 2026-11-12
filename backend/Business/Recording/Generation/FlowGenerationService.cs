@@ -138,7 +138,7 @@ namespace Business.Recording.Generation
             }
 
             List<FlowStep> steps = schema.Steps.Where(x => !stepsBefore.Contains(x)).ToList();
-            List<FlowCsvColumn> inputs = draft.AddedInputs.ToList();
+            List<FlowInput> inputs = draft.AddedInputs.ToList();
 
             // The tree insert hangs them at the position by its ids, as it renumbers the steps there.
             foreach (FlowStep step in steps.Where(x => x.ParentFlowStep == under))

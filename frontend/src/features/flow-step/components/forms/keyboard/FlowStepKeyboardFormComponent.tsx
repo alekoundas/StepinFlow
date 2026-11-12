@@ -60,7 +60,10 @@ export default function FlowStepKeyboardFormComponent({
             onCancel={onCancel}
             baseValues={defaultValues}
           >
-            <FlowStepKeyboardFormFieldsComponent isDisabled={formMode === "VIEW"} />
+            <FlowStepKeyboardFormFieldsComponent
+              flowId={defaultValues.flowId ?? defaultValues.rootId}
+              isDisabled={formMode === "VIEW"}
+            />
           </FlowStepFormLayoutComponent>
         </form>
       </FormProvider>

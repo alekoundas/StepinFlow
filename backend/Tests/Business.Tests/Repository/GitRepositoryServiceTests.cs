@@ -330,9 +330,9 @@ namespace Business.Tests.Repository
 
             ResultDto<int> flow = await data.Flow.CreateAsync(new Flow { Name = "Login" }, Ct);
             ResultDto<int> area = await data.FlowArea.CreateAsync(new FlowArea { Name = "Box", FlowId = flow.Data, Type = FlowAreaTypeEnum.CUSTOM }, Ct);
-            ResultDto<int> input = await data.FlowCsvColumn.CreateAsync(new FlowCsvColumn { Name = "email", FlowId = flow.Data }, Ct);
+            ResultDto<int> input = await data.FlowInput.CreateAsync(new FlowInput { Name = "email", FlowId = flow.Data }, Ct);
             await data.FlowArea.DeleteAsync(area.Data, Ct);
-            await data.FlowCsvColumn.DeleteAsync(input.Data, Ct);
+            await data.FlowInput.DeleteAsync(input.Data, Ct);
             await data.Flow.DeleteAsync(flow.Data, Ct);
 
             repository.Changes.ShouldBe([flow.Data, flow.Data, flow.Data, flow.Data, flow.Data, flow.Data]);

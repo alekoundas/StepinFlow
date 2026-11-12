@@ -296,10 +296,27 @@ exactly ran in execution 37").
 
 ### 8. Inputs, secrets and the CSV round trip
 
-- [ ] A CSV template generated from the flow's columns, downloaded, filled in, uploaded back.
+Done 2026-11-12, for the first release, which has no CSV:
+
+- [x] **CSV columns are inputs**: `FlowCsvColumn` is `FlowInput`, its table `FlowInputs`, the rows
+      carried over (`RenameCsvColumnsToInputs`), with the unique name its configuration always
+      meant to have and was never applied.
+- [x] **An execution types an input's value.** It never did: `{{username}}` passed validation and
+      the step failed with "Nothing has a value", so every recording that typed into an input failed
+      at its first Type step.
+- [x] `FlowInput.IsSecret` means the value is never stored in any file. Its value is typed once on
+      the Inputs tab and kept in the database only, never sent back; an import keeps it for a secret
+      of the same name.
+- [x] **The app says which inputs are unset before the execution starts**: `INPUT_VALUE_MISSING`,
+      an error on the input, for a secret with no value saved or an empty default a step types.
+- [x] A Type step's form puts an input into its text, or adds a new one.
+
+Left:
+
+- [ ] By hand: record a sign-in with a password field, see the error on the secret, set it on the
+      Inputs tab, start the flow and watch it type both; switch branch and back, and it is still set.
+- [ ] A CSV template generated from the flow's inputs, downloaded, filled in, uploaded back.
 - [ ] **One execution per row.** `Execution.CsvRowIndex` already exists for it.
-- [ ] `FlowCsvColumn.IsSecret` means the value is never stored in any file. A password in a
-      repository is a leak.
 - [ ] **Stored secrets encrypted at rest** under a master password: `Rfc2898DeriveBytes` to derive a
       key, `AesGcm` to encrypt and authenticate, a random data key wrapped by the derived key so
       changing the password is O(1) and needs no separate verifier. Both live in
@@ -308,8 +325,6 @@ exactly ran in execution 37").
 - [ ] **CI never decrypts anything.** A pipeline resolves from environment variables; a headless
       execution that can block on a password prompt is a broken CI story. Resolution order is
       `CI argument > environment variable > local secrets file > stored value`.
-- [ ] A flow arriving on a new machine has no values, and the app says which inputs are unset before
-      the execution starts rather than failing halfway through.
 
 ### 9. Happy-path validation and the fix loop
 

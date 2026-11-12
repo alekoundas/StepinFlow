@@ -17,7 +17,7 @@ import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
-import type { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
+import type { FlowInputDto } from "@/shared/models/database/flow-input-dto";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
 import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
@@ -250,11 +250,11 @@ export const backendApiService = {
       call<ScreenPointDto>("FlowPoint.resolve", dto),
   },
 
-  FlowCsvColumn: {
-    create: (dto: FlowCsvColumnDto) => call<number>("FlowCsvColumn.create", dto),
-    update: (dto: FlowCsvColumnDto) =>
-      call<FlowCsvColumnDto>("FlowCsvColumn.update", dto),
-    delete: (id: number) => call<boolean>("FlowCsvColumn.delete", id),
+  FlowInput: {
+    create: (dto: FlowInputDto) => call<number>("FlowInput.create", dto),
+    update: (dto: FlowInputDto) =>
+      call<FlowInputDto>("FlowInput.update", dto),
+    delete: (id: number) => call<boolean>("FlowInput.delete", id),
   },
 
   Lookup: {

@@ -32,10 +32,13 @@ Each line is trimmed, so indentation does not survive an export.
 ## Inputs
 
 An input is a named value the flow types, such as `{{username}}`. It keeps the value it was
-recorded with as its default, and a row of the CSV beside the flow overrides it. A **secret** input
-keeps no value anywhere in the flow or its file, so it has no default.
+recorded with as its default, written in the flow's file. A **secret** input has no default: its
+value is typed once on the Inputs tab and kept only in this machine's database, never in the flow,
+its file or the repository, and never shown again. Until it has one, the flow has an error on that
+input and does not start; the same goes for an input a step types whose default is empty.
 
-The editor's **Inputs** tab lists them, with the steps that type each one. Renaming an input there
+The editor's **Inputs** tab lists them, with the steps that type each one. A Type step's form puts
+any of them into its text, or adds a new one. Renaming an input there
 does not rename it in those steps: each one still typing the old name shows an error until it is
 changed.
 

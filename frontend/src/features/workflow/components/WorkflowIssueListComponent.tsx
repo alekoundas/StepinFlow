@@ -218,7 +218,7 @@ function partNamed(flow: FlowDto, name: string): { tab: WorkflowPartTab; id: num
   const point = flow.flowPoints.find(isNamed);
   if (point) return { tab: "locations", id: point.id };
 
-  const input = flow.flowCsvColumns.find(isNamed);
+  const input = flow.flowInputs.find(isNamed);
   if (input) return { tab: "inputs", id: input.id };
 
   return null;

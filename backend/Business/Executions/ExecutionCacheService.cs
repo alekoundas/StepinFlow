@@ -33,6 +33,7 @@ namespace Business.Executions
         private readonly Dictionary<int, ExecutionStep> _cachedExecutionStepsById = new Dictionary<int, ExecutionStep>();            //Cache all flowstep parents execution steps with result. One per step - a loop overwrites its own
         private readonly Dictionary<int, IReadOnlyList<Point>> _cachedPointsByStepId = new Dictionary<int, IReadOnlyList<Point>>();  //Every hit a FIND_ALL came back with
 
+        private IReadOnlyDictionary<string, string> _inputValues = new Dictionary<string, string>();
         private bool _keepsScreenshots;
 
         public ExecutionCacheService(
@@ -52,9 +53,10 @@ namespace Business.Executions
         // Public methods
         // ================================================================
 
-        public async Task ResetAsync(IReadOnlyDictionary<int, FlowStep> stepsById, bool keepsScreenshots, CancellationToken ct)
+        public async Task ResetAsync(IReadOnlyDictionary<int, FlowStep> stepsById, IReadOnlyDictionary<string, string> inputValues, bool keepsScreenshots, CancellationToken ct)
         {
             StepsById = stepsById;
+            _inputValues = inputValues;
             _keepsScreenshots = keepsScreenshots;
 
             _cachedExecutionStepsById.Clear();
@@ -110,8 +112,8 @@ namespace Business.Executions
                 return new VariableTranslationResult { Text = text ?? string.Empty };
 
             // Built per call rather than kept: a step's result changes as the walk goes, and a map
-            // built once would answer with what was true earlier.
-            Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            // built once would answer with what was true earlier. The inputs first, then the steps.
+            Dictionary<string, string> values = new Dictionary<string, string>(_inputValues, StringComparer.OrdinalIgnoreCase);
 
             foreach (KeyValuePair<int, FlowStep> pair in StepsById)
             {

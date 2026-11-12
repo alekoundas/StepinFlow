@@ -140,7 +140,21 @@ namespace Business.FlowScript
             FlowScriptSchema schema = new FlowScriptSchema() { Flow = flow };
             schema.Areas.AddRange(await dbContext.FlowAreas.Where(x => x.FlowId == flowId).ToListAsync(ct));
             schema.Points.AddRange(await dbContext.FlowPoints.Where(x => x.FlowId == flowId).ToListAsync(ct));
-            schema.Inputs.AddRange(await dbContext.FlowCsvColumns.Where(x => x.FlowId == flowId).ToListAsync(ct));
+            // Without a secret's value: what is exported goes to files and to models.
+            schema.Inputs.AddRange(await dbContext.FlowInputs
+                .AsNoTracking()
+                .Where(x => x.FlowId == flowId)
+                .Select(x => new FlowInput
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    DefaultValue = x.DefaultValue,
+                    IsSecret = x.IsSecret,
+                    OrderNumber = x.OrderNumber,
+                    FlowId = x.FlowId,
+                    CreatedOn = x.CreatedOn,
+                })
+                .ToListAsync(ct));
             schema.Steps.AddRange(await dbContext.FlowSteps.Where(x => x.RootId == flowId).ToListAsync(ct));
 
             // Their pixels are megabytes, so only when asked for. Not tracked, so linked to their steps

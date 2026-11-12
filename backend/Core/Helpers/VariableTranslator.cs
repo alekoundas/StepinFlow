@@ -6,7 +6,7 @@ namespace Core.Helpers
     /// <summary>
     /// Swaps {{name}} for what it stands for.
     ///
-    /// One syntax for two things - a csv column and what an earlier step produced - because at the
+    /// One syntax for two things - a input and what an earlier step produced - because at the
     /// point of use they are the same thing: a value the flow did not know when it was recorded.
     /// </summary>
     public static class VariableTranslator

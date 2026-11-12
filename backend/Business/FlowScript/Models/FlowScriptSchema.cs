@@ -15,7 +15,7 @@ namespace Business.FlowScript.Models
 
         public List<FlowArea> Areas { get; } = new List<FlowArea>();
         public List<FlowPoint> Points { get; } = new List<FlowPoint>();
-        public List<FlowCsvColumn> Inputs { get; } = new List<FlowCsvColumn>();
+        public List<FlowInput> Inputs { get; } = new List<FlowInput>();
 
         /// <summary>In file order, so a parent always comes before its children. Templates are on their step.</summary>
         public List<FlowStep> Steps { get; } = new List<FlowStep>();

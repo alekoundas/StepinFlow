@@ -11,17 +11,17 @@ namespace Business.Flows.DataService
         public FlowStepDataService FlowStep { get; }
         public FlowAreaDataService FlowArea { get; }
         public FlowPointDataService FlowPoint { get; }
-        public FlowCsvColumnDataService FlowCsvColumn { get; }
+        public FlowInputDataService FlowInput { get; }
         public FlowTemplateDataService FlowTemplate { get; }
         public DiscordBotDataService DiscordBot { get; }
 
-        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowCsvColumnDataService flowCsvColumn, FlowTemplateDataService flowTemplate, DiscordBotDataService discordBot)
+        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowInputDataService flowInput, FlowTemplateDataService flowTemplate, DiscordBotDataService discordBot)
         {
             Flow = flow;
             FlowStep = flowStep;
             FlowArea = flowArea;
             FlowPoint = flowPoint;
-            FlowCsvColumn = flowCsvColumn;
+            FlowInput = flowInput;
             FlowTemplate = flowTemplate;
             DiscordBot = discordBot;
         }

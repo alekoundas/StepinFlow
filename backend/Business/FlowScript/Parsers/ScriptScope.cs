@@ -7,7 +7,7 @@ using Core.Models.Database;
 namespace Business.FlowScript.Parsers
 {
     /// <summary>
-    /// Store the related data defined in the script header. (Steps, areas, points, csvColumns, templates and Discord bots)
+    /// Store the related data defined in the script header. (Steps, areas, points, inputs, templates and Discord bots)
     ///
     /// A name nothing above declares is reported at the token it was read from.
     /// </summary>
@@ -15,7 +15,7 @@ namespace Business.FlowScript.Parsers
     {
         private readonly List<Diagnostic> _diagnostics;
 
-        private readonly HashSet<string> _names = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Steps, areas, points and csvColumns share one set of names.
+        private readonly HashSet<string> _names = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Steps, areas, points and inputs share one set of names.
         private readonly Dictionary<string, FlowArea> _areas = new Dictionary<string, FlowArea>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowPoint> _points = new Dictionary<string, FlowPoint>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, FlowStep> _steps = new Dictionary<string, FlowStep>(StringComparer.OrdinalIgnoreCase);
@@ -53,7 +53,7 @@ namespace Business.FlowScript.Parsers
                 _steps[step.Name] = step;
         }
 
-        public void Declare(FlowCsvColumn input, ScriptToken at)
+        public void Declare(FlowInput input, ScriptToken at)
         {
             DeclareName(input.Name, at);
         }

@@ -65,6 +65,17 @@ namespace Business.Tests.Executions
             return flow.Id;
         }
 
+        private void SeedInputs(int flowId, params FlowInput[] inputs)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+
+            foreach (FlowInput input in inputs)
+                input.FlowId = flowId;
+
+            db.FlowInputs.AddRange(inputs);
+            db.SaveChanges();
+        }
+
         private async Task<ExecutionStatusEnum?> ExecuteAsync(int flowId)
         {
             ExecutionEngine engine = Engine();
@@ -127,6 +138,26 @@ namespace Business.Tests.Executions
         {
             child.ParentFlowStep = parent;
             return child;
+        }
+
+
+        // ================================================================
+        // Inputs
+        // ================================================================
+
+        // A secret's value comes from the database, since the script never holds one.
+        [Fact]
+        public async Task A_step_types_each_inputs_value_and_a_secrets_saved_value()
+        {
+            FlowStep type = new FlowStep { Name = "Sign in", FlowStepType = FlowStepTypeEnum.KEYBOARD_INPUT, KeyboardInputText = "{{username}} {{password}}" };
+            int flowId = SeedFlow(false, type);
+            SeedInputs(flowId,
+                new FlowInput { Name = "username", DefaultValue = "standard_user" },
+                new FlowInput { Name = "password", IsSecret = true, SecretValue = "secret_sauce" });
+
+            await ExecuteAsync(flowId);
+
+            _workers.Typed.ShouldBe(["standard_user secret_sauce"]);
         }
 
 
@@ -429,6 +460,9 @@ namespace Business.Tests.Executions
         {
             private readonly Dictionary<string, Func<CancellationToken, Task<ExecutionStep>>> _byName = new Dictionary<string, Func<CancellationToken, Task<ExecutionStep>>>();
 
+            /// <summary>What each Type step would have typed, its names filled in.</summary>
+            public List<string> Typed { get; } = new List<string>();
+
             public void Does(string stepName, Func<CancellationToken, Task<ExecutionStep>> work)
             {
                 _byName[stepName] = work;
@@ -441,6 +475,9 @@ namespace Business.Tests.Executions
 
             public Task<ExecutionStep> ExecuteAsync(FlowStep step, IExecutionCacheService cache, CancellationToken ct)
             {
+                if (step.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT)
+                    Typed.Add(cache.TranslateVariables(step.KeyboardInputText).Text);
+
                 if (_byName.TryGetValue(step.Name, out Func<CancellationToken, Task<ExecutionStep>>? work))
                     return work(ct);
 

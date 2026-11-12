@@ -3,18 +3,18 @@ using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
 {
-    public class DeleteFlowCsvColumnHandler
+    public class DeleteFlowInputHandler
     {
         private readonly DataService _dataService;
 
-        public DeleteFlowCsvColumnHandler(DataService dataService)
+        public DeleteFlowInputHandler(DataService dataService)
         {
             _dataService = dataService;
         }
 
         public Task<ResultDto<bool>> HandleAsync(int id, CancellationToken ct)
         {
-            return _dataService.FlowCsvColumn.DeleteAsync(id, ct);
+            return _dataService.FlowInput.DeleteAsync(id, ct);
         }
     }
 }

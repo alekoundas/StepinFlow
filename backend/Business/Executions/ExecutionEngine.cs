@@ -138,7 +138,8 @@ namespace Business.Executions
 
                 isQaTest = await dbContext.Flows.Where(x => x.Id == dto.FlowId).Select(x => x.IsQaTest).FirstOrDefaultAsync(ct);
                 Dictionary<int, FlowStep> stepsById = await LoadReachableStepsAsync(dbContext, dto.FlowId, ct);
-                await _cache.ResetAsync(stepsById, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
+                Dictionary<string, string> inputValues = await LoadInputValuesAsync(dbContext, dto.FlowId, stepsById, ct);
+                await _cache.ResetAsync(stepsById, inputValues, dto.HistoryLevel == ExecutionHistoryLevelEnum.STEPS_AND_IMAGES, ct);
                 ExecutionId = await _history.StartAsync(dto, stepsById, ct); // History creates the Execution db row.
             }
             catch
@@ -305,6 +306,33 @@ namespace Business.Executions
             }
 
             return stepsById;
+        }
+
+        // The value of every input the reached flows have, a secret's from the database. The flow
+        // started comes first, so its value wins over a sub-flow's input of the same name. An empty
+        // value is none, and the step that types it says so.
+        private static async Task<Dictionary<string, string>> LoadInputValuesAsync(AppDbContext dbContext, int flowId, IReadOnlyDictionary<int, FlowStep> stepsById, CancellationToken ct)
+        {
+            HashSet<int> flowIds = stepsById.Values.Select(x => x.RootId).ToHashSet();
+            flowIds.Add(flowId);
+
+            List<FlowInput> inputs = await dbContext.FlowInputs
+                .AsNoTracking()
+                .Where(x => flowIds.Contains(x.FlowId))
+                .ToListAsync(ct);
+
+            Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (FlowInput input in inputs.OrderBy(x => x.FlowId == flowId ? 0 : 1))
+            {
+                string value = input.DefaultValue;
+                if (input.IsSecret)
+                    value = input.SecretValue;
+
+                if (value.Length > 0)
+                    values.TryAdd(input.Name.Trim(), value);
+            }
+
+            return values;
         }
 
 

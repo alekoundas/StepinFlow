@@ -12,7 +12,7 @@ namespace Business.FlowScript.Parsers.Structure
         public override ScriptSymbolEnum Parse()
         {
             // Description: | Areas: | Points: | Inputs: | Discord Bots: | Templates: | Steps:
-            ScriptSymbolEnum section = ExtractKeyword(ScriptSymbolEnum.FLOWFIELD_DESCRIPTION, ScriptSymbolEnum.AREAS, ScriptSymbolEnum.POINTS, ScriptSymbolEnum.CSV_COLUMNS, ScriptSymbolEnum.DISCORD_BOTS, ScriptSymbolEnum.TEMPLATES, ScriptSymbolEnum.STEPS);
+            ScriptSymbolEnum section = ExtractKeyword(ScriptSymbolEnum.FLOWFIELD_DESCRIPTION, ScriptSymbolEnum.AREAS, ScriptSymbolEnum.POINTS, ScriptSymbolEnum.INPUTS, ScriptSymbolEnum.DISCORD_BOTS, ScriptSymbolEnum.TEMPLATES, ScriptSymbolEnum.STEPS);
             ExpectEnd();
 
             return section;

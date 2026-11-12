@@ -137,7 +137,7 @@ namespace Business.Tests.Recording
             FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == roots[1].Id, Ct);
             template.FlowTemplate.TemplateImage.ShouldNotBeNull();
 
-            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            FlowInput input = await db.FlowInputs.SingleAsync(x => x.FlowId == flowId, Ct);
             (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
         }
 
@@ -215,7 +215,7 @@ namespace Business.Tests.Recording
             using AppDbContext db = _database.CreateDbContext();
             FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == roots[0].Id, Ct);
             template.FlowTemplate.TemplateImage.ShouldNotBeNull();
-            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            FlowInput input = await db.FlowInputs.SingleAsync(x => x.FlowId == flowId, Ct);
             (input.Name, input.DefaultValue).ShouldBe(("email", "ops@example.com"));
         }
 
@@ -356,7 +356,7 @@ namespace Business.Tests.Recording
             using AppDbContext db = _database.CreateDbContext();
             FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == search.Id, Ct);
             template.FlowTemplate.TemplateImage.ShouldNotBeNull();
-            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            FlowInput input = await db.FlowInputs.SingleAsync(x => x.FlowId == flowId, Ct);
             input.DefaultValue.ShouldBe("ops@example.com");
         }
 
@@ -902,7 +902,7 @@ namespace Business.Tests.Recording
             using AppDbContext db = _database.CreateDbContext();
             FlowStepTemplate template = await db.FlowStepTemplates.Include(x => x.FlowTemplate).SingleAsync(x => x.FlowStepId == search.Id, Ct);
             template.FlowTemplate.TemplateImage.ShouldNotBeNull();
-            FlowCsvColumn input = await db.FlowCsvColumns.SingleAsync(x => x.FlowId == flowId, Ct);
+            FlowInput input = await db.FlowInputs.SingleAsync(x => x.FlowId == flowId, Ct);
             input.DefaultValue.ShouldBe("ops@example.com");
         }
 

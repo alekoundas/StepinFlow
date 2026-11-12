@@ -86,7 +86,7 @@ namespace Business.FlowScript
         // Private methods
         // ================================================================
 
-        private static FlowScriptInputDto InputOf(FlowCsvColumn input)
+        private static FlowScriptInputDto InputOf(FlowInput input)
         {
             return new FlowScriptInputDto
             {

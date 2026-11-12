@@ -389,7 +389,8 @@ namespace Business.Tests.FlowScript
             missing.AddRange(MissingEitherWay(rows.Areas, new FlowArea(), nameof(FlowArea.Name)));
             missing.AddRange(MissingEitherWay(rows.Points, new FlowPoint(), nameof(FlowPoint.Name)));
             missing.AddRange(MissingEitherWay(pictures, new FlowTemplate(), nameof(FlowTemplate.Name), nameof(FlowTemplate.Thumbnail)));
-            missing.AddRange(MissingEitherWay(rows.Inputs, new FlowCsvColumn(), nameof(FlowCsvColumn.Name), nameof(FlowCsvColumn.OrderNumber)));
+            // A secret's value never reaches a file, so it is never in the script.
+            missing.AddRange(MissingEitherWay(rows.Inputs, new FlowInput(), nameof(FlowInput.Name), nameof(FlowInput.OrderNumber), nameof(FlowInput.SecretValue)));
 
             missing.ShouldBeEmpty();
         }
@@ -564,7 +565,7 @@ namespace Business.Tests.FlowScript
             foreach (FlowPoint point in before.Points)
                 changed.AddRange(ScriptRows.Differences(point, after.Points.FirstOrDefault(x => x.Name == point.Name)).Select(x => $"{point.Name}: {x}"));
 
-            foreach (FlowCsvColumn input in before.Inputs)
+            foreach (FlowInput input in before.Inputs)
                 changed.AddRange(ScriptRows.Differences(input, after.Inputs.FirstOrDefault(x => x.Name == input.Name)).Select(x => $"{input.Name}: {x}"));
 
             foreach (FlowStepTemplate template in before.Templates)

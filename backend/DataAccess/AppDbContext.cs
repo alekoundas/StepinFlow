@@ -9,7 +9,7 @@ namespace DataAccess
         public DbSet<Flow> Flows { get; set; }
         public DbSet<FlowArea> FlowAreas { get; set; }
         public DbSet<FlowPoint> FlowPoints { get; set; }
-        public DbSet<FlowCsvColumn> FlowCsvColumns { get; set; }
+        public DbSet<FlowInput> FlowInputs { get; set; }
         public DbSet<FlowStep> FlowSteps { get; set; }
         public DbSet<FlowTemplate> FlowTemplates { get; set; }
         public DbSet<FlowStepTemplate> FlowStepTemplates { get; set; }
@@ -30,6 +30,7 @@ namespace DataAccess
             modelBuilder.ApplyConfiguration(new FlowConfiguration());
             modelBuilder.ApplyConfiguration(new FlowAreaConfiguration());
             modelBuilder.ApplyConfiguration(new FlowPointConfiguration());
+            modelBuilder.ApplyConfiguration(new FlowInputConfiguration());
             modelBuilder.ApplyConfiguration(new FlowStepConfiguration());
             modelBuilder.ApplyConfiguration(new FlowTemplateConfiguration());
             modelBuilder.ApplyConfiguration(new FlowStepTemplateConfiguration());

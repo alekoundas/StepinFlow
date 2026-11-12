@@ -138,10 +138,10 @@ namespace Transport.Ipc
                     "FlowPoint.getPreview" => await Handler<GetFlowPointPreviewHandler>().HandleAsync(Payload<int>(request), ct),
                     "FlowPoint.resolve" => await Handler<ResolveFlowPointHandler>().HandleAsync(Payload<FlowPointDto>(request), ct),
 
-                    // FlowCsvColumn
-                    "FlowCsvColumn.create" => await Handler<CreateFlowCsvColumnHandler>().HandleAsync(Payload<FlowCsvColumnDto>(request), ct),
-                    "FlowCsvColumn.update" => await Handler<UpdateFlowCsvColumnHandler>().HandleAsync(Payload<FlowCsvColumnDto>(request), ct),
-                    "FlowCsvColumn.delete" => await Handler<DeleteFlowCsvColumnHandler>().HandleAsync(Payload<int>(request), ct),
+                    // FlowInput
+                    "FlowInput.create" => await Handler<CreateFlowInputHandler>().HandleAsync(Payload<FlowInputDto>(request), ct),
+                    "FlowInput.update" => await Handler<UpdateFlowInputHandler>().HandleAsync(Payload<FlowInputDto>(request), ct),
+                    "FlowInput.delete" => await Handler<DeleteFlowInputHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // FlowTemplate
                     "FlowTemplate.getByFlow" => await Handler<GetFlowTemplatesHandler>().HandleAsync(Payload<int>(request), ct),

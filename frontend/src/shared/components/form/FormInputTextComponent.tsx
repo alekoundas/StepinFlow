@@ -12,6 +12,8 @@ interface Props {
   hintText?: string;
   isDisabled?: boolean;
   isRequired?: boolean;
+  /** Shown as dots, for a password. */
+  isMasked?: boolean;
   className?: string;
 }
 
@@ -22,6 +24,7 @@ export function FormInputTextComponent({
   hintText,
   isDisabled = false,
   isRequired = false,
+  isMasked = false,
   className,
 }: Props) {
   const {
@@ -39,6 +42,8 @@ export function FormInputTextComponent({
         <InputText
           ref={ref}
           name={fieldName}
+          type={isMasked ? "password" : "text"}
+          autoComplete={isMasked ? "new-password" : undefined}
           value={value ? value.toString() : ""}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}

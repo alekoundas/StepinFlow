@@ -28,7 +28,7 @@ namespace Business.FlowScript.Text
             // Header - Flow relations
             WriteAreas(builder, schema);
             WritePoints(builder, schema);
-            WriteCsvColumns(builder, schema);
+            WriteInputs(builder, schema);
             WriteDiscordBots(builder, schema);
             WriteTemplates(builder, schema);
 
@@ -218,17 +218,17 @@ namespace Business.FlowScript.Text
             builder.AppendLine();
         }
 
-        private static void WriteCsvColumns(StringBuilder builder, FlowScriptSchema schema)
+        private static void WriteInputs(StringBuilder builder, FlowScriptSchema schema)
         {
             if (schema.Inputs.Count == 0)
                 return;
 
-            string heading = new SectionWriter(ScriptSymbolEnum.CSV_COLUMNS).Write();
+            string heading = new SectionWriter(ScriptSymbolEnum.INPUTS).Write();
             builder.AppendLine(heading);
 
-            foreach (FlowCsvColumn input in schema.Inputs.OrderBy(x => x.OrderNumber))
+            foreach (FlowInput input in schema.Inputs.OrderBy(x => x.OrderNumber))
             {
-                string line = new CsvColumnWriter(input).Write();
+                string line = new InputWriter(input).Write();
                 builder.Append("  ").AppendLine(line);
             }
 

@@ -4,12 +4,12 @@ import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FormMode } from "@/shared/enums/form-mode-enum";
-import { FlowCsvColumnDto } from "@/shared/models/database/flow-csv-column-dto";
+import { FlowInputDto } from "@/shared/models/database/flow-input-dto";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import FlowCsvColumnFormComponent from "@/features/flow-csv-column/components/forms/FlowCsvColumnFormComponent";
-import { useFlowCsvColumnMutations } from "@/features/flow-csv-column/hooks/use-flow-csv-column";
+import FlowInputFormComponent from "@/features/flow-input/components/forms/FlowInputFormComponent";
+import { useFlowInputMutations } from "@/features/flow-input/hooks/use-flow-input";
 import { typesInput } from "@/features/workflow/hooks/use-flow-parts";
 import { WorkflowUsedByComponent } from "@/features/workflow/components/WorkflowUsedByComponent";
 import type { WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
@@ -21,15 +21,15 @@ interface Props {
   onSelect: (selected: WorkflowPartSelection) => void;
 }
 
-const FORM_ID = "flow-csv-column-panel-form";
+const FORM_ID = "flow-input-panel-form";
 
 /** The Inputs tab's right side: the picked input's form, saved on its own. */
-export function FlowCsvColumnPanelComponent({ flow, uses, selected, onSelect }: Props) {
+export function FlowInputPanelComponent({ flow, uses, selected, onSelect }: Props) {
   const {
-    createFlowCsvColumnMutation,
-    updateFlowCsvColumnMutation,
-    deleteFlowCsvColumnMutation,
-  } = useFlowCsvColumnMutations();
+    createFlowInputMutation,
+    updateFlowInputMutation,
+    deleteFlowInputMutation,
+  } = useFlowInputMutations();
   const { openConfirm } = useDialogStore();
 
   const [formMode, setFormMode] = useState<FormMode>(FormMode.VIEW);
@@ -53,8 +53,8 @@ export function FlowCsvColumnPanelComponent({ flow, uses, selected, onSelect }: 
 
   const input =
     selected === "new"
-      ? new FlowCsvColumnDto({ flowId: flow.id })
-      : flow.flowCsvColumns.find((x) => x.id === selected);
+      ? new FlowInputDto({ flowId: flow.id })
+      : flow.flowInputs.find((x) => x.id === selected);
 
   if (!input)
     return (
@@ -66,16 +66,16 @@ export function FlowCsvColumnPanelComponent({ flow, uses, selected, onSelect }: 
 
   const usedBy = (uses ?? []).filter((x) => typesInput(x, input.name));
 
-  const save = async (dto: FlowCsvColumnDto) => {
+  const save = async (dto: FlowInputDto) => {
     setError(undefined);
     try {
       if (formMode === FormMode.ADD) {
-        const id = await createFlowCsvColumnMutation.mutateAsync(dto);
+        const id = await createFlowInputMutation.mutateAsync(dto);
         onSelect(id);
         return;
       }
 
-      await updateFlowCsvColumnMutation.mutateAsync(dto);
+      await updateFlowInputMutation.mutateAsync(dto);
       // From what was saved, so putting a field back afterwards counts as a change.
       setResetCount((x) => x + 1);
       setFormMode(FormMode.VIEW);
@@ -102,13 +102,13 @@ export function FlowCsvColumnPanelComponent({ flow, uses, selected, onSelect }: 
         ? `${usedBy.length} step(s) type {{${input.name}}} and will have nothing to fill it with.`
         : `No step types "${input.name}".`;
 
-    openConfirm("flow-csv-column-delete", {
+    openConfirm("flow-input-delete", {
       headerText: `Delete ${input.name}?`,
       confirmLabel: "Delete the input",
       confirmSeverity: "danger",
       children: <LabelComponent text={`${message} This cannot be undone.`} />,
       onConfirm: async () => {
-        await deleteFlowCsvColumnMutation.mutateAsync(input.id);
+        await deleteFlowInputMutation.mutateAsync(input.id);
         onSelect(null);
       },
     });
@@ -137,7 +137,7 @@ export function FlowCsvColumnPanelComponent({ flow, uses, selected, onSelect }: 
         />
       )}
 
-      <FlowCsvColumnFormComponent
+      <FlowInputFormComponent
         key={`${selected}-${resetCount}`}
         formId={FORM_ID}
         formMode={formMode}

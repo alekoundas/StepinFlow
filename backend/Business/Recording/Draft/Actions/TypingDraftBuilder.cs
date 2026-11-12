@@ -6,9 +6,10 @@ namespace Business.Recording.Draft.Actions
 {
     /// <summary>
     /// Typed text is an input with what was typed as its default, and the step types the input, so
-    /// a CSV row can change it. A secret keeps no value anywhere: it is supplied when the flow
-    /// executes. Typed as written, the text is on the line itself - and so is a value typed wrong on
-    /// purpose, which a row must never be able to put right, with a comment saying so for the model.
+    /// the value is changed in one place. A secret keeps no value here: it is set once on the
+    /// Inputs tab and kept only in the database. Typed as written, the text is on the line itself -
+    /// and so is a value typed wrong on purpose, which changing an input must never put right, with
+    /// a comment saying so for the model.
     /// </summary>
     public static class TypingDraftBuilder
     {
@@ -22,7 +23,7 @@ namespace Business.Recording.Draft.Actions
             if (review.Choice == ReviewChoiceEnum.INPUT)
             {
                 string desired = string.IsNullOrWhiteSpace(review.InputName) ? "input" : review.InputName.Trim();
-                FlowCsvColumn input = draft.Input(desired, typed, review.IsSecret);
+                FlowInput input = draft.Input(desired, typed, review.IsSecret);
                 text = $"{{{{{input.Name}}}}}";
             }
 

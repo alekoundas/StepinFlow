@@ -16,12 +16,16 @@ import {
   toDisplay,
   useCaptureCombination,
 } from "@/features/flow-step/hooks/use-capture-combination";
+import { FlowStepInputPickerComponent } from "@/features/flow-step/components/forms/keyboard/FlowStepInputPickerComponent";
 
 interface Props {
+  // The flow whose inputs the text can type.
+  flowId: number | undefined;
   isDisabled?: boolean;
 }
 
 export default function FlowStepKeyboardFormFieldsComponent({
+  flowId,
   isDisabled = false,
 }: Props) {
   const { control, setValue } = useFormContext();
@@ -71,7 +75,14 @@ export default function FlowStepKeyboardFormFieldsComponent({
           label="Text to type"
           isRequired={true}
           isDisabled={isDisabled}
-          hintText="Typed literally. To press Enter or Tab, add a Send Keys step after this one."
+          hintText="Typed as written, each {{name}} as that input's value. To press Enter or Tab, add a Send Keys step after this one."
+        />
+      )}
+
+      {!isCombination && (
+        <FlowStepInputPickerComponent
+          flowId={flowId}
+          isDisabled={isDisabled}
         />
       )}
 

@@ -3,11 +3,11 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Text.Header
 {
-    internal sealed class CsvColumnWriter : BaseWriter
+    internal sealed class InputWriter : BaseWriter
     {
-        private readonly FlowCsvColumn _input;
+        private readonly FlowInput _input;
 
-        public CsvColumnWriter(FlowCsvColumn input)
+        public InputWriter(FlowInput input)
         {
             _input = input;
         }
@@ -15,8 +15,8 @@ namespace Business.FlowScript.Text.Header
         protected override void Compose()
         {
             // <[ email ]>   [default <[ ops@example.com ]> | secret]
-            // A default travels with the flow, so a clone and an import keep it; a csv row still
-            // overrides it. A secret's value never reaches a file.
+            // A default travels with the flow, so a clone and an import keep it. A secret's value
+            // never reaches a file.
             WriteQuote(_input.Name);
 
             if (_input.IsSecret)

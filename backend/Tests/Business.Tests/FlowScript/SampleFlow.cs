@@ -41,8 +41,8 @@ namespace Business.Tests.FlowScript
 
             schema.Inputs.AddRange(
             [
-                new FlowCsvColumn { Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
-                new FlowCsvColumn { Name = "password", OrderNumber = 1, IsSecret = true },
+                new FlowInput { Name = "username", OrderNumber = 0, DefaultValue = "standard_user" },
+                new FlowInput { Name = "password", OrderNumber = 1, IsSecret = true },
             ]);
 
             FlowStep Step(FlowStep step, FlowStep? parent)

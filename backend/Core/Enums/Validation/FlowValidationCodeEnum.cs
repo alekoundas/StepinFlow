@@ -75,6 +75,9 @@ namespace Core.Enums
         /// <summary>A step writes a name nothing in the flow defines, so it can never resolve.</summary>
         VARIABLE_UNKNOWN,
 
+        /// <summary>A step types an input that has no value: a secret never set, or an empty default.</summary>
+        INPUT_VALUE_MISSING,
+
         /// <summary>Text holding "&lt;[" or "]&gt;", the quotes the flow script writes text between.</summary>
         QUOTE_INSIDE,
 

@@ -5,21 +5,21 @@ using Core.Models.Dtos;
 
 namespace Transport.Ipc.Handlers
 {
-    public class CreateFlowCsvColumnHandler
+    public class CreateFlowInputHandler
     {
         private readonly IMapper _mapper;
         private readonly DataService _dataService;
 
-        public CreateFlowCsvColumnHandler(IMapper mapper, DataService dataService)
+        public CreateFlowInputHandler(IMapper mapper, DataService dataService)
         {
             _mapper = mapper;
             _dataService = dataService;
         }
 
-        public Task<ResultDto<int>> HandleAsync(FlowCsvColumnDto dto, CancellationToken ct)
+        public Task<ResultDto<int>> HandleAsync(FlowInputDto dto, CancellationToken ct)
         {
-            FlowCsvColumn input = _mapper.Map<FlowCsvColumn>(dto);
-            return _dataService.FlowCsvColumn.CreateAsync(input, ct);
+            FlowInput input = _mapper.Map<FlowInput>(dto);
+            return _dataService.FlowInput.CreateAsync(input, ct);
         }
     }
 }

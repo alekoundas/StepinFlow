@@ -18,8 +18,8 @@ import { FlowAreaListComponent } from "@/features/flow-area/components/FlowAreaL
 import { FlowAreaPanelComponent } from "@/features/flow-area/components/FlowAreaPanelComponent";
 import { FlowPointListComponent } from "@/features/flow-point/components/FlowPointListComponent";
 import { FlowPointPanelComponent } from "@/features/flow-point/components/FlowPointPanelComponent";
-import { FlowCsvColumnListComponent } from "@/features/flow-csv-column/components/FlowCsvColumnListComponent";
-import { FlowCsvColumnPanelComponent } from "@/features/flow-csv-column/components/FlowCsvColumnPanelComponent";
+import { FlowInputListComponent } from "@/features/flow-input/components/FlowInputListComponent";
+import { FlowInputPanelComponent } from "@/features/flow-input/components/FlowInputPanelComponent";
 import {
   WorkflowIssueListComponent,
   type WorkflowPartTab,
@@ -70,7 +70,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
     <WorkflowTabsComponent
       areaCount={flow?.flowAreas.length}
       locationCount={flow?.flowPoints.length}
-      inputCount={flow?.flowCsvColumns.length}
+      inputCount={flow?.flowInputs.length}
       templateCount={templates?.length}
       issueCount={issues.length > 0 ? issues.length : undefined}
       issueColor={flowHealthOf(issues).color}
@@ -132,8 +132,8 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
                 />
               )}
               {activeTab === "inputs" && (
-                <FlowCsvColumnListComponent
-                  inputs={flow.flowCsvColumns}
+                <FlowInputListComponent
+                  inputs={flow.flowInputs}
                   uses={uses}
                   selected={input}
                   onSelect={setInput}
@@ -196,7 +196,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
                   />
                 )}
                 {activeTab === "inputs" && (
-                  <FlowCsvColumnPanelComponent
+                  <FlowInputPanelComponent
                     flow={flow}
                     uses={uses}
                     selected={input}

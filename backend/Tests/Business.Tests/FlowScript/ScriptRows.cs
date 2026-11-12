@@ -27,7 +27,7 @@ namespace Business.Tests.FlowScript
         public List<FlowPoint> Points { get; set; } = [];
         public List<FlowStep> Steps { get; set; } = [];
         public List<FlowStepTemplate> Templates { get; set; } = [];
-        public List<FlowCsvColumn> Inputs { get; set; } = [];
+        public List<FlowInput> Inputs { get; set; } = [];
 
         public static async Task<ScriptRows> LoadAsync(IDbContextFactory<AppDbContext> factory, int flowId)
         {
@@ -41,7 +41,7 @@ namespace Business.Tests.FlowScript
                 Points = await db.FlowPoints.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
                 Steps = await db.FlowSteps.AsNoTracking().Where(x => x.RootId == flowId).ToListAsync(ct),
                 Templates = await db.FlowStepTemplates.AsNoTracking().Include(x => x.FlowTemplate).Where(x => x.FlowStep.RootId == flowId).ToListAsync(ct),
-                Inputs = await db.FlowCsvColumns.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
+                Inputs = await db.FlowInputs.AsNoTracking().Where(x => x.FlowId == flowId).ToListAsync(ct),
             };
         }
 

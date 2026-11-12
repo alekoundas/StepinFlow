@@ -4,20 +4,20 @@ using Core.Models.Database;
 
 namespace Business.FlowScript.Parsers.Header
 {
-    internal sealed class CsvColumnParser : BaseParser<FlowCsvColumn>
+    internal sealed class InputParser : BaseParser<FlowInput>
     {
-        public CsvColumnParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
+        public InputParser(IReadOnlyList<ScriptToken> tokens) : base(tokens)
         {
         }
 
-        public override FlowCsvColumn Parse()
+        public override FlowInput Parse()
         {
             // <[ email ]>   [default <[ ops@example.com ]> | secret]
             ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
             string name = ExtractText();
             ExpectKeyword(ScriptSymbolEnum.QUOTE_CLOSE);
 
-            FlowCsvColumn input = new FlowCsvColumn() { Name = name };
+            FlowInput input = new FlowInput() { Name = name };
 
             // A secret has no value in the file, so the two never stand together.
             if (ExpectOptionalKeyword(ScriptSymbolEnum.DEFAULT))

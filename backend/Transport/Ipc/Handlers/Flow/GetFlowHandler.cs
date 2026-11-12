@@ -93,14 +93,15 @@ namespace Transport.Ipc.Handlers
                         })
                         .ToList(),
 
-                    FlowCsvColumns = x.FlowCsvColumns
+                    FlowInputs = x.FlowInputs
                         .OrderBy(c => c.OrderNumber)
-                        .Select(c => new FlowCsvColumnDto
+                        .Select(c => new FlowInputDto
                         {
                             Id = c.Id,
                             Name = c.Name,
                             DefaultValue = c.DefaultValue,
                             IsSecret = c.IsSecret,
+                            HasSecretValue = c.SecretValue != string.Empty,
                             OrderNumber = c.OrderNumber,
                             FlowId = c.FlowId,
                         })

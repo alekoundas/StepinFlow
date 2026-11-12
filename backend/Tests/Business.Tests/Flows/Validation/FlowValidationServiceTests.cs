@@ -12,7 +12,7 @@ namespace Business.Tests.Flows.Validation
         private readonly Dictionary<int, int> _templateCounts = new Dictionary<int, int>();
         private readonly List<FlowArea> _areas = new List<FlowArea>();
         private readonly List<FlowPoint> _points = new List<FlowPoint>();
-        private readonly List<string> _inputs = new List<string>();
+        private readonly List<FlowInput> _inputs = new List<FlowInput>();
         private readonly Dictionary<int, string> _webhooklessBots = new Dictionary<int, string>();
         private bool _isQaTest;
         private readonly FakeOcrService _ocr = new FakeOcrService();
@@ -53,8 +53,8 @@ namespace Business.Tests.Flows.Validation
 
         private FlowValidationResultDto Validate()
         {
-            List<string> names = _areas.Select(x => x.Name).Concat(_points.Select(x => x.Name)).Concat(_inputs).ToList();
-            return new FlowValidationService(_ocr).Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, names, _webhooklessBots, _isQaTest);
+            List<string> names = _areas.Select(x => x.Name).Concat(_points.Select(x => x.Name)).Concat(_inputs.Select(x => x.Name)).ToList();
+            return new FlowValidationService(_ocr).Validate(_steps, _templateCounts, _areas.DistinctBy(x => x.Id).ToList(), _points, _inputs, names, _webhooklessBots, _isQaTest);
         }
 
         private List<FlowValidationCodeEnum> CodesOn(FlowStep step)
@@ -540,12 +540,62 @@ namespace Business.Tests.Flows.Validation
         [Fact]
         public void A_variable_is_known_from_an_input_or_a_step_above()
         {
-            _inputs.Add("username");
+            _inputs.Add(new FlowInput { Name = "username", DefaultValue = "ops@example.com" });
             FlowStep read = Add(FlowStepTypeEnum.SEARCH_TEXT, "Read the total");
             FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type", Branch(read, FlowStepTypeEnum.SUCCESS));
             type.KeyboardInputText = "{{username}} {{Read the total}}";
 
             CodesOn(type).ShouldBeEmpty();
+        }
+
+        // The row is where it is fixed, so the issue names the input rather than each step typing it.
+        [Fact]
+        public void A_secret_a_step_types_with_no_value_saved_is_an_error_on_the_input()
+        {
+            _inputs.Add(new FlowInput { Name = "password", IsSecret = true });
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            type.KeyboardInputText = "{{password}}";
+
+            FlowValidationIssueDto issue = Validate().Issues.Single(x => x.Code == FlowValidationCodeEnum.INPUT_VALUE_MISSING);
+
+            issue.FlowStepId.ShouldBeNull();
+            issue.FlowStepName.ShouldBe("password");
+            issue.Severity.ShouldBe(ValidationSeverityEnum.ERROR);
+            issue.Message.ShouldContain("never shown again");
+            CodesOn(type).ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void A_secret_with_its_value_saved_is_valid()
+        {
+            _inputs.Add(new FlowInput { Name = "password", IsSecret = true, SecretValue = "set" });
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            type.KeyboardInputText = "{{password}}";
+
+            Validate().Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.INPUT_VALUE_MISSING);
+        }
+
+        [Fact]
+        public void An_input_a_step_types_with_an_empty_value_is_an_error()
+        {
+            _inputs.Add(new FlowInput { Name = "username" });
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            type.KeyboardInputText = "{{username}}";
+
+            Validate().Issues.Single(x => x.Code == FlowValidationCodeEnum.INPUT_VALUE_MISSING).FlowStepName.ShouldBe("username");
+        }
+
+        // Only a step typing it would stop; and a disabled one is not executed.
+        [Fact]
+        public void An_input_with_no_value_that_no_step_types_is_valid()
+        {
+            _inputs.Add(new FlowInput { Name = "password", IsSecret = true });
+            FlowStep type = Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type");
+            type.KeyboardInputText = "{{password}}";
+            type.IsDisabled = true;
+            Add(FlowStepTypeEnum.KEYBOARD_INPUT, "Type more").KeyboardInputText = "hello";
+
+            Validate().Issues.ShouldNotContain(x => x.Code == FlowValidationCodeEnum.INPUT_VALUE_MISSING);
         }
 
         [Fact]

@@ -20,7 +20,7 @@ namespace Business.FlowScript.Catalogs
         // Flow references
         AREAS,
         POINTS,
-        CSV_COLUMNS,
+        INPUTS,
         DISCORD_BOTS,
         TEMPLATES,
         STEPS,
@@ -43,7 +43,7 @@ namespace Business.FlowScript.Catalogs
         WITH_FRAME,
         STARTED_BY,
 
-        // FlowCsvColumn
+        // FlowInput
         DEFAULT,
         SECRET,
 

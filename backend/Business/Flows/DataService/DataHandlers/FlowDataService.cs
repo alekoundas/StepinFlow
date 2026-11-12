@@ -298,17 +298,19 @@ namespace Business.Flows.DataService.DataHandlers
 
             if (existing != null)
             {
+                await KeepSecretValuesAsync(dbContext, flow.Id, schema.Inputs, ct);
+
                 await dbContext.FlowSteps.Where(x => x.RootId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowTemplates.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowPoints.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
                 await dbContext.FlowAreas.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
-                await dbContext.FlowCsvColumns.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
+                await dbContext.FlowInputs.Where(x => x.FlowId == flow.Id).ExecuteDeleteAsync(ct);
             }
 
-            foreach (FlowCsvColumn input in schema.Inputs)
+            foreach (FlowInput input in schema.Inputs)
                 input.FlowId = flow.Id;
 
-            dbContext.FlowCsvColumns.AddRange(schema.Inputs);
+            dbContext.FlowInputs.AddRange(schema.Inputs);
             FlowAreaDataService.Add(dbContext, flow, schema.Areas);
             FlowPointDataService.Add(dbContext, flow, schema.Points);
             FlowStepDataService.AddTree(dbContext, flow, schema.Steps, TakenNames(schema));
@@ -486,6 +488,22 @@ namespace Business.Flows.DataService.DataHandlers
                 .Concat(schema.Inputs.Select(x => x.Name))
                 .Concat(stepNames)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        // A script never holds a secret's value, so a secret still called the same keeps the saved one.
+        private static async Task KeepSecretValuesAsync(AppDbContext dbContext, int flowId, IReadOnlyList<FlowInput> inputs, CancellationToken ct)
+        {
+            List<FlowInput> saved = await dbContext.FlowInputs
+                .AsNoTracking()
+                .Where(x => x.FlowId == flowId && x.IsSecret && x.SecretValue != string.Empty)
+                .ToListAsync(ct);
+
+            foreach (FlowInput input in inputs.Where(x => x.IsSecret && x.SecretValue.Length == 0))
+            {
+                FlowInput? same = saved.FirstOrDefault(x => string.Equals(x.Name, input.Name, StringComparison.OrdinalIgnoreCase));
+                if (same != null)
+                    input.SecretValue = same.SecretValue;
+            }
         }
 
         // By Id first, since either side may have renamed it; then by the name, which no two flows

@@ -127,7 +127,7 @@ namespace App
             builder.Services.AddSingleton<FlowStepDataService>();
             builder.Services.AddSingleton<FlowAreaDataService>();
             builder.Services.AddSingleton<FlowPointDataService>();
-            builder.Services.AddSingleton<FlowCsvColumnDataService>();
+            builder.Services.AddSingleton<FlowInputDataService>();
             builder.Services.AddSingleton<FlowTemplateDataService>();
             builder.Services.AddSingleton<DiscordBotDataService>();
             builder.Services.AddSingleton<DataService>();
@@ -277,9 +277,9 @@ namespace App
             builder.Services.AddTransient<GetFlowPointHandler>();
             builder.Services.AddTransient<GetFlowPointPreviewHandler>();
             builder.Services.AddTransient<ResolveFlowPointHandler>();
-            builder.Services.AddTransient<CreateFlowCsvColumnHandler>();
-            builder.Services.AddTransient<UpdateFlowCsvColumnHandler>();
-            builder.Services.AddTransient<DeleteFlowCsvColumnHandler>();
+            builder.Services.AddTransient<CreateFlowInputHandler>();
+            builder.Services.AddTransient<UpdateFlowInputHandler>();
+            builder.Services.AddTransient<DeleteFlowInputHandler>();
             builder.Services.AddTransient<GetFlowTemplatesHandler>();
             builder.Services.AddTransient<UpdateFlowTemplateHandler>();
             builder.Services.AddTransient<GetLookupWindowHandler>();

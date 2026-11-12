@@ -141,7 +141,7 @@ namespace Business.Ai.ScriptRevision
         public string RequestOf(string script, string instruction)
         {
             FlowScriptSchema sent = _scanner.Read(script);
-            foreach (FlowCsvColumn input in sent.Inputs)
+            foreach (FlowInput input in sent.Inputs)
                 input.DefaultValue = string.Empty;
 
             string printed = _printer.Write(sent);
@@ -236,10 +236,10 @@ namespace Business.Ai.ScriptRevision
             revised.Flow.IsQaTest = original.Flow.IsQaTest;
             revised.Flow.IsSubFlow = original.Flow.IsSubFlow;
 
-            foreach (FlowCsvColumn input in original.Inputs)
+            foreach (FlowInput input in original.Inputs)
             {
                 string name = NewName(input.Name, renames);
-                FlowCsvColumn answered = revised.Inputs.First(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+                FlowInput answered = revised.Inputs.First(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
 
                 answered.DefaultValue = input.DefaultValue;
                 answered.IsSecret = input.IsSecret;

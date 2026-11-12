@@ -15,6 +15,8 @@ namespace Business.Flows.FlowValidationService
     /// </summary>
     public sealed class FlowValidationService : IFlowValidationService
     {
+        private const string SECRET_SET = "set";
+
         private readonly IOcrService _ocrService;
 
         public FlowValidationService(IOcrService ocrService)
@@ -35,7 +37,7 @@ namespace Business.Flows.FlowValidationService
             LoadedFlows loaded = await LoadAsync(dbContext, [flowId], ct);
             Flow flow = loaded.Flows[flowId];
 
-            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
+            return Validate(loaded.StepsByFlow[flowId].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), flow.FlowInputs.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
         }
 
         /// <summary>
@@ -47,7 +49,7 @@ namespace Business.Flows.FlowValidationService
             Dictionary<int, FlowValidationResultDto> results = new Dictionary<int, FlowValidationResultDto>();
 
             foreach (Flow flow in loaded.Flows.Values)
-                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
+                results[flow.Id] = Validate(loaded.StepsByFlow[flow.Id].ToList(), loaded.TemplateCounts, flow.FlowAreas.ToList(), flow.FlowPoints.ToList(), flow.FlowInputs.ToList(), FlowNames(flow), loaded.WebhooklessBots, flow.IsQaTest);
 
             return results;
         }
@@ -60,6 +62,7 @@ namespace Business.Flows.FlowValidationService
             IReadOnlyDictionary<int, int> templateCountByStepId,
             IReadOnlyList<FlowArea> areas,
             IReadOnlyList<FlowPoint> points,
+            IReadOnlyList<FlowInput> inputs,
             IReadOnlyList<string> flowNames,
             IReadOnlyDictionary<int, string> webhooklessBots,
             bool isQaTest)
@@ -91,6 +94,7 @@ namespace Business.Flows.FlowValidationService
             FlowStepValidator.Validate(authored, templateCountByStepId, areas, InstalledReaders(authored), webhooklessBots, result);
             FlowStructureValidator.Validate(authored, everyAuthored, byStepId, childrenByParentId, flowNames, result);
             FlowPortabilityValidator.Validate(authored, areas, points, result);
+            FlowInputValidator.Validate(authored, inputs, result);
 
             if (isQaTest)
                 FlowQaTestValidator.Validate(enabled, result);
@@ -180,7 +184,7 @@ namespace Business.Flows.FlowValidationService
             return int.MaxValue;
         }
 
-        // Load Flow with its relations.(areas, points and csvColumns).
+        // Load Flow with its relations.(areas, points and inputs).
         private static async Task<LoadedFlows> LoadAsync(AppDbContext dbContext, IReadOnlyList<int> flowIds, CancellationToken ct)
         {
             List<FlowStep> steps = await dbContext.FlowSteps
@@ -196,7 +200,7 @@ namespace Business.Flows.FlowValidationService
                 .Select(x => new { FlowStepId = x.Key, Count = x.Count() })
                 .ToDictionaryAsync(x => x.FlowStepId, x => x.Count, ct);
 
-            // Load Flow with its relations.(areas, points and csvColumns).
+            // Load Flow with its relations.(areas, points and inputs).
             Dictionary<int, Flow> flows = await dbContext.Flows
                 .AsNoTracking()
                 .AsSplitQuery()
@@ -218,7 +222,14 @@ namespace Business.Flows.FlowValidationService
                         LaunchCommand = area.LaunchCommand,
                     }).ToList(),
                     FlowPoints = x.FlowPoints.Select(point => new FlowPoint { Id = point.Id, Name = point.Name, FlowAreaId = point.FlowAreaId }).ToList(),
-                    FlowCsvColumns = x.FlowCsvColumns.Select(column => new FlowCsvColumn { Name = column.Name }).ToList(),
+                    // Whether a secret has a value, never the value itself.
+                    FlowInputs = x.FlowInputs.Select(input => new FlowInput
+                    {
+                        Name = input.Name,
+                        IsSecret = input.IsSecret,
+                        DefaultValue = input.DefaultValue,
+                        SecretValue = input.SecretValue == string.Empty ? string.Empty : SECRET_SET,
+                    }).ToList(),
                 })
                 .ToDictionaryAsync(x => x.Id, ct);
 
@@ -235,12 +246,12 @@ namespace Business.Flows.FlowValidationService
             return new LoadedFlows(flows, steps.ToLookup(x => x.RootId), templateCounts, webhooklessBots);
         }
 
-        // Areas, points and csv columns need to be unique between them.
+        // Areas, points and inputs need to be unique between them.
         private static List<string> FlowNames(Flow flow)
         {
             return flow.FlowAreas.Select(x => x.Name)
                 .Concat(flow.FlowPoints.Select(x => x.Name))
-                .Concat(flow.FlowCsvColumns.Select(x => x.Name))
+                .Concat(flow.FlowInputs.Select(x => x.Name))
                 .ToList();
         }
 

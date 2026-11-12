@@ -13,7 +13,8 @@ namespace Business.Executions
     {
         IReadOnlyDictionary<int, FlowStep> StepsById { get; }
 
-        Task ResetAsync(IReadOnlyDictionary<int, FlowStep> stepsById, bool keepsScreenshots, CancellationToken ct);
+        /// <summary>A new execution: its steps, and the value of each input by name.</summary>
+        Task ResetAsync(IReadOnlyDictionary<int, FlowStep> stepsById, IReadOnlyDictionary<string, string> inputValues, bool keepsScreenshots, CancellationToken ct);
 
 
         // Execution steps a step below can still read
@@ -32,7 +33,7 @@ namespace Business.Executions
         /// <summary>
         /// Swaps {{name}} for what it stands for, using what this execution knows so far.
         ///
-        /// Lives here because the values do: what an earlier step produced, and later the csv row.
+        /// Lives here because the values do: the flow's inputs and what an earlier step produced.
         /// A worker asks rather than assembling its own answer, so adding a source is one change
         /// here instead of one per worker.
         /// </summary>

@@ -58,7 +58,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("Description:", ScriptSymbolEnum.FLOWFIELD_DESCRIPTION),
             new ScriptKeyword("Areas:", ScriptSymbolEnum.AREAS),
             new ScriptKeyword("Points:", ScriptSymbolEnum.POINTS),
-            new ScriptKeyword("Inputs:", ScriptSymbolEnum.CSV_COLUMNS),
+            new ScriptKeyword("Inputs:", ScriptSymbolEnum.INPUTS),
             new ScriptKeyword("Discord Bots:", ScriptSymbolEnum.DISCORD_BOTS),
             new ScriptKeyword("Templates:", ScriptSymbolEnum.TEMPLATES),
             new ScriptKeyword("Steps:", ScriptSymbolEnum.STEPS),
@@ -81,7 +81,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("with frame", ScriptSymbolEnum.WITH_FRAME),
             new ScriptKeyword("started by", ScriptSymbolEnum.STARTED_BY),
 
-            // FlowCsvColumn
+            // FlowInput
             new ScriptKeyword("default", ScriptSymbolEnum.DEFAULT),
             new ScriptKeyword("secret", ScriptSymbolEnum.SECRET),
 
