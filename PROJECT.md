@@ -467,6 +467,13 @@ the log, and offers Try again, which relaunches the whole app rather than joinin
 pages left from the old one. Under `npm run dev:spawn` that also ends the dev session, because
 `concurrently -k` takes Vite down when Electron exits.
 
+Opening StepinFlow while it is open brings its window forward. The new copy finds Electron's
+single-instance lock taken and leaves before it opens a window or starts a backend, since a second
+backend would share the database and the pipe names. The lock lives in Electron's data folder, which
+the dev build keeps apart from a release's (`%APPDATA%\Electron` and `%APPDATA%\stepinflow` on
+Windows), so the dev build and the installed app can still be open together. Try again is unaffected:
+`app.relaunch()` starts the new copy only once the old one has exited.
+
 **Only three protobuf messages exist.** The envelope is protobuf, the body is JSON bytes:
 
 ```proto

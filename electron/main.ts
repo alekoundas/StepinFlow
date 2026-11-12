@@ -45,7 +45,18 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(async () => {
+function showMainWindow() {
+  // macOS keeps the app open after its window closes.
+  if (!mainWindow) {
+    createWindow();
+    return;
+  }
+
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
+}
+
+async function startApp() {
   if (IS_DEVELOPING) {
     // try {
     //   await installExtension(REACT_DEVELOPER_TOOLS, {
@@ -95,7 +106,15 @@ app.whenReady().then(async () => {
       createWindow();
     }
   });
-});
+}
+
+// A second launch leaves before it opens a window or starts a backend, and the open copy comes forward.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", showMainWindow);
+  app.whenReady().then(startApp);
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
