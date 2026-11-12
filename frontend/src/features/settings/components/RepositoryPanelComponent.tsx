@@ -9,14 +9,14 @@ import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
 import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import RepositoryRemoteComponent from "@/features/repository/components/RepositoryRemoteComponent";
+// import RepositoryRemoteComponent from "@/features/repository/components/RepositoryRemoteComponent";
 import { MONO, UNCOMMITTED_COLOR, formatWhen, plural } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
 /**
- * Where the flows are kept as files, who commits them, and the remote they are pushed to and
- * pulled from. The folder is the app's own and made at first launch.
+ * Where the flows are kept as files and who commits them. The folder is the app's own and made at
+ * first launch.
  */
 export default function RepositoryPanelComponent() {
   const { data: status, isError } = useRepositoryStatus();
@@ -124,6 +124,7 @@ export default function RepositoryPanelComponent() {
         {authorField(AppSettingKeyEnum.GIT_AUTHOR_NAME, fromConfig(status?.configuredAuthorName))}
         {authorField(AppSettingKeyEnum.GIT_AUTHOR_EMAIL, fromConfig(status?.configuredAuthorEmail))}
 
+        {/* Hidden for now: the remote.
         {status && (
           <div
             className="pt-3 border-top-1"
@@ -131,7 +132,7 @@ export default function RepositoryPanelComponent() {
           >
             <RepositoryRemoteComponent status={status} />
           </div>
-        )}
+        )} */}
       </div>
     </Panel>
   );

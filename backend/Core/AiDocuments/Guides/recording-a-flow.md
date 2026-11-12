@@ -40,8 +40,8 @@ Record now minimises StepinFlow and opens a small bar at the top of the screen. 
 then press Start on the bar. While recording, the bar shows whether it is recording or paused, a
 clock, the last few actions, and Pause, Stage and Stop. Closing the bar before Start records nothing
 and brings StepinFlow back. Nothing you do on the bar is recorded, and it never appears in a
-screenshot. Pause, Stage and Stop also have keys, F9, F8 and F10 by default, which work whatever
-window is in front and are never recorded; they are under Recording keys in Settings.
+screenshot. Pause and Stop also have keys, F9 and F10 by default, which work whatever window is in
+front and are never recorded; they are under Recording keys in Settings. Stage is only on the bar.
 
 Stage marks where a part of what you are testing begins - "Sign in", "Delete customer" - which is
 the one thing no model can work out. Nothing is typed then: Review asks for its name. Typed text shows in the

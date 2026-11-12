@@ -278,16 +278,14 @@ export default function HotkeysPanelComponent({
         ))}
       </div>
 
-      <LabelComponent
-        text={
-          hotkeys.some((x) => x.kind === AppSettingKindEnum.GESTURE)
-            ? "Hold the keys you want, then let one go to save it. For a click, hold the keys and click, with whichever button."
-            : "Hold the keys you want, then let one go to save it."
-        }
-        size="xs"
-        color="secondary"
-        className="mt-3"
-      />
+      {hotkeys.some((x) => x.kind === AppSettingKindEnum.GESTURE) && (
+        <LabelComponent
+          text="To rebind a click, hold its keys and click with the button it should use."
+          size="xs"
+          color="secondary"
+          className="mt-3"
+        />
+      )}
     </Panel>
   );
 }

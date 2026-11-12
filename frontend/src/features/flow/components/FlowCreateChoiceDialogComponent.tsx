@@ -51,6 +51,7 @@ export function FlowCreateChoiceDialogComponent({
         <ChoiceCardComponent
           icon="circle-fill"
           title="Record it"
+          tag="Beta"
           description="Do the task once. Every click and keystroke is captured, and you say what each one should become."
           onSelect={() => choose(onRecord)}
         />

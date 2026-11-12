@@ -38,13 +38,6 @@ export default function HomePage() {
       width="wide"
       className="flex flex-column gap-3"
     >
-      <h1
-        className="m-0 text-3xl font-semibold"
-        style={{ letterSpacing: "-0.02em" }}
-      >
-        Home
-      </h1>
-
       {isNewInstall ? (
         <FirstFlowCardComponent />
       ) : (

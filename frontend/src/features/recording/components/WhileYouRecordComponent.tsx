@@ -13,14 +13,12 @@ export default function WhileYouRecordComponent() {
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
-  const stageKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STAGE)?.value;
   const checkKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_CHECK)?.value;
   const substituteKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_SUBSTITUTE)?.value;
 
   const entries = [
     { keys: pauseKeys, does: "Pause or resume" },
     { keys: stopKeys, does: "Stop and review" },
-    { keys: stageKeys, does: "A stage of the test begins here, such as Delete customer: Review asks for its name" },
     { keys: checkKeys, does: "Check what you click on: that it is there, or that it goes, and tell Discord" },
     { keys: substituteKeys, does: "A step that is not a click: a command, an application, a notification, an input, a wait" },
   ];
@@ -66,7 +64,7 @@ export default function WhileYouRecordComponent() {
       >
         They work whatever window is in front. The keys are never recorded, and the two clicks never
         reach the application: the recording pauses and a window asks what each was for, or leaves it
-        for Review. All five, and whether the window asks, are under Settings, Recording keys.
+        for Review. All four, and whether the window asks, are under Settings, Recording keys.
       </span>
       <span
         className="text-xs"

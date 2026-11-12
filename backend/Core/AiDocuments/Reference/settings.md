@@ -41,11 +41,11 @@ key is set, not what it is.
 account number or a password, and a screenshot is whatever was on screen. The local model always
 sees it, because nothing leaves this machine.
 
-## OCR languages
+## Text recognition
 
-Lists the text readers: Latin, built in, and the ones that can be downloaded for a Read Text step in
-another script - Greek, Cyrillic, Chinese and others, a few megabytes each. A download needs no
-administrator permission and is checked before it is kept.
+Lists the text readers: Latin, built in, and the ones that can be downloaded for a Search Text step
+that reads other writing - Greek, Cyrillic, Chinese and others, a few megabytes each. A download
+needs no administrator permission and is checked before it is kept.
 
 ## Hotkeys
 
@@ -59,4 +59,6 @@ combinations.
 ## Discord bots
 
 Name, webhook URL, the bot name to post as, an avatar, and a rate limit in seconds. The webhook URL
-is the credential and is never logged.
+is the credential and is never logged. It comes from Discord: Edit Channel → Integrations → Create
+Webhook (View Webhooks → New Webhook when the channel has some already) → Copy Webhook URL, which
+needs the Manage Webhooks permission. Anyone with the URL can post to that channel.

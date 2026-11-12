@@ -3,8 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Panel } from "primereact/panel";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
-import { InputSwitch } from "primereact/inputswitch";
+// import { Password } from "primereact/password";
+// import { InputSwitch } from "primereact/inputswitch";
 import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
@@ -63,7 +63,8 @@ export default function AiSettingsPanelComponent() {
   const selectedModel = models.find((x) => x.name === ollamaModel);
   const hasVision = selectedModel?.capabilities?.includes("vision") === true;
 
-  const isScreenContentAllowed = savedOf(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT) === "true";
+  // Hidden with the cloud half below.
+  // const isScreenContentAllowed = savedOf(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT) === "true";
 
   return (
     <Panel header="AI">
@@ -130,6 +131,7 @@ export default function AiSettingsPanelComponent() {
 
         <OllamaModelDownloadComponent />
 
+        {/* Hidden for now: the cloud model.
         <LabelComponent
           text="In the cloud"
           weight="semibold"
@@ -191,7 +193,7 @@ export default function AiSettingsPanelComponent() {
               />
             </Row>
           </>
-        )}
+        )} */}
       </div>
     </Panel>
   );

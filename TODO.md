@@ -627,8 +627,8 @@ the history.
       of each window's screens was built and removed on 2026-10-31 - it lived in one PC's database,
       so a flow pulled by another tester started from nothing. If it is ever needed, decide within
       the one recording, a line on nearly every screenshot of it, and store nothing.
-- [ ] **Not tried by hand: stages.** Verified by tests and the build only. Press F8 and Stage on
-      the bar while recording, paused once, name them in Review along with a new page it offers,
+- [ ] **Not tried by hand: stages.** Verified by tests and the build only. Press Stage on the bar
+      while recording, paused once, name them in Review along with a new page it offers,
       and look for the `##` lines in the draft and in what the model saved.
 - [ ] **Not tried by hand: the request shown before a cloud model is sent it.** Verified by tests
       and the build only. With a cloud model set and "Let the cloud model see your screen" on,

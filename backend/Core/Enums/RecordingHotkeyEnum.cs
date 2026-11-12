@@ -5,6 +5,5 @@ namespace Core.Enums
     {
         PAUSE,          // Pause, or resume when paused
         STOP,
-        STAGE,          // Mark where a stage of the test begins
     }
 }

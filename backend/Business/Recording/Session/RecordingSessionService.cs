@@ -353,10 +353,8 @@ namespace Business.Recording.Session
 
             string pauseKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyPause, ct);
             string stopKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyStop, ct);
-            string stageKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyStage, ct);
             _hotkeys.Bind(RecordingHotkeyEnum.PAUSE, pauseKeys);
             _hotkeys.Bind(RecordingHotkeyEnum.STOP, stopKeys);
-            _hotkeys.Bind(RecordingHotkeyEnum.STAGE, stageKeys);
 
             _gestures = await GesturesAsync(ct);
             _hotkeys.BindGestures(_gestures);
@@ -561,10 +559,6 @@ namespace Business.Recording.Session
 
                 case RecordingHotkeyEnum.STOP:
                     _ = Task.Run(StopFromHotkeyAsync);
-                    break;
-
-                case RecordingHotkeyEnum.STAGE:
-                    MarkStage();
                     break;
             }
         }

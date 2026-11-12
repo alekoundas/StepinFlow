@@ -531,18 +531,28 @@ namespace Business.Tests.Recording
 
         // Paused, the tester may be getting the next part ready, which a stage can begin at.
         [Fact]
-        public async Task The_stage_key_marks_where_a_stage_begins_paused_or_not_and_is_never_recorded()
+        public async Task The_stage_button_marks_where_a_stage_begins_paused_or_not()
+        {
+            await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
+
+            _session.MarkStage();
+            _session.Pause();
+            _session.MarkStage();
+
+            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.STAGE, RecordedInputTypeEnum.STAGE]);
+            (await WaitUntilReadyAsync()).Actions.Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.STAGE, RecordedActionKindEnum.STAGE]);
+        }
+
+        // It was the stage key.
+        [Fact]
+        public async Task F8_is_recorded_like_any_other_key()
         {
             await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
 
             RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F8, "VcF8");
             RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F8, "VcF8");
-            _session.Pause();
-            RaiseKey(RecordedInputTypeEnum.KEY_DOWN, KeyCodeEnum.F8, "VcF8");
-            RaiseKey(RecordedInputTypeEnum.KEY_UP, KeyCodeEnum.F8, "VcF8");
 
-            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.STAGE, RecordedInputTypeEnum.STAGE]);
-            (await WaitUntilReadyAsync()).Actions.Select(x => x.Kind).ShouldBe([RecordedActionKindEnum.STAGE, RecordedActionKindEnum.STAGE]);
+            (await _session.StopAsync(Ct)).Select(x => x.Type).ShouldBe([RecordedInputTypeEnum.KEY_DOWN, RecordedInputTypeEnum.KEY_UP]);
         }
 
         [Fact]

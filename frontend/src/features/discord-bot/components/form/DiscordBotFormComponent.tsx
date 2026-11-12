@@ -72,7 +72,6 @@ export default function DiscordBotFormComponent({
               fieldName="name"
               label="Name"
               placeholderText="Alerts"
-              hintText="What you pick from in a Notify step."
               isRequired={true}
               isDisabled={isDisabled}
             />
@@ -81,7 +80,7 @@ export default function DiscordBotFormComponent({
               fieldName="webhookUrl"
               label="Webhook URL"
               placeholderText="https://discord.com/api/webhooks/..."
-              hintText="Discord: channel settings, Integrations, Webhooks, New Webhook, Copy Webhook URL. Anyone holding this link can post to that channel."
+              hintText="In Discord: Edit Channel → Integrations → Create Webhook → Copy Webhook URL. Anyone with this URL can post to that channel, so keep it private."
               isRequired={true}
               isDisabled={isDisabled}
             />

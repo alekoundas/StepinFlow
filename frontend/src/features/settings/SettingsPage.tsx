@@ -27,7 +27,7 @@ const SECTIONS: Section[] = [
     content: (
       <AppSettingsPanelComponent
         header="Execution"
-        description="What a run keeps behind it."
+        description="What an execution saves, so you can look back at what it did."
         keyPrefix="EXECUTION_"
       />
     ),
@@ -76,7 +76,7 @@ const SECTIONS: Section[] = [
     content: (
       <HotkeysPanelComponent
         header="Debugger keys"
-        description="Pressed while you are looking at the application being automated, not at StepinFlow, so these are matched system wide. That also means they still do whatever they normally do in that application - rebind any that clash with what a flow drives."
+        description="These work while a flow executes, whichever window is in front, so you can pause or step through it without switching back to StepinFlow. The window in front still gets the key too, so pick keys the application does not use."
         keyPrefix="HOTKEY_"
       />
     ),

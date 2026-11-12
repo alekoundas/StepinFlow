@@ -733,16 +733,16 @@ every screenshot (`setContentProtection`). Record now opens it at the top of the
 minimises the main window, and the recording starts from the bar's Start. The tester arranges their
 windows first, and the bar is subscribed before the first `RECORDING_PROGRESS` goes out: a bar
 opened after the start would hear nothing until the first click, since a broadcast is never sent
-twice. It shows READY, REC or PAUSED with a clock, the action count and the last action, Pause,
-Stage and Stop with their keys, and the live list: the inputs folded a few times a second the way the stop
+twice. It shows READY, REC or PAUSED with a clock, the action count and the last action, Pause
+and Stop with their keys, Stage, and the live list: the inputs folded a few times a second the way the stop
 folds them, "Typed 15 characters" rather than every key-down and key-up, typed text counted rather
 than shown. The bar only asks. Every change goes out whole as `RECORDING_PROGRESS`, and the
 recording page follows a stop or a discard from there, whichever of the bar, a hotkey or the page
 made it, and closes the bar.
 
-**Its hotkeys never reach the recording**, whatever window is in front. They are three settings of
-their own, F9, F8 and F10 by default, and the same key may also be one of the debugger's, since the
-two are never live at once. `RecordingHotkeyReader` reads them at the hook before the filter. A
+**Its hotkeys never reach the recording**, whatever window is in front. They are two settings of
+their own, F9 and F10 by default, and the same key may also be one of the debugger's, since the
+two are never live at once. Stage has no key: it is only on the bar. `RecordingHotkeyReader` reads them at the hook before the filter. A
 combination's first keys are held back while they are down, so the Ctrl of Ctrl+F9 is not in the
 recording by the time F9 comes, and anything else lets them through first, in order.
 
@@ -1200,7 +1200,7 @@ and Review asks, as before.
   nothing there, and Wayland lets no application give another the keyboard back.
 
 **The tester names the stages**, since what they are testing is the one thing no model can work
-out. F8, or Stage on the bar, marks where one begins - paused as well, while the next part is made
+out. Stage on the bar marks where one begins - paused as well, while the next part is made
 ready - as an action of its own (`RecordedActionKindEnum.STAGE`) that takes no time, so the click
 after it still waited from the click before. Nothing is typed while recording: the bar never takes
 the keyboard from the application, and the click back into it would be recorded. Review asks for

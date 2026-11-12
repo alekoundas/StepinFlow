@@ -87,7 +87,7 @@ export default function ImportFlowPage() {
 
     const path = ElectronApiService.files.pathOf(file);
     if (!path.toLowerCase().endsWith(".sflw")) {
-      setError("Drop a .sflw file: a flow script exported from StepinFlow or written by hand.");
+      setError("Drop a .sflw file exported from StepinFlow.");
       return;
     }
 
@@ -147,8 +147,8 @@ export default function ImportFlowPage() {
           className="m-0"
           style={{ ...MUTED, maxWidth: 760 }}
         >
-          A .sflw script, with its templates in the folder named after it, beside it. It is read the way every script
-          is, and nothing is saved until you press Import.
+          A flow exported from StepinFlow: its .sflw file, and the folder of the same name beside it that holds its
+          template images. You see what importing would do first, and nothing is saved until you press Import.
         </p>
       </div>
 
@@ -252,8 +252,7 @@ function ChooseComponent({
           className="m-0"
           style={{ ...MUTED, maxWidth: 520 }}
         >
-          Exported from StepinFlow or written by hand. The file dialog opens in the export folder; drop a file here
-          instead if you have it open.
+          Choose a flow exported from StepinFlow, or drag its .sflw file onto this box.
         </p>
         <Button
           type="button"

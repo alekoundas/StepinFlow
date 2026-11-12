@@ -80,7 +80,8 @@ Left:
       `setContentProtection` does nothing, so the window can be in a screenshot taken as it closes;
       Wayland lets no application give another the focus; and the gesture reaches the application
       there anyway.
-- [ ] Optional: F8 opens the window on Begin a stage, so a stage is named as it is marked.
+- [ ] Optional: Stage on the bar opens the window on Begin a stage, so a stage is named as it is
+      marked.
 - [ ] Optional: Browse... beside Open an application's program, which the sketch had. A dialog of
       the main window, which is minimised while recording, would open behind it.
 

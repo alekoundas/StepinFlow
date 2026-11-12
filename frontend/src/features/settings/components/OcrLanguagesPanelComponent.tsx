@@ -33,7 +33,7 @@ export default function OcrLanguagesPanelComponent() {
   return (
     <Panel header="Text recognition languages">
       <LabelComponent
-        text="Text is read on this computer, the same way on every system. Latin comes with the app and reads English and most European languages. A Read Text step in another script needs its reader: a few megabytes, downloaded once."
+        text="Search Text steps read the screen on this computer, so nothing is sent anywhere. Latin is built in and reads English and most European languages. For Greek, Cyrillic, Chinese or other writing, download its reader once, then pick it as the step's Language."
         size="sm"
         color="secondary"
       />

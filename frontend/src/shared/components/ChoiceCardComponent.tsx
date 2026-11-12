@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Tag } from "primereact/tag";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
@@ -7,12 +8,13 @@ interface Props {
   icon: string;
   title: string;
   description: string;
+  tag?: string;
   onSelect: () => void;
   children?: React.ReactNode;
 }
 
 /** One answer in a dialog that asks how to do something, picked by clicking the whole card. */
-export function ChoiceCardComponent({ icon, title, description, onSelect, children }: Props) {
+export function ChoiceCardComponent({ icon, title, description, tag, onSelect, children }: Props) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -32,11 +34,19 @@ export function ChoiceCardComponent({ icon, title, description, onSelect, childr
       />
 
       <div className="flex flex-column gap-1">
-        <LabelComponent
-          text={title}
-          weight="semibold"
-          color={isHovered ? "primary" : undefined}
-        />
+        <div className="flex align-items-center gap-2">
+          <LabelComponent
+            text={title}
+            weight="semibold"
+            color={isHovered ? "primary" : undefined}
+          />
+          {tag && (
+            <Tag
+              value={tag}
+              severity="warning"
+            />
+          )}
+        </div>
         <LabelComponent
           text={description}
           size="sm"

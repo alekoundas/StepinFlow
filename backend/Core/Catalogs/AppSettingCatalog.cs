@@ -22,12 +22,6 @@ namespace Core.Catalogs
             "End the recording and review what was recorded.",
             "VcF10");
 
-        public static readonly HotkeyAppSettingDefinition RecordingHotkeyStage = new(
-            AppSettingKeyEnum.RECORDING_HOTKEY_STAGE,
-            "A stage begins",
-            "Mark where a part of what you are testing begins, such as Delete customer. Review asks for its name.",
-            "VcF8");
-
         // Recording gestures. The press never reaches the application, on Windows and macOS.
         public static readonly GestureAppSettingDefinition RecordingGestureCheck = new(
             AppSettingKeyEnum.RECORDING_HOTKEY_CHECK,
@@ -47,7 +41,7 @@ namespace Core.Catalogs
         public static readonly BoolAppSettingDefinition RecordingGestureAsk = new BoolAppSettingDefinition(
             AppSettingKeyEnum.RECORDING_GESTURE_ASK,
             "Ask at once",
-            "A check or a step marked pauses the recording and asks what it is for, in a window over the application. Off, it is only marked, and Review asks. Turn it off for an application that closes a menu or minimises when another window takes the keyboard.",
+            "On, marking a check or a step pauses the recording and a small window asks what it is for. Off, the mark is only noted, and Review asks once you stop. Turn it off for an application that closes its menus or minimises when it loses focus.",
             defaultValue: true);
 
 
@@ -85,7 +79,7 @@ namespace Core.Catalogs
         public static readonly IntAppSettingDefinition ExecutionScreenshotLimit = new IntAppSettingDefinition(
             AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT,
             "Screenshots kept per execution",
-            "How many of an execution's last screenshots it keeps, written to disk as it ends. A loop that searches several times a second fills them in seconds; raise it to see further back before the end.",
+            "How many of its last screenshots an execution saves to disk.",
             defaultValue: 50,
             minimum: 0,
             maximum: 100);
@@ -162,7 +156,6 @@ namespace Core.Catalogs
         [
             RecordingHotkeyPause,
             RecordingHotkeyStop,
-            RecordingHotkeyStage,
             RecordingGestureCheck,
             RecordingGestureSubstitute,
             RecordingGestureAsk,
@@ -193,7 +186,6 @@ namespace Core.Catalogs
         [
             RecordingHotkeyPause,
             RecordingHotkeyStop,
-            RecordingHotkeyStage,
 
             HotkeyContinue,
             HotkeyStepInto,

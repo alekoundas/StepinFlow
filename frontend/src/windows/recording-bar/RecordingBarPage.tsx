@@ -132,7 +132,6 @@ export default function RecordingBarPage() {
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;
-  const stageKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STAGE)?.value;
 
   const ask = async (request: () => Promise<unknown>) => {
     setError(null);
@@ -274,11 +273,8 @@ export default function RecordingBarPage() {
               disabled={isBusy || !isLive}
               severity="secondary"
               size="small"
-              className="gap-1"
               aria-label="A stage of the test begins here. Review asks for its name."
-            >
-              {stageKeys && <HotkeyComponent keys={stageKeys} />}
-            </Button>
+            />
 
             <Button
               type="button"
