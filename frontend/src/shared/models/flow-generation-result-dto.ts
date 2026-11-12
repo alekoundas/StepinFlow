@@ -18,6 +18,12 @@ export interface FlowGenerationResultDto {
   /** What the model says a tester should check. */
   notes: string[];
 
+  /** What the model asks that only the tester can answer, and would change the flow. */
+  questions: string[];
+
+  /** What of the model's answer was not taken, each in a sentence. */
+  notTaken: string[];
+
   /** The checks the model added, for the tester to keep or drop. In the saved flow until dropped. */
   proposedChecks: ProposedCheckDto[];
 
@@ -32,7 +38,7 @@ export interface FlowGenerationResultDto {
   /** The request's lines, from 1, that hold text read off the screen. */
   requestScreenLines: number[];
 
-  /** The script the model was given: what it changed is told against this. Empty when no model was asked. */
+  /** The draft before the model's words, as a script: what it changed is told against this. Empty when no model was asked. */
   draft: string;
 
   /** The flow as saved, as script text. Empty when nothing was saved. */

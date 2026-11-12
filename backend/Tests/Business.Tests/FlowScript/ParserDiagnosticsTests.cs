@@ -294,15 +294,6 @@ namespace Business.Tests.FlowScript
             covered.Add(DiagnosticCodeEnum.INPUT_NOT_RENAMED);
             covered.Add(DiagnosticCodeEnum.DISCORD_BOT_NOT_GIVEN);
 
-            // Raised by FlowGenerationService, against a QA test's answer (FlowGenerationServiceTests).
-            covered.Add(DiagnosticCodeEnum.STAGE_MARKER_MISSING);
-            covered.Add(DiagnosticCodeEnum.END_PASSED_MISSING);
-            covered.Add(DiagnosticCodeEnum.WRONG_VALUE_CHANGED);
-
-            // Raised by FlowGenerationService, against any recording's answer (RecordedActionsCheckTests, ProposedChecksTests).
-            covered.Add(DiagnosticCodeEnum.ACTIONS_CHANGED);
-            covered.Add(DiagnosticCodeEnum.CHECK_TEXT_UNSEEN);
-
             Enum.GetValues<DiagnosticCodeEnum>().Except(covered).ShouldBeEmpty();
         }
     }

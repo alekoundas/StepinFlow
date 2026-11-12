@@ -95,5 +95,57 @@ namespace Business.Tests.Ai
             request.ShouldContain("<[ Read the price ]>");
             request.ShouldNotContain("Check 104.12");
         }
+
+        // What a recording's words are written like: a small model copies better than it follows.
+        [Fact]
+        public void A_recording_s_words_are_shown_how_a_finished_flow_names_its_searches()
+        {
+            string words = FlowExamples.WordsOf(FlowExamples.WEBSITE);
+
+            words.ShouldContain("- Read the price: The price changes from one execution to the next");
+            words.ShouldContain("Not found: no crude oil price was shown within 10 seconds");
+            words.ShouldContain("never its names");
+            words.ShouldNotContain("Check 104.12");
+        }
+
+        // ================================================================
+        // Picked by meaning
+        // ================================================================
+
+        private static FlowExampleIndex Index(params string[] words)
+        {
+            FakeEmbeddingService embedder = new FakeEmbeddingService { IsReady = true };
+            embedder.Words.AddRange(words);
+
+            return new FlowExampleIndex(embedder);
+        }
+
+        [Fact]
+        public void The_example_nearest_what_the_flow_is_for_is_picked()
+        {
+            FlowExampleIndex index = Index("game", "website", "browser", "notification", "price");
+            Flow flow = new Flow { Name = "Claim rewards", Description = "Opens every notification in the game and claims it." };
+
+            index.DocumentFor(flow, new FlowArea { Type = FlowAreaTypeEnum.APPLICATION, ScalesWith = ScalesWithEnum.DPI }).ShouldBe(FlowExamples.GAME);
+        }
+
+        // A word or two says nothing to match by.
+        [Fact]
+        public void With_too_little_to_go_on_the_rule_picks()
+        {
+            FlowExampleIndex index = Index("game", "website", "browser", "notification", "price");
+            Flow flow = new Flow { Name = "Claim rewards", Description = "game" };
+
+            index.DocumentFor(flow, new FlowArea { Type = FlowAreaTypeEnum.BROWSER_TAB }).ShouldBe(FlowExamples.WEBSITE);
+        }
+
+        [Fact]
+        public void Without_an_embedding_model_the_rule_picks()
+        {
+            FlowExampleIndex index = new FlowExampleIndex(new FakeEmbeddingService());
+            Flow flow = new Flow { Name = "Claim rewards", Description = "Opens every notification in the game and claims it." };
+
+            index.DocumentFor(flow, new FlowArea { Type = FlowAreaTypeEnum.BROWSER_TAB }).ShouldBe(FlowExamples.WEBSITE);
+        }
     }
 }

@@ -106,7 +106,7 @@ namespace Business.Tests.Recording
 
         private FlowScriptSchema Build()
         {
-            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null, false);
+            return _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null).Lay();
         }
 
         private static List<FlowStep> ChildrenOf(FlowScriptSchema schema, FlowStep? parent)
@@ -175,31 +175,52 @@ namespace Business.Tests.Recording
             success[0].FlowStepReference.ShouldBeSameAs(search);
         }
 
-        // An icon has no words for OCR, and an application often names it all the same.
+        // An application names the thing itself - a field by its label, not by its placeholder or
+        // what it held - and an icon has no words for OCR at all.
         [Fact]
-        public void A_click_with_no_words_read_is_named_as_its_application_named_it_to_Windows()
+        public void A_click_is_named_as_its_application_named_it_to_Windows_before_what_was_read_on_it()
         {
             RecordedActionDto cart = Click(400, 300, "");
             RecordedActionDto menu = Click(500, 300, "Menu");
+            RecordedActionDto field = Click(600, 300, "ser");
             _recording.PressedElements.Add(new PressedElementDto { ActionIndex = cart.Index, Role = "link", Name = "Shopping cart" });
             _recording.PressedElements.Add(new PressedElementDto { ActionIndex = menu.Index, Role = "button", Name = "Open Menu" });
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = field.Index, Role = "text field", Name = "Username" });
 
             FlowScriptSchema schema = Build();
 
-            schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Select(x => x.Name).ShouldBe(["Find Shopping cart", "Find Menu"]);
+            schema.Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Select(x => x.Name).ShouldBe(["Find Shopping cart", "Find Open Menu", "Find Username"]);
         }
 
+        // A group's name is the group's: what was pressed in it is read on the screen.
         [Fact]
-        public void The_notes_go_over_a_search_only_when_asked_for()
+        public void A_press_Windows_names_only_by_what_it_sits_in_is_named_by_what_was_read_on_it()
+        {
+            RecordedActionDto login = Click(400, 300, "Login");
+            _recording.PressedElements.Add(new PressedElementDto { ActionIndex = login.Index, Role = "group", Name = "Login form" });
+
+            Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Name.ShouldBe("Find Login");
+        }
+
+        // A box around the click cuts through the words, where the whole screenshot does not.
+        [Fact]
+        public void A_box_around_the_click_is_named_from_the_whole_line_under_it()
+        {
+            RecordedActionDto logout = Click(400, 300, "pgout");
+            ClickedElementDto box = _recording.ClickedElements.Single(x => x.ActionIndex == logout.Index);
+            (box.FoundBy, box.LineText) = (ElementFoundByEnum.FALLBACK, "Logout");
+
+            Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Name.ShouldBe("Find Logout");
+        }
+
+        // Notes of what the screen said are for a model, which reads the outline, and never for a flow.
+        [Fact]
+        public void A_search_s_comment_says_how_long_the_tester_waited_and_nothing_read_off_the_screen()
         {
             RecordedActionDto cart = Click(400, 300, "Add to cart");
             _recording.PressedElements.Add(new PressedElementDto { ActionIndex = cart.Index, Role = "button", Name = "Add to cart" });
 
-            FlowScriptSchema plain = Build();
-            FlowScriptSchema noted = _builder.Build(Flow(), _recording, _reviewed, ScreenAt, null, null, true);
-
-            plain.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).CodeComment.ShouldBe("recorded after a 1.0s wait");
-            noted.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).CodeComment.ShouldBe("recorded after a 1.0s wait\nscreen: what was pressed, as Windows names it: button \"Add to cart\"");
+            Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).CodeComment.ShouldBe("recorded after a 1.0s wait");
         }
 
         // A flow that carries on after a wait timed out clicks blind.
@@ -261,7 +282,7 @@ namespace Business.Tests.Recording
             flow.Steps.Add(new FlowStep { Name = "Wait", FlowStepType = FlowStepTypeEnum.WAIT, OrderNumber = 1 });
             Click(400, 300, "Invoices");
 
-            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, null, 1, false);
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, null, 1).Lay();
 
             ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Find Invoices", "Wait"]);
         }
@@ -278,7 +299,7 @@ namespace Business.Tests.Recording
             Typing("ops@example.com", inputName: "email");
             Click(300, 400, "Sign in");
 
-            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, success, 0, false);
+            FlowScriptSchema schema = _builder.Build(flow, _recording, _reviewed, ScreenAt, success, 0).Lay();
 
             ChildrenOf(schema, success).Select(x => x.Name).ShouldBe(["Find Email", "Find Sign in"]);
             ChildrenOf(schema, null).Select(x => x.Name).ShouldBe(["Launch Browser", "Signed in"]);
@@ -342,6 +363,107 @@ namespace Business.Tests.Recording
             Click(700, 200, "");
 
             Build().Steps.Where(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).Select(x => x.Name).ShouldBe(["Find Save", "Find Save 2", "Find icon"]);
+        }
+
+        // ================================================================
+        // The same picture in several places
+        // ================================================================
+
+        // The download icon on three rows: the same thing done on every row.
+        [Fact]
+        public void Clicks_on_one_picture_in_several_places_one_after_another_are_a_wait_then_a_click_on_every_one()
+        {
+            Click(760, 210, "Download");
+            Click(760, 248, "Download");
+            Click(760, 286, "Download");
+            _recording.ClickGroups.Add(new ClickGroupDto { ActionIndexes = [0, 1, 2], IsMoving = true });
+
+            FlowScriptSchema schema = Build();
+
+            FlowStep wait = ChildrenOf(schema, null).Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE);
+            (wait.Name, wait.SearchMode).ShouldBe(("Find Download", SearchModeEnum.WAIT_UNTIL_STILL));
+
+            FlowStep every = ChildrenOf(schema, BranchOf(schema, wait, FlowStepTypeEnum.SUCCESS)).ShouldHaveSingleItem();
+            (every.Name, every.SearchMode).ShouldBe(("Find every Download", SearchModeEnum.FIND_ALL));
+            every.FlowStepTemplates.Single().FlowTemplate.ShouldBeSameAs(wait.FlowStepTemplates.Single().FlowTemplate);
+
+            List<FlowStep> eachHit = ChildrenOf(schema, BranchOf(schema, every, FlowStepTypeEnum.SUCCESS));
+            eachHit.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.CURSOR_RELOCATE, FlowStepTypeEnum.CURSOR_CLICK]);
+            eachHit[0].FlowStepReference.ShouldBeSameAs(every);
+            schema.Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_CLICK).ShouldBe(1);
+        }
+
+        [Fact]
+        public void Clicks_on_one_picture_with_something_done_between_them_stay_each_its_own()
+        {
+            Click(760, 210, "Edit");
+            Typing("Paid", ReviewChoiceEnum.TYPE_AS_WRITTEN);
+            Click(760, 248, "Edit");
+            _recording.ClickGroups.Add(new ClickGroupDto { ActionIndexes = [0, 2], IsMoving = true });
+
+            FlowScriptSchema schema = Build();
+
+            schema.Steps.ShouldNotContain(x => x.SearchMode == SearchModeEnum.FIND_ALL);
+            schema.Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_CLICK).ShouldBe(2);
+        }
+
+        // Clicked again in the same place is the same thing twice, not the same thing everywhere.
+        [Fact]
+        public void One_place_clicked_twice_stays_two_clicks()
+        {
+            Click(760, 210, "Next");
+            Click(760, 210, "Next");
+            _recording.ClickGroups.Add(new ClickGroupDto { ActionIndexes = [0, 1], IsMoving = false });
+
+            Build().Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.CURSOR_CLICK).ShouldBe(2);
+        }
+
+        // ================================================================
+        // Pages
+        // ================================================================
+
+        private void OnPage(RecordedActionDto action, int page)
+        {
+            _recording.ScreenPages.Add(new ScreenPageDto { ActionIndex = action.Index, Page = page });
+        }
+
+        // The click on Login opened the products page, so what was done there is under it.
+        [Fact]
+        public void The_first_search_on_a_new_page_goes_under_the_click_that_opened_it()
+        {
+            OnPage(Click(300, 200, "Username"), 1);
+            OnPage(Click(300, 300, "Login"), 1);
+            OnPage(Click(300, 200, "Add to cart"), 2);
+            OnPage(Click(500, 100, "Cart"), 2);
+
+            FlowScriptSchema schema = Build();
+
+            RootsOf(schema).ShouldBe(["Launch Browser", "Find Username", "Find Login"]);
+            FlowStep login = ChildrenOf(schema, null).Single(x => x.Name == "Find Login");
+            ChildrenOf(schema, BranchOf(schema, login, FlowStepTypeEnum.SUCCESS)).Select(x => x.Name)
+                .ShouldBe(["", "", "Find Add to cart", "Find Cart"]);
+        }
+
+        // A dialog closed, a menu left: back beside the searches of the page it was opened from.
+        [Fact]
+        public void A_page_come_back_to_goes_back_beside_its_own_searches()
+        {
+            OnPage(Click(300, 200, "Invoices"), 1);
+            OnPage(Click(300, 300, "Delete"), 2);
+            OnPage(Click(300, 400, "Settings"), 1);
+
+            RootsOf(Build()).ShouldBe(["Launch Browser", "Find Invoices", "Find Settings"]);
+        }
+
+        // A stage begins at the top, so the page it begins on is never nested under the click before it.
+        [Fact]
+        public void A_stage_brings_a_new_page_back_to_the_top()
+        {
+            OnPage(Click(300, 300, "Login"), 1);
+            Stage("Shop");
+            OnPage(Click(300, 200, "Add to cart"), 2);
+
+            RootsOf(Build()).ShouldBe(["Launch Browser", "Find Login", "## Shop", "Find Add to cart"]);
         }
 
         // ================================================================

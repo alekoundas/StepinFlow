@@ -42,7 +42,7 @@ namespace Business.Tests.Recording
 
         private async Task<List<ScreenChangeDto>> ReadAsync(params RecordedActionDto[] actions)
         {
-            RecordedScreens screens = await _reader.ReadAsync(actions, x => _presses.GetValueOrDefault(x), null, (done, total) => { }, Ct);
+            RecordedScreens screens = await _reader.ReadAsync(actions, x => _presses.GetValueOrDefault(x), [], null, (done, total) => { }, Ct);
             return screens.Changes;
         }
 
@@ -118,7 +118,7 @@ namespace Business.Tests.Recording
             finish.WindowTitle = "Swag Labs";
             List<(int, int)> progress = [];
 
-            RecordedScreens screens = await _reader.ReadAsync([finish], x => _presses.GetValueOrDefault(x), LAST_SCREEN, (done, total) => progress.Add((done, total)), Ct);
+            RecordedScreens screens = await _reader.ReadAsync([finish], x => _presses.GetValueOrDefault(x), [], LAST_SCREEN, (done, total) => progress.Add((done, total)), Ct);
 
             ScreenChangeDto change = screens.Changes.ShouldHaveSingleItem();
             (change.ActionIndex, change.NextActionIndex).ShouldBe((4, null));
@@ -134,7 +134,7 @@ namespace Business.Tests.Recording
                 Screen("Products", "Add to cart"),
                 Screen("Products", "Remove"));
 
-            RecordedScreens screens = await _reader.ReadAsync([Click(0)], x => _presses.GetValueOrDefault(x), LAST_SCREEN, (done, total) => { }, Ct);
+            RecordedScreens screens = await _reader.ReadAsync([Click(0)], x => _presses.GetValueOrDefault(x), [], LAST_SCREEN, (done, total) => { }, Ct);
 
             screens.Lines.ShouldBe(["Products", "Add to cart", "Remove"]);
         }
@@ -146,11 +146,111 @@ namespace Business.Tests.Recording
             RecordedActionDto click = Click(0);
             _presses[0] = new RecordedPress { Index = 0, MainAreaBounds = new Rectangle(0, 0, 800, 600), Dpi = 120, Screenshot = [1] };
 
-            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), null, (done, total) => { }, Ct);
+            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), [], null, (done, total) => { }, Ct);
             _ocr.LastDpi.ShouldBe(120);
 
-            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), LAST_SCREEN, (done, total) => { }, Ct);
+            await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), [], LAST_SCREEN, (done, total) => { }, Ct);
             _ocr.LastDpi.ShouldBe(LAST_SCREEN_DPI);
+        }
+
+        // ================================================================
+        // Which page each press was on
+        // ================================================================
+
+        private async Task<List<int>> PagesAsync(params RecordedActionDto[] actions)
+        {
+            RecordedScreens screens = await _reader.ReadAsync(actions, x => _presses.GetValueOrDefault(x), [], null, (done, total) => { }, Ct);
+            screens.Pages.Select(x => x.ActionIndex).ShouldBe(actions.Select(x => x.Index));
+
+            return screens.Pages.Select(x => x.Page).ToList();
+        }
+
+        [Fact]
+        public async Task A_page_stays_the_same_page_while_only_some_of_it_changes()
+        {
+            _ocr.ReadsWords(
+                Screen("Products", "Sauce Labs Backpack", "Add to cart"),
+                Screen("Products", "Sauce Labs Backpack", "Remove"));
+
+            (await PagesAsync(Click(0), Click(1))).ShouldBe([1, 1]);
+        }
+
+        // A menu left or a dialog closed is the page it was opened from, not one more.
+        [Fact]
+        public async Task A_page_come_back_to_has_the_number_it_had()
+        {
+            _ocr.ReadsWords(
+                Screen("Username", "Password", "Login"),
+                Screen("Products", "Sauce Labs Backpack", "Add to cart"),
+                Screen("Your Cart", "Checkout", "Continue Shopping"),
+                Screen("Products", "Sauce Labs Backpack", "Remove"),
+                Screen("Username", "Password", "Login"));
+
+            (await PagesAsync(Click(0), Click(1), Click(2), Click(3), Click(4))).ShouldBe([1, 2, 3, 2, 1]);
+        }
+
+        // A single-page application keeps most of its words and changes its title.
+        [Fact]
+        public async Task The_same_words_under_another_title_are_another_page()
+        {
+            RecordedActionDto inbox = Click(0);
+            (inbox.Window, inbox.WindowTitle) = (RecordedWindowEnum.MAIN_AREA, "Inbox");
+            RecordedActionDto sent = Click(1);
+            (sent.Window, sent.WindowTitle) = (RecordedWindowEnum.MAIN_AREA, "Sent");
+            RecordedActionDto back = Click(2);
+            (back.Window, back.WindowTitle) = (RecordedWindowEnum.MAIN_AREA, "Inbox");
+
+            (await PagesAsync(inbox, sent, back)).ShouldBe([1, 2, 1]);
+        }
+
+        // ================================================================
+        // The line under a click
+        // ================================================================
+
+        // A click in the main area, which is at the screen's corner here.
+        private RecordedActionDto ClickAt(int index, int x, int y)
+        {
+            RecordedActionDto click = Click(index);
+            (click.LocationX, click.LocationY) = (x, y);
+
+            return click;
+        }
+
+        // The element's rectangle may cut a word in half; the whole screenshot does not.
+        [Fact]
+        public async Task The_line_under_a_click_is_read_whole()
+        {
+            _ocr.ReadsWords(Screen("Accepted usernames", "standard_user", "Login"));
+            RecordedActionDto click = ClickAt(0, 20, 45);
+
+            RecordedScreens screens = await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), [], null, (done, total) => { }, Ct);
+
+            screens.LineTexts[0].ShouldBe("standard_user");
+        }
+
+        // A text field is clicked in its middle, beside its placeholder.
+        [Fact]
+        public async Task A_click_beside_its_words_takes_the_nearest_line_its_element_touches()
+        {
+            _ocr.ReadsWords(Screen("Username", "Password", "Login"));
+            RecordedActionDto click = ClickAt(0, 300, 47);
+            ClickedElementDto field = new ClickedElementDto { ActionIndex = 0, X = 5, Y = 35, Width = 400, Height = 24 };
+
+            RecordedScreens screens = await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), [field], null, (done, total) => { }, Ct);
+
+            screens.LineTexts[0].ShouldBe("Password");
+        }
+
+        [Fact]
+        public async Task A_click_on_no_words_has_no_line()
+        {
+            _ocr.ReadsWords(Screen("Username", "Password", "Login"));
+            RecordedActionDto click = ClickAt(0, 600, 400);
+            ClickedElementDto icon = new ClickedElementDto { ActionIndex = 0, X = 580, Y = 380, Width = 40, Height = 40 };
+
+            RecordedScreens screens = await _reader.ReadAsync([click], x => _presses.GetValueOrDefault(x), [icon], null, (done, total) => { }, Ct);
+
+            screens.LineTexts.ShouldBeEmpty();
         }
     }
 }

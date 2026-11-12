@@ -1,3 +1,4 @@
+using System.Drawing;
 using Business.Recording.Models.Session;
 using Business.ScreenText;
 using Business.ScreenText.Models;
@@ -15,12 +16,19 @@ namespace Business.Recording.Screens
     /// browser, another page. A press's screenshot is from just before it, so what a click did
     /// shows at the next press, and what the last one did on the screen the recording stopped on.
     ///
+    /// Which page each press was on comes out of the same comparison: a new page is compared with
+    /// every page seen before it, so a dialog closed or a menu left is the page it was opened from,
+    /// come back to, and not one more. And the line under each click is read here, whole, where
+    /// the text read on the element is cut by its rectangle.
+    ///
     /// One screenshot decoded at a time, as the clicked elements are. Read with the default
     /// reader, Latin, as the text under a click is.
     /// </summary>
     public sealed class RecordedScreenReader : IRecordedScreenReader
     {
         private const int SHARE_DECIMALS = 2;
+
+        private static readonly RecordedActionKindEnum[] POINTED = [RecordedActionKindEnum.CLICK, RecordedActionKindEnum.DRAG, RecordedActionKindEnum.CHECK];
 
         private readonly IOcrService _ocrService;
         private readonly IScreenshotService _screenshotService;
@@ -39,6 +47,7 @@ namespace Business.Recording.Screens
         public async Task<RecordedScreens> ReadAsync(
             IReadOnlyList<RecordedActionDto> actions,
             Func<int, RecordedPress?> pressOf,
+            IReadOnlyList<ClickedElementDto> elements,
             RecordingScreenshot? lastScreen,
             Action<int, int> onProgress,
             CancellationToken ct = default)
@@ -53,16 +62,32 @@ namespace Business.Recording.Screens
 
             onProgress(0, total);
 
+            List<SeenPage> seen = new List<SeenPage>();
+            SeenPage? page = null;
+
             List<ScreenLine>? before = null;
             for (int done = 0; done < pressed.Count; done++)
             {
                 ct.ThrowIfCancellationRequested();
 
-                RecordedPress press = pressOf(pressed[done].ScreenshotIndex!.Value)!;
+                RecordedActionDto action = pressed[done];
+                RecordedPress press = pressOf(action.ScreenshotIndex!.Value)!;
                 List<ScreenLine> lines = await ReadLinesAsync(_screenshotService.Decode(press.Screenshot), press.Dpi, screens, read, ct);
 
+                string under = LineUnder(action, press, lines, elements);
+                if (under.Length > 0)
+                    screens.LineTexts[action.Index] = under;
+
+                bool isNewPage = false;
                 if (before != null)
-                    screens.Changes.Add(ChangeOf(pressed[done - 1], pressed[done], ScreenTextComparer.Compare(before, lines)));
+                {
+                    ScreenChangeDto change = ChangeOf(pressed[done - 1], action, ScreenTextComparer.Compare(before, lines));
+                    screens.Changes.Add(change);
+                    isNewPage = change.IsNewScreen || change.IsNewTitle;
+                }
+
+                page = PageOf(seen, page, lines, TitleOf(action), isNewPage);
+                screens.Pages.Add(new ScreenPageDto { ActionIndex = action.Index, Page = page.Number });
 
                 before = lines;
                 onProgress(done + 1, total);
@@ -98,6 +123,62 @@ namespace Business.Recording.Screens
             return lines;
         }
 
+        // The page it was on before, unless a new one began: then one seen earlier that reads the
+        // same under the same title, the latest such, or one more.
+        private static SeenPage PageOf(List<SeenPage> seen, SeenPage? current, List<ScreenLine> lines, string? title, bool isNewPage)
+        {
+            if (current != null && !isNewPage)
+                return current;
+
+            SeenPage? back = seen.LastOrDefault(x => x != current && IsSamePage(x, lines, title));
+            if (back != null)
+                return back;
+
+            SeenPage page = new SeenPage(seen.Count + 1, lines, title);
+            seen.Add(page);
+
+            return page;
+        }
+
+        private static bool IsSamePage(SeenPage page, List<ScreenLine> lines, string? title)
+        {
+            if (page.Title != null && title != null && page.Title != title)
+                return false;
+
+            return !ScreenTextComparer.Compare(page.Lines, lines).IsNewScreen;
+        }
+
+        // The smallest line the click is on, else the nearest one its element's rectangle touches:
+        // a text field clicked beside its placeholder.
+        private static string LineUnder(RecordedActionDto action, RecordedPress press, List<ScreenLine> lines, IReadOnlyList<ClickedElementDto> elements)
+        {
+            if (!POINTED.Contains(action.Kind))
+                return string.Empty;
+
+            Point click = new Point(action.LocationX - press.MainAreaBounds.X, action.LocationY - press.MainAreaBounds.Y);
+
+            ScreenLine? under = lines.Where(x => x.Bounds.Contains(click)).MinBy(x => x.Bounds.Width * x.Bounds.Height);
+            if (under != null)
+                return under.Text;
+
+            ClickedElementDto? element = elements.FirstOrDefault(x => x.ActionIndex == action.Index);
+            if (element == null)
+                return string.Empty;
+
+            Rectangle rectangle = new Rectangle(element.X, element.Y, element.Width, element.Height);
+            ScreenLine? touched = lines.Where(x => x.Bounds.IntersectsWith(rectangle)).MinBy(x => DistanceTo(x.Bounds, click));
+
+            return touched?.Text ?? string.Empty;
+        }
+
+        private static double DistanceTo(Rectangle bounds, Point point)
+        {
+            double x = bounds.Left + bounds.Width / 2d - point.X;
+            double y = bounds.Top + bounds.Height / 2d - point.Y;
+
+            return Math.Sqrt(x * x + y * y);
+        }
+
         // To the next press, or to the screen the recording stopped on, which has no title.
         private static ScreenChangeDto ChangeOf(RecordedActionDto from, RecordedActionDto? to, ScreenTextChange change)
         {
@@ -128,5 +209,13 @@ namespace Business.Recording.Screens
 
             return action.WindowTitle.Trim();
         }
+
+
+        // ================================================================
+        // Private types
+        // ================================================================
+
+        // A page as first seen: what was read on it, and its window's title when pressed in the main area.
+        private sealed record SeenPage(int Number, List<ScreenLine> Lines, string? Title);
     }
 }

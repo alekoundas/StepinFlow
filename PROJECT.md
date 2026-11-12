@@ -682,6 +682,11 @@ draft is inserted at that position (below).
 - **Pause and resume**, from the recording bar or its hotkey. A paused session keeps nothing new,
   and the time paused is not read as a wait.
 
+`RecordingSessionService` holds the session - its start, pause and stop, the queue from the hook and
+the live list - and what it does beside that is a part of its own, sharing its cache:
+`RecordingScreenCapture`, `PressedElementLookups`, `RecordingGestureAsker` and `RecordingProcessor`.
+Until 2026-11-11 it was all one class of 1,100 lines.
+
 **Raw input folds into actions in one pass** (`Business/Recording/ActionBuilder`), in the order it
 was recorded, so replaying the actions does what the inputs did and only fewer lines say it. Each
 action is built from its first input and marks the rest of its own handled - a release, a key's
@@ -806,6 +811,16 @@ for a browser, another page, which a single-page application can reach with most
 place. Only presses on the main area's own window count, so a click on the taskbar is no page. The
 title is screen text; that it changed is not.
 
+**Which page each press was on** comes out of it too (`RecordingResultDto.ScreenPages`): pages
+numbered from 1 in the order first seen, a new one where most of the words or the title changed,
+and a new one compared with every page before it, so a dialog closed or a menu left is the page it
+was opened from, come back to - the same title, where both had one, and not half of the words
+changed - and not one more. A number, so it goes anywhere. The draft nests by it (below). And the
+**line under each click** is read on the same screenshot (`ClickedElementDto.LineText`): the
+smallest line the click is on, else the nearest one the element's rectangle touches, a text field
+clicked beside its placeholder; the text read on the element is cut by its rectangle, and this is
+not.
+
 **What a press landed on, as its application tells Windows** (`Core/Ports/IAccessibleElementService`,
 `Platform.Windows/Accessibility/AccessibleElementService`). Every press is asked of Windows' UI
 Automation - what a screen reader is told - at once and off the drain, which every input after it
@@ -821,8 +836,9 @@ asking whether the element has the pattern at all, since one without the toggle 
 "unticked". Asking turns on an application's accessibility tree if nothing had, which a browser
 builds for the whole page, so the first press of a recording can cost it a moment. Review shows it
 as "Windows says"; a typed field takes its input's name from it before the text read on the field,
-which may be a placeholder or what the field held, and a password field is made secret. A plain
-draft names a click OCR read nothing on - an icon - by it. For names and structure only: execution
+which may be a placeholder or what the field held, and a password field is made secret. The
+draft names a press by it before the text read on it, unless it names only what the press sits in
+(below). For names and structure only: execution
 stays image-based. Windows only: macOS and Linux each want an adapter of their own (`TODO.md`,
 Recording).
 
@@ -847,9 +863,8 @@ and never executes on its own - a model that could execute what it wrote would t
 injection in OCR'd screen text into a moving mouse.
 
 ```
-Setup -> Record -> Review -> Draft ---------------------------> Import -> Check -> Editor
-                              \-> Model -> Scanner --(clean)--/
-                                    ^---- diagnostics, at most 3 attempts
+Setup -> Record -> Review -> Draft (rules) ---------------------------------> Import -> Check -> Editor
+                                    \-> Outline -> Model -> words, field by field -/
 ```
 
 `Business/Recording` is a pipeline whose folders are its stages, the way `Business/FlowScript` is:
@@ -857,19 +872,32 @@ Setup -> Record -> Review -> Draft ---------------------------> Import -> Check 
 ```
 Business/Recording/
   Setup/        RecordingSetupService     the flow, its main area and a Launch step, before the first click
-  Session/      RecordingSessionService   start, pause, resume, stop; the bar's hotkeys; the live list;
-                                          RecordingSessionCache holds what it remembers
+  Session/      RecordingSessionService   start, pause, resume, stop; the queue from the hook; the live list
+                RecordingScreenCapture    the main area a few times a second, a tab followed in its window
+                PressedElementLookups     each press asked of its application, off the drain
+                RecordingGestureAsker     a gesture paused at and asked about
+                RecordingProcessor        a stopped recording worked through, stage by stage
+                RecordingSessionCache     what all of them remember
   ActionBuilder/ RecordingActionBuilder   events into actions, one builder per kind
   Elements/     ClickedElementFinder      per click: place in the main area, the element's rectangle,
                                           the text on it
                 ClickedElementGrouper     the clicks that hit the same picture
-  Draft/        RecordingDraftBuilder     the reviewed recording into a FlowScriptSchema, one builder
-                                          per kind of action; RecordingDraft holds what they share
-  Generation/   FlowGenerationService     draft, script, scanner, import; the model's draft too
-                FlowGenerationSessionService  the model's draft and Check's revisions in the
+  Screens/      RecordedScreenReader      what changed between presses, which page each was on, the
+                                          line under each click
+                RecordingScreenDescriber  the local model looking at new pages and wordless clicks
+  Draft/        RecordingDraftBuilder     the reviewed recording into entries, one builder per kind of
+                                          action; RecordingDraft holds what they share
+                DraftLayout               where each entry sits: branches, pages, stages
+  Generation/   FlowGenerationService     draft, script, scanner, import; the model's words too
+                RecordingOutline          the draft as the model reads it: the searches by id
+                RecordingWordsService     the model asked for words, in a shape Ollama holds it to
+                RecordingWordsApplier     the words put on the draft, field by field
+                FlowGenerationSessionService  the model's words and Check's revisions in the
                                               background, by broadcast
 Business/Ai/ScriptRevision/
                 ScriptRevisionService     a script and an instruction in, a script that reads cleanly out
+Business/Ai/AiDocuments/
+                FlowExampleIndex          the example flows, picked by meaning
 Business/Ai/Vision/
                 ElementLocator            phase 6's detection model, with a fallback box
 ```
@@ -883,11 +911,14 @@ landed, the template cut there, the area's size and DPI - which is what makes a 
 **What the recorder keeps** is the session above. A press on anything outside the main area's
 application starts left out.
 
-**The draft is built without a model** (`Business/Recording/Draft/RecordingDraftBuilder`). Each reviewed action becomes steps by a rule rather than a
-question, one builder per kind of action as there is a parser per kind of line, all adding through
-`RecordingDraft`, which holds what every step shares: a name unique in the flow, the order, and
-which branch a step goes in. The recording comes after the steps the flow already has - the
-setup's Launch step first.
+**The draft is built without a model** (`Business/Recording/Draft/RecordingDraftBuilder`). Each
+reviewed action becomes steps by a rule rather than a question, one builder per kind of action as
+there is a parser per kind of line, all adding through `RecordingDraft`, which holds what every step
+shares: a name unique in the flow, the templates, the points and the inputs. It holds what each step
+is, in the order it was done, and never where it sits: `DraftLayout` gives each entry its parent and
+its order, and is asked again whenever an entry is renamed or one is added between two others - a
+model's stage or check. So nothing a model says can move or reorder what was recorded. The recording
+comes after the steps the flow already has - the setup's Launch step first.
 
 - A click waited for is three lines - `Find Image` waiting for the element, `Move to` it, `Click` -
   because every step is a line and a click acts where the cursor is. At its exact spot it is a
@@ -898,17 +929,36 @@ setup's Launch step first.
   only makes sense once the element was found. The Failure branch ends the execution, failed, with
   the reason - `Find Invoices found nothing within 10.0s` - because an empty one carries on and
   clicks blind.
+- **Searches on one page sit beside each other, and a new page goes under the click that opened
+  it**, by which page each press was on (What changed on the screen, above): the first search on a
+  new page is in the Success branch of the search before it, after its click; a page come back to -
+  a dialog closed, a menu left - goes back beside the searches of that page; a stage marker is at
+  the top of the flow and what follows it starts there again. A model was told to do this from the
+  notes before 2026-11-11; the recorder has the pages, so it is a rule.
 - The template is the element's rectangle as Review left it, cut from the main area at the press,
   with where the click landed inside it and the area's size and DPI. Clicks that hit the same
   picture share one template.
+- **Clicks on one picture in several places, one after another**, nothing else kept between them
+  and each waited for by its picture - a moving click group (Which clicks hit the same picture,
+  above) - are a search waiting for the picture and a `Find All Images` whose Success branch moves
+  onto each hit and clicks it (`EveryClickDraftBuilder`): the download icon on every row. Every one
+  on the screen is clicked, as many as there are then. The same place clicked again, or the picture
+  clicked with something done between, stays clicks of their own. A model was told to fold them
+  before; the groups say which, so it is a rule.
 - **Or by its words**, which Review offers for a click, a drag or a check: the words read on the
   element, which the tester can change, and the same rectangle as an area of its own inside the main
   area - `Find Invoices area`, placed as a point is, at the press's DPI. The search is a `Wait For
   Text` there. A text search succeeds with its area's centre, so the move goes to the middle of the
   rectangle, which is why for a click it sits on what was clicked. Words left empty go by the
   picture. Read by PaddleOCR, the same on every system (§8, Reading text).
-- A search is named from the text read on the element - `Find Invoices`, `Find icon` when there was
-  none - through `FlowNameHelper.MakeUnique`; found by its words, from those.
+- **A search is named after what was pressed** (`RecordingDraft.TextOf`): as its application named
+  it to Windows - `Find Username`, `Find Open Menu` - unless that names what it sits in, a group, a
+  page or a pane, rather than the thing; then the words read on it, and when the element is only a
+  box around the click, the whole line under the click read on the screenshot, which a box cuts
+  through: at 3840 by 2100 a box is 80 pixels and read "andard cked_ou" for `standard_user`; then
+  what the local model called it; `Find icon` when there is nothing. Through
+  `FlowNameHelper.MakeUnique`, in the one namespace steps, areas, points and inputs share; found by
+  its words, from those.
 - Typed text is an input with what was typed as its default, and the step types `{{email}}`; a
   secret keeps no value anywhere, to be supplied when the flow executes. Typed as written, the text
   is on the line. A key is a `Press`, held and released around a click as it was recorded.
@@ -940,46 +990,65 @@ way, but writes only the new rows, through `FlowStepDataService.CreateTreeAsync`
 every row, and a step replaced loses its link to the executions it was in, which only its name then
 keeps. A draft that does not read cleanly writes nothing and says on which line, as an import does.
 
-**A model shapes it as a script** - Review's "Generate flow".
-`FlowGenerationService.ImportModelDraftAsync` writes the plain draft as a script and hands it, with
-an instruction to name the steps after the task, fold clicks on the same picture into one Find All
-Images, say what each failed wait was waiting for and put a comment over every search, to
-`Business/Ai/ScriptRevision/ScriptRevisionService`: a script and an instruction in, a script that
-reads cleanly out, built once for phase 9's fix loop as well. Its standing instructions are `AiPromptHelper.ReviseScript` followed
-by the whole of `AiDocuments/Reference/flow-format.md`, the grammar people read.
+**A model writes its words, never its script** - Review's "Generate flow". Until 2026-11-11 the model
+was handed the plain draft as a script, under the whole of the flow format, and answered with the
+whole script revised, three attempts at most. On the tester's `qwen3.5:4b` it never got through: a
+step renamed but not the line that moved to it, a point used that the header never declared, two
+steps given one name - each attempt fixing one and breaking another, and the plain draft saved.
+A small model writes a good name for one step; it does not rewrite a hundred lines with every
+reference intact. So the split is now between the words, which are the model's, and the structure
+and every reference, which are the code's:
 
-**An example goes with the instruction** (`Business/Ai/AiDocuments/FlowExamples`), for the draft and
-for Check's "Ask for changes": a real flow finished by hand, so the model sees how names, comments
-and branches read in a finished flow rather than only being told. Each is an AI document in
-`AiDocuments/Examples` - what it shows, then its script fenced as ` ```sflw ` - so the assistant
-searches them too. The flow's main area picks one by a rule rather than by meaning: an application
-whose contents stretch with its window gets the Firestone game, anything else the crude oil website.
-With a handful, what the flow works in says which fits better than a similarity score, and an
-example only teaches whole, never as a 2,000-character chunk. The website's also carries the draft
-as it was recorded (` ```sflw recorded `), with what was wrong with it - the most common fix a
-recording needs - for a person or the assistant, never the request. Firestone is cut to four of its
-thirteen notifications, one of each pattern, at about 13,000 characters beside the reference's
-39,000. `FlowExamplesTests` imports every finished example as a file is imported, validation
-included, so a format change cannot leave the model learning lines the app refuses; the only issue
-allowed is a Notify with no Discord bot: a bot is the machine's own, and no example names one.
+- **The outline** (`RecordingOutline`) is what the model reads: the task in the tester's words, the
+  flow's name and kind and the window it works in, then each search by an id of its own - `S1`, `S2`
+  - its name, the notes of what the screen said there, and what was done once it was found, `then:
+  double click, hold Ctrl, press C, release Ctrl`. Stage markers stand among them as `## name`. An
+  input is its name, never its value. No script, no header, no format: a model given only this
+  cannot misname a point or an area, because it never writes one.
+- **The answer is words by id** (`RecordingWordsService`): for each search a name, a comment saying
+  what it is for in the task, and what its failure says, with questions only the tester can answer
+  and notes of what to check. Its shape is a JSON schema sent as the response format, which Ollama
+  decodes against: every field required and no other, and an id only one the outline has. Thinking
+  is off, as for every request to Ollama. Asked again when an answer does not read, twice at most;
+  not when the model cannot be reached.
+- **Put on the draft field by field** (`RecordingWordsApplier`). A name empty or longer than a line
+  keeps the draft's and is said in `NotTaken`; one already used is numbered; a search renamed takes
+  its own area along, and a failure message that only named it. A comment goes over the search,
+  above the one saying how long the tester waited. The rest of the answer is taken whatever one
+  field did, so a mediocre answer still improves most of the flow, and nothing in it can stop the
+  import. Measured on `qwen3.5:4b` on the tester's recording of Swag Labs, eight searches: about
+  seventeen seconds for the words, every comment and failure message fitting the task, and the names
+  kept, since the plain draft's were right (`SwagLabsRecordingTests`, left out of the tests unless
+  `-p:Model=true` brings in `Category=Model`).
 
-The answer is JSON - `{ script, notes[], inputRenames }` - so any model that can answer in it will
-do, with no tool calling. It is read back with the scanner as a file is, and checked in code rather
-than in the prompt: `Flow:` and `Id:` as they were, no template the draft did not cut, and every
-input kept, renamed only through the map. A refusal is a `Diagnostic` like a scanner error, with
-codes of its own, and goes back to the model line by line, three attempts at most. What the code owns
-is never taken from the answer: input values are not even sent, and they, the description, the
-flow's kind and each template's click point, size and DPI are put back from the draft - the import
-writes a flow's kind from its script, so an answer could otherwise turn a QA test into an
-automation. When no answer reads cleanly, or the model cannot be reached, the plain draft is saved
-instead and the page says why, so the tester always has a flow. A cloud model that may not be sent screen content (§10) gets the draft with
-nothing read under the clicks - its search names are placeholders - and is told to name the steps
-from the description.
+The request is a few thousand tokens where the script and the format were fifteen thousand, which is
+most of the time on a CPU. A cloud model goes through the same path; a bigger model only writes
+better words.
+
+**How a finished flow names its searches goes with the outline** (`FlowExamples.WordsOf`): the
+example's searches, each with its name, its comment and what its failure says, which a small model
+copies better than it follows a description of them, and the instruction to take none of its names.
+Which example is picked by meaning (`FlowExampleIndex`): each document in `AiDocuments/Examples` is
+embedded once by its title and what it is for, with the bge-small model the assistant's guide index
+uses, and the nearest to the flow's name, description and window goes, above a floor; below it, with
+a description of fewer than three words, or with no embedding model, the main area's rule picks, the
+game for a window that stretches its contents and the website for anything else. An example is added
+by adding a file, and a store's most used flows could be indexed the same way. The vectors belong to
+the embedding model, so changing the model that answers changes nothing here. "Ask for changes"
+takes its example the same way, whole.
+
+**Each example is still a real flow finished by hand**, an AI document in `AiDocuments/Examples` -
+what it shows, then its script fenced as ` ```sflw ` - so the assistant searches them too. The
+website's also carries the draft as it was recorded (` ```sflw recorded `), with what was wrong with
+it, for a person or the assistant, never the request. Firestone is cut to four of its thirteen
+notifications, one of each pattern. `FlowExamplesTests` imports every finished example as a file is
+imported, validation included, so a format change cannot leave an example the app refuses; the only
+issue allowed is a Notify with no Discord bot: a bot is the machine's own, and no example names one.
 
 **The local model looks at the screens first** (`Business/Recording/Screens/RecordingScreenDescriber`),
 the generation's first stage, "Looked at the screens with the local model: 3 of 8". It is always
-the local model, through `IAiClientFactory.CreateLocalAsync`, even when a cloud model shapes the
-draft: the pictures never leave the machine, and only what it says goes on. It describes in one
+the local model, through `IAiClientFactory.CreateLocalAsync`, even when a cloud model writes the
+words: the pictures never leave the machine, and only what it says goes on. It describes in one
 sentence the first screen and every one where a new page began, by its words or its title - from
 the screenshot, never from the OCR text, which made a small model invent what a screen was for -
 and names in two to four words every kept click that neither OCR nor Windows named, from its
@@ -991,58 +1060,47 @@ pages and twelve clicks at most, a look that fails is passed over, and none at a
 model takes no pictures, or when a cloud model may not be sent screen content, since what it said
 would be withheld. Not at Stop: a plain draft needs none of it, and a model on a CPU is slow.
 
-**The draft the model gets carries notes of what the screen said** (`Business/Recording/Draft/ScreenNoteWriter`):
-comment lines starting `screen:` over each search, from what changed on the screen, what was
+**The notes of what the screen said** (`Business/Recording/Draft/ScreenNoteWriter`) are lines
+starting `screen:` under each search of the outline, from what changed on the screen, what was
 pressed and what the local model saw (above) - where a new page began, by its words or by the
 window's title, what was on it and what the local model sees it as; what was pressed, as Windows
-named it or the local model sees it; and what appeared and went after the click, in the words
-read, lines of four letters or more, six at most, each cut at fifty characters with an ellipsis. The model
-is told to name the steps from them, to nest what was done on a page in the Success branch of the
-search whose click opened it, and to write the comment a person would in their place. Whatever it
-does with them, the code takes every `screen:` line out of its answer before the import, and out of
-the draft Check compares it with: they are screen text, and a flow is written into a repository
-(§11). With screen content not allowed, the notes say where a new page began and what kind of
-thing was pressed in what state, and no word read, no title, no name and nothing the local model
-said.
+named it or the local model sees it; and what appeared and went after the click, in the words read,
+lines of four letters or more, six at most, each cut at fifty characters with an ellipsis. They are
+never in the flow: they are screen text, and a flow is written into a repository (§11). With screen
+content not allowed, the notes say where a new page began and what kind of thing was pressed in
+what state, and no word read, no title, no name and nothing the local model said; the model is told
+the names are placeholders, to name the steps from the task and what was done.
 
-**An answer may not add, drop or reorder what was recorded**
-(`Business/Recording/Generation/RecordedActionsCheck`), only the prompt's word before. The draft and
-the answer are both read in the order an execution that finds everything goes - down each search's
-Success branch, never its Failure - and their clicks, drags, scrolls, typed text and keys compared
-one by one; typed text as typed text, since an input may be renamed. A Find All Images' Success
-branch, or a loop's, stands for one or more of what it holds in a row in the draft, as few as what
-comes after it needs, so three clicks on the download icon folded into one are still three, and the
-click on Log out after them is not a fourth. The first difference goes back as `ACTIONS_CHANGED`,
-saying which of the draft's actions it is and under which search. An "Ask for changes" is not held
-to it.
+**A QA test is asked a second time** (`AiPromptHelper.ProposeTestParts`), once its searches have
+their names: where each part of the journey the task names begins, as stages, and the checks that
+turn a replay into a test - after "Add to cart" the button reads "Remove", so a `Wait For Text` for
+"Remove" right after that click, its Failure ending the execution. In one request with the names, a
+4B model's names got worse, so the two are apart. The code holds both to what it can stand behind:
+a stage goes only before a search where no stage begins, so the tester's stand; a check only for
+words a screenshot showed appearing after that search's click, quotes and a cut line's ellipsis
+taken off, four letters at least - anything else would fail the first execution - in the main area,
+after what that search did (`RecordingDraft.AddCheckAfter`). With screen content not allowed there
+are no words to check for, and the schema allows no checks. Whatever the answers, a QA test has a
+stage, named after the flow when nobody named one, and ends with `End Execution passed`
+(`RecordingWordsApplier.MakeTest`) - which the code asked the model for before, and refused an
+answer without. A value typed wrong on purpose (below) is typed as it was, since the model writes no
+step; the outline shows it as such.
 
 **The checks a model adds are proposed, and the tester keeps or drops each**
-(`Business/Recording/Generation/ProposedChecks`). After "Add to cart" the button reads "Remove":
-a QA test's answer may add a Wait For Text for words a `screen:` note says appeared after a click,
-or a Wait Until No Text for words that went, right after that click - what turns a replay into a
-test. Which checks it added is told by comparing, not by anything the model marks: a search nothing
-moves to is a check rather than a click's, and one with the words or the templates of a check the
-draft had is the tester's own, however renamed. An added check for words is tested the way an
-execution tests it, against every line OCR read on the recording, and one no line satisfies would
-fail the first execution, so the answer is refused as `CHECK_TEXT_UNSEEN` - only where screen
-content was sent, since a refusal would tell a model that was not shown the words what the screen
-did not say. Without it the check is saved and Check says no screenshot showed its words. Check
-lists each with its line and the search it sits under: Keep only stops offering it, since it is in
-the flow already; Drop (`Recording.dropProposedCheck`) takes it out with its Failure branch, and
-what its Success branch holds - the test's `End Execution passed`, the rest of a page a model nested
-under it - takes its place, then imports the flow again. A check another step reads is not dropped,
-and says which step. "Ask for changes" carries the ones not yet decided, by name, so a revision
-still offers them even renamed.
+(`Business/Recording/Generation/ProposedChecks`). Which checks it added is told by comparing the
+saved flow with the plain draft, not by anything the model marks: a search nothing moves to is a
+check rather than a click's, and one with the words or the templates of a check the draft had is
+the tester's own, however renamed. Each is tested the way an execution tests it against every line
+OCR read on the recording, and Check says when no screenshot showed its words. Check lists each with
+its line and the search it sits under: Keep only stops offering it, since it is in the flow already;
+Drop (`Recording.dropProposedCheck`) takes it out with its Failure branch, and what its Success
+branch holds takes its place, then imports the flow again. A check another step reads is not
+dropped, and says which step. "Ask for changes" carries the ones not yet decided, by name, so a
+revision still offers them even renamed.
 
-**A QA test is told to be one** (`AiPromptHelper.ShapeQaTest`, after the instruction above): stage
-markers for the parts of the journey the description names, each with a comment saying what it
-proves; `End Execution passed` where what the description says the flow proves has been seen;
-failure messages in the test's words; and a check it can make only from what the script has - a
-Check Text or Wait For Text in the main area, or a template the draft cut - or a note saying what
-is not checked. The code holds it to that whatever the prompt says: an answer with no stage marker,
-no `End Execution passed`, or a value typed wrong on purpose (below) no longer typed as it is, is
-refused as `STAGE_MARKER_MISSING`, `END_PASSED_MISSING` or `WRONG_VALUE_CHANGED` and goes back like
-any other refusal. An "Ask for changes" is not held to it, so a tester can ask for what they like.
+**What the model asks, and what of its answer was left out**, are on Check beside its notes: a
+question only the tester can answer - "Should it sign in with a different account each time?" - is
+answered through Ask for changes or the editor.
 
 A model takes minutes over a draft, so it is work longer than a request can wait for (§4):
 `Recording.generateDraft` starts `FlowGenerationSessionService` and returns;
@@ -1150,11 +1208,8 @@ the name, "Delete customer", and offers a stage at each action where the compari
 (What changed on the screen, above), marked "new page" in the list. A named stage is a stage marker at
 the top of the flow over the next search, so what came between stays in the search before; one at
 the end closes the flow, where a test says what it proved; one never named, or left out, is none
-(`RecordingDraft.BeginStage`). The model is told the draft's stage markers are the tester's, and
-`RecordedActionsCheck` holds it to that: each stands among the recorded actions where it was, at
-the top of the flow, by its name, so one moved, renamed or put in a branch is `ACTIONS_CHANGED`. A
-stage the model adds under another name is not compared, and a QA test whose stages are all the
-tester's needs none of the model's.
+(`RecordingDraft.BeginStage`). A stage of the tester's is an entry of the draft no
+model's words reach: a model can only propose one before a search where none begins (above).
 
 **A QA test adds to it**: stage markers and `End Execution` checks for what the description says
 the flow is meant to prove (above), and failure paths written by provoking them rather than
@@ -1643,8 +1698,8 @@ half-built step can be parked and the rest tried. Two things still count a disab
 stays taken, because the script reads by name, and a branch holding only a disabled step is not
 `BRANCHES_EMPTY`. No rule second-guesses what was disabled. The existing ones judge the flow that is
 left, so a disabled key release is `KEYS_NOT_RELEASED` and a check whose only End Execution is
-disabled is `CHECK_CANNOT_FAIL`. A model is told to leave the word alone, and `RecordedActionsCheck`
-treats a disabled recorded click as dropped.
+disabled is `CHECK_CANNOT_FAIL`. A model writing a recording's words writes no step, so it cannot
+disable one, and one revising a script is told to leave the word alone.
 
 A key combination is pressed, held or released (`KeyboardKeyActionType`), the way a click is
 single, double, held or released. A held key stays down for the steps after it - a Ctrl+click is
@@ -2925,14 +2980,14 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1557 tests, all passing, in eight projects under `backend/Tests/` - one
+1566 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1174 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the check that its answer keeps every recorded action, the tester's stages and their notifications, and the checks it adds - told from the draft's, held to what the screenshots showed, and dropped with what they held kept - the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 1183 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 47 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |

@@ -20,6 +20,12 @@ namespace Core.Models.Dtos
         /// <summary>Read by OCR. Empty when there is none, or none could be read.</summary>
         public string Text { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The line of words under the click, read on the whole screenshot, so a rectangle that
+        /// cuts through a word does not cut it here. Empty when the click was on no words. Screen text.
+        /// </summary>
+        public string LineText { get; set; } = string.Empty;
+
         public ElementFoundByEnum FoundBy { get; set; }
 
         /// <summary>Why it is a box around the click rather than what the model found. Null when the model found it.</summary>

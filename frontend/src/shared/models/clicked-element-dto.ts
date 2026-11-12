@@ -17,6 +17,9 @@ export interface ClickedElementDto {
   /** Read by OCR. Empty when there is none, or none could be read. */
   text: string;
 
+  /** The line of words under the click, read on the whole screenshot. Empty when the click was on no words. */
+  lineText: string;
+
   foundBy: ElementFoundByEnum;
 
   /** Why it is a box around the click rather than what the model found. */

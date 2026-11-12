@@ -3,14 +3,13 @@ using Core.Models.Dtos;
 namespace Business.Recording.Draft
 {
     /// <summary>
-    /// What the screen said at a search, as comment lines over it in the draft a model shapes:
-    /// whether a new page began there - by its words, or by the window's title - what was on it and
-    /// what the local model sees it as, what was pressed as its application named it to Windows or
-    /// as the local model sees it, and what appeared and went after the click - for the last, by
-    /// the screen the recording stopped on. For the model to name the steps, find the pages and
-    /// propose checks by, never for the flow - every line starts with the prefix, and the answer
-    /// loses them before it is saved, because they are screen text and the flow is written into a
-    /// repository.
+    /// What the screen said at a search, as lines under it in the outline a model is sent
+    /// (RecordingOutline): whether a new page began there - by its words, or by the window's title
+    /// - what was on it and what the local model sees it as, what was pressed as its application
+    /// named it to Windows or as the local model sees it, and what appeared and went after the
+    /// click - for the last, by the screen the recording stopped on. For the model to name the
+    /// steps and propose checks by, never for the flow: they are screen text, and the flow is
+    /// written into a repository.
     ///
     /// Only lines of four letters or more, and a handful of those: a game's counters and a misread
     /// icon are not words. A long line is cut short with an ellipsis.
@@ -85,24 +84,17 @@ namespace Business.Recording.Draft
             return notes;
         }
 
-        /// <summary>The script without a single note, whatever the model did with them.</summary>
-        public static string WithoutNotes(string script)
-        {
-            IEnumerable<string> lines = script.Split('\n').Where(x => !IsNote(x));
-            return string.Join('\n', lines);
-        }
-
         /// <summary>
-        /// A comment line that starts with the prefix, however the model spaced or cased it. A
-        /// stage marker's ## is not one.
+        /// A line that starts with the prefix, as an outline writes it or as a comment, however it
+        /// is spaced or cased. A stage marker's ## is not one.
         /// </summary>
         public static bool IsNote(string line)
         {
             string text = line.TrimStart();
-            if (!text.StartsWith('#'))
-                return false;
+            if (text.StartsWith('#'))
+                text = text[1..].TrimStart();
 
-            return text[1..].TrimStart().StartsWith(PREFIX, StringComparison.OrdinalIgnoreCase);
+            return text.StartsWith(PREFIX, StringComparison.OrdinalIgnoreCase);
         }
 
 

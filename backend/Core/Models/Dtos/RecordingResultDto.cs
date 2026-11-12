@@ -14,6 +14,9 @@ namespace Core.Models.Dtos
         /// <summary>What changed on the screen between one press and the next, and from the last to the screen the recording stopped on. Empty when reading failed.</summary>
         public List<ScreenChangeDto> ScreenChanges { get; set; } = [];
 
+        /// <summary>Which page each press was on, a page come back to by the number it had. Empty when reading failed.</summary>
+        public List<ScreenPageDto> ScreenPages { get; set; } = [];
+
         /// <summary>Every line OCR read on the main area, each once, in the order first read. Screen text.</summary>
         public List<string> ScreenLines { get; set; } = [];
 

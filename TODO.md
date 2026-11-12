@@ -461,12 +461,39 @@ the history.
 - [ ] **Recording into a flow that already exists, with a model: talk it through.** Raised
       2026-10-15. The editor's "Record steps here" is disabled until this is decided. Its plain
       draft works: `Recording.insertDraft` writes only the new rows at the position, so the steps
-      already there keep their link to past executions. A model
-      answers with a whole script, though, and the import that reads one replaces every row. The
-      recommendation on the table: give the model a script of only the recorded steps, with the
-      areas, templates and inputs they use and the flow's other steps as context it cannot change,
-      and insert its answer the way the plain draft is inserted. To decide before the button
-      comes back.
+      already there keep their link to past executions. A model answered with a whole script until
+      2026-11-11, and the import that reads one replaces every row. Since then it writes only words,
+      which the code puts on the draft built in memory (`RecordingWordsApplier`), so the insert path
+      could take them as it is: build the draft at the position, ask for the outline's words, apply
+      them, and write only the new rows. What is left to decide is whether the flow's other steps go
+      to the model as context, and the button coming back.
+
+- [ ] **Ask for changes still asks for the whole script.** Since 2026-11-11 Generate asks a model for
+      words only, which a 4B model gets right; "Ask for changes" still hands it the whole flow under
+      the flow format and refuses an answer with one wrong reference, which a 4B model rarely gets
+      through. The way the research of 2026-11-10 pointed: the model answers with operations by step
+      name - rename this, move that under this, make these one Find All Images, add a check here -
+      which the code applies and checks one by one, refusing a bad operation alone.
+- [ ] **A model's stages are not offered to keep or drop.** Its checks are, on Check; a stage it
+      proposed for a QA test is in the flow with nothing saying it was the model's. On
+      `qwen3.5:4b` it put "Paste password" before the search that pastes the username. Listing them
+      beside the checks, or asking in the same way, would let the tester undo one.
+- [ ] **Clicks on one picture in several places become "click every one".** Since 2026-11-11 a moving
+      click group, one click after another, is a `Find All Images`, which clicks every match on the
+      screen, not only the ones the tester clicked. One recording cannot tell "these three rows"
+      from "every row" (the programming-by-demonstration literature says ask, or get a second
+      demonstration). Review could say it under the group - "clicks every one like it" - with a way
+      to keep them as separate clicks.
+- [ ] **More recordings as fixtures for the model.** `SwagLabsRecordingTests` holds the words of one
+      real recording to what a 4B model must manage, asked only with `-p:Model=true`. A game, a
+      long form and a recording in another language would say more, and a count of usable names,
+      comments and messages across them is how a prompt change is judged rather than by one try.
+- [ ] **Example flows from a store, by meaning.** `FlowExampleIndex` embeds the shipped examples in
+      memory, two of them. Hundreds - a store's most used flows - want the file the guide index
+      keeps, the user's consent for their flows to be another's example, their screen text taken
+      out, and a check that what one says cannot steer the model. bge-small-en is English only, so
+      a flow described in Greek is matched poorly; a multilingual embedding model fixes it at a
+      bigger download.
 
 - [ ] **Ask for changes and screen content. To decide.** Raised 2026-10-15. Check's "Ask for
       changes" sends the flow's script as it is. After the plain draft its search names are the
@@ -586,11 +613,6 @@ the history.
       recording can cost it a moment, and keeping the tree up costs it a little after. Not measured.
       Try a long page in Chrome with a recording against it; if it shows, a setting to turn the
       question off, or asking only at presses inside the main area.
-- [ ] **A proposed check's words, held to the screen after its click.** Since 2026-10-31 a check a
-      model adds for words is refused when no screenshot of the recording showed them. Anywhere in
-      the recording, not after the click it follows: "Remove" put before "Add to cart" passes, and
-      fails the first execution. Telling which press a check follows means walking the answer the
-      way `RecordedActionsCheck` does, Find All folds included.
 - [ ] **The local model looking at the screen the recording stopped on.** Its words reach the model
       since 2026-10-31, but not a sentence of what page it is, which the other new pages get:
       `RecordingScreenDescriber` finds its screenshots by press, and that one has none.

@@ -119,8 +119,20 @@ and which other clicks hit the same picture. "What it should do" can be edited h
   you waited.
 - Everything after a search, up to the next search, goes in that search's Success branch. Its
   Failure branch ends the execution, failed, saying what was not found.
-- A search is named from the text on the element, such as "Find Invoices", or "Find icon".
-- Clicks that hit the same picture share one template.
+- Searches on one page sit beside each other. The first search on a new page goes in the Success
+  branch of the search whose click opened it, after that click, and a page come back to - a dialog
+  closed, a menu left - goes back beside the searches of that page. A stage you named starts at the
+  top of the flow again.
+- A search is named after what was pressed: as the application named it to Windows, such as "Find
+  Username" for the Username field or "Find Open Menu" for a button, unless Windows only named
+  what it sits in, a group or a page. Then by the words read on it, and when what was found is
+  only a box around the click, by the whole line of words under the click, so a box that cuts
+  through "Logout" still names it "Find Logout". "Find icon" when there are none.
+- Clicks on the same picture in several places, one after another with nothing else between them,
+  become a search that waits for the picture and a Find All Images that clicks every one on the
+  screen: the download icon on every row. Clicks on one picture with something done between them,
+  or the same place clicked again, stay clicks of their own. Clicks that hit the same picture
+  always share one template.
 - Typed text types its input, such as {{email}}. A pause is not a step; it sizes the next wait.
 - A check is a wait for it, or for it to go; what came after it goes in its Success branch. Its
   notification when it succeeds is the first step there, and when it fails it comes before the
@@ -132,40 +144,51 @@ flow as it was and says on which line.
 
 ## Generate flow
 
-"Generate flow" gives the plain draft, as a script, with what the flow should do, to the model chosen
-in Settings, and the model shapes it: it names the steps after the task, turns clicks on the same
-picture into one search for every match, and says in each failure what was not found. It is off
+"Generate flow" writes the plain draft, then asks the model chosen in Settings for its words: for each
+search, a name after the task, a comment saying what it is for, and what its failure says. It is off
 until Ollama is running with a model chosen under Settings, AI.
+
+The model never writes the script. It is sent what the flow should do and the searches as a list,
+each with an id - S1, S2 - what the screen said there, and what was done once it was found, and it
+answers by those ids. The app puts each answer on its step on its own: a name longer than a line, or
+empty, keeps the draft's, a name already used is numbered, and the rest of the answer is still taken.
+So nothing it says can add, drop or move a step you recorded, change a template or an input, or stop
+the flow from saving. What was left out is listed on Check. With a small local model it takes tens of
+seconds, since the request is a few thousand tokens and not the whole flow format. When no answer
+reads, or the model cannot be reached, the plain draft is saved instead, and the page says why.
+
+With it goes how a finished flow names its searches: one of the example flows that come with the
+app, the one nearest what this flow is for, found by meaning with the embedding model the assistant
+searches its guide with.
 
 First, the local model looks at the screens, when it can take pictures: it says in a sentence which
 page each screen is where a new page began, and names in a few words each click that had no words
 on it and no name from Windows, such as an icon in a game. It is always the model in Ollama, even
-when a cloud model shapes the draft, so the screenshots never leave this machine; only what it said
+when a cloud model writes the words, so the screenshots never leave this machine; only what it said
 goes on. About two seconds a look on a graphics card, and much slower without one.
 
-The answer is read the way an imported file is. When it does not read cleanly, or changes something
-it may not - the flow's name and id, a template, an input other than by renaming it, a click, drag,
-scroll, typed text or key you recorded, added, left out or moved, a stage you named moved,
-renamed or left out, or a notification you asked for changed, left out or moved off its check - it
-is sent back with what was wrong, three times at most. It may add stages
-of its own for parts you did not name. Nothing is saved until an answer reads cleanly. When none does, or
-the model cannot be reached, the plain draft is saved instead, and the page says why.
+The notes under each search, starting "screen:", say what the screen said: where a new page began,
+by its words or by the window's title, what was on it and what the local model said it is; what was
+pressed, as the application named it to Windows or the local model saw it; and what appeared and
+went after the click, read by OCR from the screenshots taken while recording. They are for the
+model only, and never in the flow.
 
-What goes to the model: what the flow should do, the draft as a script, and which clicks hit the same
-picture. Over each search are notes, comments starting "screen:", of what the screen said: where a
-new page began, by its words or by the window's title, what was on it and what the local model
-said it is; what was pressed, as the application named it to Windows or the local model saw it; and
-what appeared and went after the click, read by OCR from the screenshots taken while recording. The model names the steps and nests them by page from these, and
-the notes are taken out before anything is saved.
+The model may also ask you something only you can answer, which Check shows.
 
-In a QA test the model may add a check after a click for words that appeared - the button now reads
-"Remove", "Thank you for your order" - which is what makes a replay a test. A check it adds for
-words no screenshot showed is sent back, since it would fail the first execution; with "Let the
-cloud model see your screen" off it is kept, and Check says no screenshot showed its words. The text read under each click and in the notes
-goes too, unless a cloud model answers and "Let the cloud model see your screen" is off; then the
-model names the steps from what the flow should do, and the notes say only where a new page began
-and what kind of thing was pressed - a button, a text field - with no words, titles or names. What you typed never goes: the model sees only the input's name, such as {{email}}. The
-screenshots and templates stay on this machine. "Show the exact request" shows what was sent.
+In a QA test the model is asked a second time, once the searches have their names: where each part
+of the test begins, as stages, and a check after a click for words that appeared - the button now
+reads "Remove", "Thank you for your order" - which is what makes a replay a test. A check is taken
+only for words a screenshot showed appearing after that click, since any other would fail the first
+execution, and a stage only before a search where you began none. Whatever it says, a QA test has a
+stage - named after the flow when nobody named one - and ends with End Execution passed. With "Let
+the cloud model see your screen" off it proposes stages only.
+
+The text read under each click and in the notes goes too, unless a cloud model answers and "Let the
+cloud model see your screen" is off; then the model names the steps from what the flow should do,
+and the notes say only where a new page began and what kind of thing was pressed - a button, a text
+field - with no words, titles or names. What you typed never goes: the model sees only the input's
+name, such as {{email}}. The screenshots and templates stay on this machine. "Show the exact
+request" shows what was sent.
 
 When a cloud model would be sent text read off your screen, the request is shown first, and nothing
 leaves the machine until you press Send. The lines that hold such text are marked: the notes, and
@@ -180,12 +203,13 @@ The page shows each stage as it happens. Once it is done, "Check the flow" shows
 
 Check shows the flow as it was saved, before it ever executes:
 
-- **Script**: the flow as a script, numbered, its steps and branches folding. After a model, what it
-  wrote is green, with the draft's lines it replaced in red above them, and a warning from the
-  import is underlined at its line. **Changes from the draft** puts the draft and the saved flow
+- **Script**: the flow as a script, numbered, its steps and branches folding. After a model, what its
+  words changed is green, with the draft's lines it replaced in red above them, and a warning from
+  the import is underlined at its line. **Changes from the draft** puts the draft and the saved flow
   side by side, with what did not change folded away.
 - **Tree**: the steps as the editor shows them, every branch open.
-- What the model did, in its own notes; for the plain draft, how it was written.
+- What the model did: its notes, what it asks you, and what of its answer was left out and why; for
+  the plain draft, how it was written.
 - **Checks the model added**, each with its line and the search it is under. They are in the flow
   already: **Keep** stops offering it, and **Drop** takes it out, with what it did when it failed,
   while the steps under it stay where it was. A check another step reads what it found from is not
@@ -194,12 +218,13 @@ Check shows the flow as it was saved, before it ever executes:
   says.
 
 **Ask for changes** sends the script back to the model with what you write, such as "also sign out
-at the end". The answer is read and checked the way the first one was, three times at most, and the
-checks you have not kept or dropped yet are still offered after it. When one
-reads cleanly it replaces the flow, and Check marks what it changed; when none does, the flow is as
-it was and Check says why. The model cannot cut a template, so a change that needs a search for
-something no template shows is left out, and its notes say so. The script goes as the flow holds it,
-step names included, even with "Send text read from the screen" off.
+at the end". Unlike Generate, the model writes the whole script here, so a small local model often
+fails at it. The answer is read and checked the way an imported file is, three times at most, and
+the checks you have not kept or dropped yet are still offered after it. When one reads cleanly it
+replaces the flow, and Check marks what it changed; when none does, the flow is as it was and Check
+says why. The model cannot cut a template, so a change that needs a search for something no template
+shows is left out, and its notes say so. The script goes as the flow holds it, step names included,
+even with "Send text read from the screen" off.
 
 **Open in the editor** goes on to the flow. **Discard the flow** deletes it, and the recording with
 it.

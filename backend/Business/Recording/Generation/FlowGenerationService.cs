@@ -10,6 +10,7 @@ using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
 using Business.Recording.Draft;
+using Business.Recording.Generation.Models;
 using Business.Recording.Screens;
 using Core.Enums;
 using Core.Models.Database;
@@ -20,26 +21,27 @@ namespace Business.Recording.Generation
 {
     /// <summary>
     /// A recording into a flow: the draft, the script, the import. The draft goes through the
-    /// printer and the scanner rather than straight to the database, so a recorded flow, a file and
-    /// a model's answer all land the one way, and the plain draft is held to what a file is.
+    /// printer and the scanner rather than straight to the database, so a recorded flow and a file
+    /// land the one way, and the draft is held to what a file is.
     ///
     /// Into a flow that already existed, at a position, it is read back the same way but only the
     /// new rows are written: the import replaces every row, and a step replaced loses its link to
     /// the executions it was in.
     ///
     /// With a model, the local model first looks at the screens worth a look - where pages began,
-    /// clicks nothing named - and the plain draft is what the model is given, as a script with the
-    /// description and notes over its searches of what the screen said, and its answer is imported
-    /// in place of it. A request that would take text read off the screen to a cloud model waits
+    /// clicks nothing named - then the model is sent the draft's outline: the task and its searches
+    /// by id, with what the screen said at each, and never the script (RecordingOutline). It
+    /// answers with words - a name, a comment and what a failed wait says for each search - and for
+    /// a QA test with the stages and checks it proposes, and the code puts them on the draft field
+    /// by field (RecordingWordsApplier). Nothing it says can add, drop or move a recorded action,
+    /// so nothing is refused for it: a field that will not do keeps the draft's. When no answer
+    /// reads, or the model cannot be reached, the plain draft is saved and says why, so the tester
+    /// always has a flow. A request that would take text read off the screen to a cloud model waits
     /// until the tester has read it, with the lines that hold that text marked.
-    /// An answer that adds, drops or moves a recorded action is refused, and so is a check it adds
-    /// for words no screenshot showed; the notes never reach the saved flow. When no answer reads
-    /// cleanly, or the model cannot be reached, the plain draft is saved instead and says why, so
-    /// the tester always has a flow.
     ///
     /// On the Check page the tester keeps or drops each check the model added, and can ask for
-    /// changes: the flow as saved goes to the model with what they wrote, and an answer that never
-    /// reads cleanly leaves the flow as it was.
+    /// changes: the flow as saved goes to the model as a script, with what they wrote, and an answer
+    /// that never reads cleanly leaves the flow as it was.
     /// </summary>
     public sealed class FlowGenerationService : IFlowGenerationService
     {
@@ -50,6 +52,8 @@ namespace Business.Recording.Generation
         private readonly IScanner _scanner;
         private readonly DataService _dataService;
         private readonly IScriptRevisionService _revisionService;
+        private readonly IRecordingWordsService _wordsService;
+        private readonly IFlowExampleIndex _exampleIndex;
         private readonly IAiProviderService _providerService;
         private readonly IRecordingScreenDescriber _screenDescriber;
 
@@ -61,6 +65,8 @@ namespace Business.Recording.Generation
             IScanner scanner,
             DataService dataService,
             IScriptRevisionService revisionService,
+            IRecordingWordsService wordsService,
+            IFlowExampleIndex exampleIndex,
             IAiProviderService providerService,
             IRecordingScreenDescriber screenDescriber)
         {
@@ -71,6 +77,8 @@ namespace Business.Recording.Generation
             _scanner = scanner;
             _dataService = dataService;
             _revisionService = revisionService;
+            _wordsService = wordsService;
+            _exampleIndex = exampleIndex;
             _providerService = providerService;
             _screenDescriber = screenDescriber;
         }
@@ -116,12 +124,12 @@ namespace Business.Recording.Generation
             }
 
             HashSet<FlowStep> stepsBefore = flow.Steps.ToHashSet();
-            HashSet<FlowCsvColumn> inputsBefore = flow.Inputs.ToHashSet();
 
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index, false);
-            await _dataService.DiscordBot.NameAsync(draft, ct);
+            RecordingDraft draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, under, position.Index);
+            FlowScriptSchema schema = draft.Lay();
+            await _dataService.DiscordBot.NameAsync(schema, ct);
 
-            string script = _printer.Write(draft);
+            string script = _printer.Write(schema);
             FlowScriptSchema read = _scanner.Read(script);
             if (!read.IsValid)
             {
@@ -129,8 +137,8 @@ namespace Business.Recording.Generation
                 return ResultDto<FlowScriptImportResultDto>.Success(refused);
             }
 
-            List<FlowStep> steps = draft.Steps.Where(x => !stepsBefore.Contains(x)).ToList();
-            List<FlowCsvColumn> inputs = draft.Inputs.Where(x => !inputsBefore.Contains(x)).ToList();
+            List<FlowStep> steps = schema.Steps.Where(x => !stepsBefore.Contains(x)).ToList();
+            List<FlowCsvColumn> inputs = draft.AddedInputs.ToList();
 
             // The tree insert hangs them at the position by its ids, as it renumbers the steps there.
             foreach (FlowStep step in steps.Where(x => x.ParentFlowStep == under))
@@ -170,7 +178,7 @@ namespace Business.Recording.Generation
                 Stage = FlowGenerationStageEnum.LOOKING_AT_SCREENS,
                 Model = model,
                 IsReadTextSent = isReadTextSent,
-                AttemptCount = ScriptRevisionService.ATTEMPT_COUNT,
+                AttemptCount = RecordingWordsService.ATTEMPT_COUNT,
             };
             onProgress?.Invoke(looking);
 
@@ -198,36 +206,24 @@ namespace Business.Recording.Generation
 
             FlowScriptSchema flow = await _exporter.LoadAsync(flowId, ct);
             bool isQaTest = flow.Flow.IsQaTest;
-            FlowScriptSchema draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null, true);
-            await _dataService.DiscordBot.NameAsync(draft, ct);
+            FlowArea? mainArea = flow.Areas.FirstOrDefault(x => x.IsMain);
+            string example = FlowExamples.WordsOf(_exampleIndex.DocumentFor(flow.Flow, mainArea));
 
-            string script = _printer.Write(draft);
-            Dictionary<string, byte[]> templates = TemplatesOf(draft);
-            FlowScriptSchema sentDraft = _scanner.Read(script);
+            RecordingDraft draft = _draftBuilder.Build(flow, sent, reviewed, screenAt, null, null);
+            FlowScriptSchema schema = draft.Lay();
+            await _dataService.DiscordBot.NameAsync(schema, ct);
+
+            // What the Check page marks the model's words against.
+            string plainScript = _printer.Write(schema);
+            FlowScriptSchema plain = _scanner.Read(plainScript);
+            Dictionary<string, byte[]> templates = TemplatesOf(schema);
+
+            RecordingOutline outline = RecordingOutline.Of(draft, sent);
+            string request = _wordsService.RequestOf(outline, example);
+            List<int> requestScreenLines = ScreenTextLines.Of(request, sent, reviewed, isReadTextSent);
 
             FlowGenerationProgressDto drafted = Next(writing, FlowGenerationStageEnum.WRITING_DRAFT, 0, []);
-            drafted.ScriptLength = script.Length;
-
-            string instruction = AiPromptHelper.ShapeRecording;
-            if (isQaTest)
-                instruction += $"\n\n{AiPromptHelper.ShapeQaTest}";
-
-            if (!isReadTextSent)
-                instruction += $"\n\n{AiPromptHelper.ShapeRecordingWithoutReadText}";
-
-            instruction += $"\n\n{FlowExamples.ForRequest(flow.Areas.FirstOrDefault(x => x.IsMain))}";
-
-            // Words are held to the screen only where the model was shown them: a refusal would
-            // tell one that was not what the screen did not say.
-            List<string> wrongValues = WrongValuesOf(recording, reviewed);
-            List<string> screenLines = recording.ScreenLines;
-            if (!isReadTextSent)
-                screenLines = [];
-
-            Func<FlowScriptSchema, IReadOnlyList<Diagnostic>> checkAnswer = answer => CheckAnswer(sentDraft, answer, isQaTest, wrongValues, screenLines);
-
-            string request = _revisionService.RequestOf(script, instruction);
-            List<int> requestScreenLines = ScreenTextLines.Of(request, sent, reviewed, isReadTextSent);
+            drafted.ScriptLength = request.Length;
 
             // Text read off the screen leaves this machine only once the tester has read it.
             if (requestScreenLines.Count > 0 && await _providerService.IsCloudModelInUseAsync(ct))
@@ -240,28 +236,22 @@ namespace Business.Recording.Generation
                 await waitToSend(ct);
             }
 
-            ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, checkAnswer, (attempt, refused) =>
-            {
-                FlowGenerationProgressDto asking = Next(drafted, FlowGenerationStageEnum.ASKING_MODEL, attempt, refused);
-                onProgress?.Invoke(asking);
-            }, ct);
-
-            FlowGenerationProgressDto saving = Next(drafted, FlowGenerationStageEnum.SAVING, revision.Attempts, []);
-            onProgress?.Invoke(saving);
+            Action<int> onAttempt = attempt => onProgress?.Invoke(Next(drafted, FlowGenerationStageEnum.ASKING_MODEL, attempt, []));
+            RecordingWordsResult named = await _wordsService.NameAsync(outline, request, isReadTextSent, onAttempt, ct);
 
             FlowGenerationResultDto result = new FlowGenerationResultDto
             {
-                Notes = revision.Notes,
-                Attempts = revision.Attempts,
-                Request = revision.Request,
+                Attempts = named.Attempts,
+                Request = named.Request,
                 RequestScreenLines = requestScreenLines,
             };
 
-            if (revision.Script == null)
+            if (named.Words == null)
             {
+                onProgress?.Invoke(Next(drafted, FlowGenerationStageEnum.SAVING, named.Attempts, []));
+
                 // Built again from the recording itself, so its names have the text read under each click.
-                result.Reason = revision.ErrorMessage ?? $"No answer from the model read cleanly in {revision.Attempts} attempts.";
-                result.Refused = FlowScriptImporter.ToDtos(revision.Refused, DiagnosticSeverityEnum.ERROR);
+                result.Reason = named.ErrorMessage ?? "The model gave no words.";
                 FlowScriptSchema reloaded = await _exporter.LoadAsync(flowId, ct);
                 result.Import = await ImportPlainAsync(reloaded, recording, reviewed, screenAt, ct);
 
@@ -269,14 +259,33 @@ namespace Business.Recording.Generation
                 return result;
             }
 
-            // The notes are screen text, and the flow is written into a repository.
+            AppliedWords applied = new AppliedWords();
+            RecordingWordsApplier.ApplyNames(draft, outline, named.Words, applied);
+
+            if (isQaTest)
+            {
+                RecordingOutline renamed = RecordingOutline.Of(draft, sent);
+                RecordingWordsResult proposed = await _wordsService.ProposeTestAsync(renamed, isReadTextSent, onAttempt, ct);
+                if (proposed.Words != null)
+                    RecordingWordsApplier.ApplyTest(draft, renamed, proposed.Words, sent, applied);
+                else
+                    applied.NotTaken.Add($"No stages or checks were proposed: {proposed.ErrorMessage}");
+
+                RecordingWordsApplier.MakeTest(draft, flow.Flow.Name);
+            }
+
+            onProgress?.Invoke(Next(drafted, FlowGenerationStageEnum.SAVING, named.Attempts, []));
+
             result.IsModelDraft = true;
-            result.Draft = ScreenNoteWriter.WithoutNotes(script);
-            result.Import = await _importer.ImportTextAsync(ScreenNoteWriter.WithoutNotes(revision.Script), templates, ct);
+            result.Notes = applied.Notes;
+            result.Questions = applied.Questions;
+            result.NotTaken = applied.NotTaken;
+            result.Draft = plainScript;
+            result.Import = await _importer.ImportTextAsync(_printer.Write(draft.Lay()), templates, ct);
 
             FlowScriptSchema? saved = await ReadSavedAsync(result, ct);
             if (saved != null)
-                result.ProposedChecks = ProposedChecks.ToDtos(ProposedChecks.Find(sentDraft, saved, []), result.Script, recording.ScreenLines);
+                result.ProposedChecks = ProposedChecks.ToDtos(ProposedChecks.Find(plain, saved, []), result.Script, recording.ScreenLines);
 
             return result;
         }
@@ -309,8 +318,9 @@ namespace Business.Recording.Generation
             FlowGenerationProgressDto read = Next(reading, FlowGenerationStageEnum.WRITING_DRAFT, 0, []);
             read.ScriptLength = script.Length;
 
+            string example = _exampleIndex.DocumentFor(flow.Flow, flow.Areas.FirstOrDefault(x => x.IsMain));
             string instruction = $"{AiPromptHelper.ReviseOnRequest}\n\nWhat the tester asks for:\n\n{changes.Trim()}";
-            instruction += $"\n\n{FlowExamples.ForRequest(flow.Areas.FirstOrDefault(x => x.IsMain))}";
+            instruction += $"\n\n{FlowExamples.ForRequest(example)}";
 
             ScriptRevisionResult revision = await _revisionService.ReviseAsync(script, instruction, null, (attempt, refused) =>
             {
@@ -390,65 +400,16 @@ namespace Business.Recording.Generation
             Func<int, RecordingScreenDto?> screenAt,
             CancellationToken ct)
         {
-            FlowScriptSchema draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null, false);
+            RecordingDraft draft = _draftBuilder.Build(flow, recording, reviewed, screenAt, null, null);
+            FlowScriptSchema schema = draft.Lay();
 
             // The import finds each Notify's bot by the name its line gives.
-            await _dataService.DiscordBot.NameAsync(draft, ct);
+            await _dataService.DiscordBot.NameAsync(schema, ct);
 
-            string script = _printer.Write(draft);
-            Dictionary<string, byte[]> templates = TemplatesOf(draft);
+            string script = _printer.Write(schema);
+            Dictionary<string, byte[]> templates = TemplatesOf(schema);
 
             return await _importer.ImportTextAsync(script, templates, ct);
-        }
-
-        // What a model may not do to any recording, and what makes an answer a QA test.
-        private static List<Diagnostic> CheckAnswer(FlowScriptSchema sentDraft, FlowScriptSchema answer, bool isQaTest, List<string> wrongValues, List<string> screenLines)
-        {
-            List<Diagnostic> refused = RecordedActionsCheck.Check(sentDraft, answer);
-            if (screenLines.Count > 0)
-                refused.AddRange(ProposedChecks.Unseen(ProposedChecks.Find(sentDraft, answer, []), screenLines));
-
-            if (isQaTest)
-                refused.AddRange(CheckQaTest(answer, wrongValues));
-
-            return refused;
-        }
-
-        // What makes a model's answer a QA test, whatever the instruction said. About the answer as
-        // a whole, so at its first line.
-        private static List<Diagnostic> CheckQaTest(FlowScriptSchema answer, List<string> wrongValues)
-        {
-            List<Diagnostic> refused = [];
-
-            if (!answer.Steps.Any(x => x.FlowStepType == FlowStepTypeEnum.STAGE_MARKER))
-                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.STAGE_MARKER_MISSING, 1, 1, "A QA test is divided into stages. Put a stage marker, ## and the stage's name, above the first step of each part of the journey the Description names."));
-
-            if (!answer.Steps.Any(x => x.FlowStepType == FlowStepTypeEnum.END_EXECUTION && x.EndExecutionAsSuccess))
-                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.END_PASSED_MISSING, 1, 1, "A QA test says when it has passed. Put End Execution passed where what the Description says the flow proves has been seen."));
-
-            // Made an input, a row could put it right, and the test would prove nothing.
-            List<string> typed = answer.Steps
-                .Where(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT && x.KeyboardInputType == KeyboardInputTypeEnum.TEXT)
-                .Select(x => x.KeyboardInputText.Trim())
-                .ToList();
-
-            foreach (string value in wrongValues.Where(x => !typed.Contains(x.Trim())))
-                refused.Add(Diagnostic.Error(DiagnosticCodeEnum.WRONG_VALUE_CHANGED, 1, 1, $"The draft types <[ {value} ]> wrong on purpose, to prove the application rejects it. Keep it typed as it is, never as an input, in a stage of its own."));
-
-            return refused;
-        }
-
-        private static List<string> WrongValuesOf(RecordingResultDto recording, ReviewedRecordingDto reviewed)
-        {
-            HashSet<int> indexes = reviewed.Actions
-                .Where(x => x.Choice == ReviewChoiceEnum.WRONG_ON_PURPOSE)
-                .Select(x => x.ActionIndex)
-                .ToHashSet();
-
-            return recording.Actions
-                .Where(x => indexes.Contains(x.Index) && !string.IsNullOrWhiteSpace(x.Text))
-                .Select(x => x.Text!)
-                .ToList();
         }
 
         // The flow as saved, read back from the database rather than taken from what was sent to it.
@@ -487,8 +448,8 @@ namespace Business.Recording.Generation
         }
 
         // The same recording with nothing read off the screen: no text under a click, no lines, no
-        // window title, no name Windows had. How much changed, that a title changed, and what kind of
-        // element was pressed in what state are not screen text, and stay.
+        // window title, no name Windows had. How much changed, that a title changed, which page a
+        // press was on, and what kind of element was pressed in what state are not screen text, and stay.
         private static RecordingResultDto WithoutReadText(RecordingResultDto recording)
         {
             List<ClickedElementDto> elements = recording.ClickedElements
@@ -533,6 +494,7 @@ namespace Business.Recording.Generation
                 ClickedElements = elements,
                 ClickGroups = recording.ClickGroups,
                 ScreenChanges = changes,
+                ScreenPages = recording.ScreenPages,
                 PressedElements = pressed,
             };
         }
@@ -546,6 +508,7 @@ namespace Business.Recording.Generation
                 ClickedElements = recording.ClickedElements,
                 ClickGroups = recording.ClickGroups,
                 ScreenChanges = recording.ScreenChanges,
+                ScreenPages = recording.ScreenPages,
                 ScreenLines = recording.ScreenLines,
                 PressedElements = recording.PressedElements,
                 ScreenDescriptions = seen.ToList(),

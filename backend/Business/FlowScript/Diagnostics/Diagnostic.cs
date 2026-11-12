@@ -61,17 +61,6 @@ namespace Business.FlowScript.Diagnostics
         TEMPLATE_NOT_CUT,
         INPUT_NOT_RENAMED,
         DISCORD_BOT_NOT_GIVEN,
-
-        // A model's answer for a QA test: no stage marker, no End Execution passed, a value typed
-        // wrong on purpose no longer typed as it is.
-        STAGE_MARKER_MISSING,
-        END_PASSED_MISSING,
-        WRONG_VALUE_CHANGED,
-
-        // A model's answer for a recording: a click, drag, scroll, typed text or key it added,
-        // dropped or moved, and a check it added for words no screenshot of the recording showed.
-        ACTIONS_CHANGED,
-        CHECK_TEXT_UNSEEN,
     }
 
     /// <summary>

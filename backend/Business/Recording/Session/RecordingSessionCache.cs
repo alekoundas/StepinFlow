@@ -17,8 +17,8 @@ namespace Business.Recording.Session
     ///    pressed button, or the menu it opened.
     /// 4) where the recording is, and its actions as last folded, for the live list.
     /// 5) once it stopped, the main area as it was left, how far it has been worked through, what
-    ///    each click hit, what changed on the screen between one press and the next, and every
-    ///    line read on it.
+    ///    each click hit, what changed on the screen between one press and the next, which page
+    ///    each press was on, and every line read on it.
     ///
     /// The inputs and the screenshots per press outlive the recording, so the review can still ask
     /// for them, until the next recording starts or the review discards it.
@@ -41,6 +41,7 @@ namespace Business.Recording.Session
         private volatile IReadOnlyList<ClickedElementDto> _clickedElements = [];
         private volatile IReadOnlyList<ClickGroupDto> _clickGroups = [];
         private volatile IReadOnlyList<ScreenChangeDto> _screenChanges = [];
+        private volatile IReadOnlyList<ScreenPageDto> _screenPages = [];
         private volatile IReadOnlyList<string> _screenLines = [];
         private volatile RecordingScreenshot? _lastScreenshot;
         private volatile RecordingStageProgress? _stage;
@@ -88,6 +89,13 @@ namespace Business.Recording.Session
         {
             get { return _screenChanges; }
             set { _screenChanges = value; }
+        }
+
+        /// <summary>Which page each press was on, once read.</summary>
+        public IReadOnlyList<ScreenPageDto> ScreenPages
+        {
+            get { return _screenPages; }
+            set { _screenPages = value; }
         }
 
         /// <summary>Every line read on the main area, once read.</summary>
@@ -156,6 +164,7 @@ namespace Business.Recording.Session
             ClickedElements = [];
             ClickGroups = [];
             ScreenChanges = [];
+            ScreenPages = [];
             ScreenLines = [];
             LastScreenshot = null;
             Reviewed = null;

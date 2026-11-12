@@ -84,6 +84,31 @@ Left:
 - [ ] Optional: Browse... beside Open an application's program, which the sketch had. A dialog of
       the main window, which is minimised while recording, would open behind it.
 
+### 7.2. A good draft without a model, and a model that writes only words
+
+Built 2026-11-11 (`PROJECT.md` §6, A recording and a description become a flow), from a recording
+of Swag Labs whose model draft never got through on `qwen3.5:4b`: the model rewrote the whole script
+and broke a reference each attempt. Now the draft reads well with no model - each press named as
+Windows named it, or by the whole line under the click, what was done on a page under the click that
+opened it, clicks on one picture in several places one `Find All Images` - and the model is sent an
+outline of the searches by id and answers with words: a name, a comment and what each failed wait
+says, put on the steps field by field, with questions for the tester shown on Check. A QA test is
+asked a second time for its stages and checks, taken only where the code can stand behind them. The
+example that goes with it is picked by meaning with the embedding model the guide uses. On the way,
+`RecordingSessionService` split into five parts, and the check that a model's script kept every
+recorded action went, with its five codes, since nothing a model writes can touch one now. Verified
+by the build, the type check, the lint and the tests (1566), and the Swag Labs recording asked of
+the real `qwen3.5:4b` (18 seconds, every comment and message taken); never by hand in the app.
+
+Left:
+
+- [ ] **By hand.** Record Swag Labs again, Generate, and read Check: the names, the nesting under
+      Login, the model's comments and what it left out; a QA test's stages and checks; the download
+      icon on several rows becoming one Find All Images; Firestone recorded, where Windows names
+      nothing and the line under a click is the game's own lettering.
+- [ ] **macOS and Linux.** Pages and the line under a click come from OCR and work anywhere; names
+      from Windows need each system's accessibility reader (`TODO.md`, Recording).
+
 ---
 
 ## Apps and browser tabs

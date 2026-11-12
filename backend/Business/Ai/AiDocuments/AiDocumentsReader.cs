@@ -34,6 +34,18 @@ namespace Business.Ai.AiDocuments
             return chunks;
         }
 
+        /// <summary>The file names of the documents in a folder, such as Examples, in name order.</summary>
+        public static List<string> DocumentNamesIn(string folder)
+        {
+            string prefix = $"{_prefix}{folder}.";
+
+            return typeof(AiDocumentChunk).Assembly.GetManifestResourceNames()
+                .Where(x => x.StartsWith(prefix, StringComparison.Ordinal) && x.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x[prefix.Length..])
+                .Order(StringComparer.Ordinal)
+                .ToList();
+        }
+
         /// <summary>One document whole, by its file name, wherever in the folders it sits.</summary>
         public static string ReadDocument(string fileName)
         {

@@ -20,6 +20,12 @@ namespace Core.Models.Dtos
         /// <summary>What the model says a tester should check.</summary>
         public List<string> Notes { get; set; } = [];
 
+        /// <summary>What the model asks that only the tester can answer, and would change the flow.</summary>
+        public List<string> Questions { get; set; } = [];
+
+        /// <summary>What of the model's answer was not taken, each in a sentence: a name too long, a check for words no screenshot showed.</summary>
+        public List<string> NotTaken { get; set; } = [];
+
         /// <summary>The checks the model added, for the tester to keep or drop. In the saved flow until dropped.</summary>
         public List<ProposedCheckDto> ProposedChecks { get; set; } = [];
 

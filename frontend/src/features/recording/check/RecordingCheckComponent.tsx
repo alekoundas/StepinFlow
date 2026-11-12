@@ -306,7 +306,8 @@ function WhatWasDoneComponent({ result }: { result: FlowGenerationResultDto }) {
           style={MUTED}
         >
           Written by rules, without a model: each click waits for what it clicked, then clicks it, and each search is
-          named from the text under it. Ask for changes below to have a model shape it.
+          named as Windows named what was pressed, or from the words under it. What was done on a page sits under the
+          click that opened it. Ask for changes below to have a model shape it.
         </p>
       </section>
     );
@@ -352,11 +353,50 @@ function WhatWasDoneComponent({ result }: { result: FlowGenerationResultDto }) {
         </ol>
       )}
 
+      {result.questions.length > 0 && (
+        <div className="flex flex-column gap-2">
+          <h4 className="m-0 text-sm font-semibold">The model asks</h4>
+          <ul className="m-0 pl-3 flex flex-column gap-1">
+            {result.questions.map((question) => (
+              <li
+                key={question}
+                style={MUTED}
+              >
+                {question}
+              </li>
+            ))}
+          </ul>
+          <span
+            className="text-xs"
+            style={MUTED}
+          >
+            Only you know. Answer in Ask for changes below, or in the editor.
+          </span>
+        </div>
+      )}
+
+      {result.notTaken.length > 0 && (
+        <div className="flex flex-column gap-2">
+          <h4 className="m-0 text-sm font-semibold">Left out of its answer</h4>
+          <ul className="m-0 pl-3 flex flex-column gap-1 text-sm">
+            {result.notTaken.map((reason) => (
+              <li
+                key={reason}
+                style={MUTED}
+              >
+                {reason}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p
         className="m-0 px-3 py-2 border-round-lg text-sm"
         style={{ ...MUTED, background: "var(--surface-ground)" }}
       >
-        Every template is one cut from your recording, and every input is one you typed.
+        The model wrote names, comments and what each failed wait says. Every step, template and input is the
+        recording&apos;s own.
       </p>
     </section>
   );

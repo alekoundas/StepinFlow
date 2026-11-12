@@ -68,6 +68,11 @@
     <!-- A test that needs a live desktop is traited Category=Desktop and left out, so a headless
          machine never meets one. dotnet test -p:Desktop=true brings them in. -->
     <TestingPlatformCommandLineArguments Condition="'$(Desktop)' != 'true'">$(TestingPlatformCommandLineArguments) --filter-not-trait Category=Desktop</TestingPlatformCommandLineArguments>
+
+    <!-- A test that asks the local model through Ollama is traited Category=Model and left out the
+         same way: it needs Ollama with the model downloaded, and takes seconds a request.
+         dotnet test -p:Model=true brings them in. -->
+    <TestingPlatformCommandLineArguments Condition="'$(Model)' != 'true'">$(TestingPlatformCommandLineArguments) --filter-not-trait Category=Model</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">

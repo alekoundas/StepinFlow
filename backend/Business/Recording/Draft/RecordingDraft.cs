@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Globalization;
 using Business.FlowScript.Models;
+using Business.Recording.Draft.Models;
 using Core.Enums;
 using Core.Helpers;
 using Core.Models.Business;
@@ -11,14 +12,16 @@ using Core.Ports;
 namespace Business.Recording.Draft
 {
     /// <summary>
-    /// The draft as it is built: the flow's rows with the recording's added at a position in them, or
-    /// after them. Every action's builder adds through here, so what all steps share is in one place -
-    /// a name unique in the flow, the order, which branch a step goes in, the template cut for a click
-    /// and the points.
+    /// The draft as it is built: what the recording became, entry by entry in the order it was
+    /// done, beside the flow it goes into. Every action's builder adds through here, so what all
+    /// steps share is in one place - a name unique in the flow, the template cut for a click, the
+    /// points and the inputs.
     ///
-    /// Everything after a search, up to the next search, goes in that search's Success branch: it
-    /// only makes sense once the search found what it waited for. Its Failure branch ends the
-    /// execution, failed, with a reason, because a flow that carries on clicks blind.
+    /// It holds what the steps are and never where they sit: DraftLayout gives each entry its
+    /// parent and its order, and is asked again whenever an entry was added or renamed - a stage
+    /// or a check a model proposed, a name it wrote. So nothing a model says can move, drop or
+    /// reorder what was recorded: it only ever changes words on entries that are already here, or
+    /// adds one between two of them.
     /// </summary>
     public sealed class RecordingDraft
     {
@@ -31,48 +34,39 @@ namespace Business.Recording.Draft
         // Long enough for a button's label, short enough for a line of the script.
         private const int NAME_LENGTH = 40;
 
+        // What a press sits in rather than what was pressed: its name says where, not what.
+        private static readonly HashSet<string> SURROUNDING_ROLES = ["", "dialog", "window", "document", "group", "list", "tool bar", "data grid", "table", "tree", "pane", "menu bar", "status bar", "title bar", "custom"];
+
         private readonly RecordingResultDto _result;
         private readonly Func<int, RecordingScreenDto?> _screenAt;
         private readonly IScreenshotService _screenshotService;
-        private readonly bool _includeScreenNotes;
+        private readonly DraftLayout _layout;
 
         private readonly HashSet<string> _names;
         private readonly HashSet<string> _templateNames;
-        private readonly Dictionary<FlowStep, int> _childCounts = new Dictionary<FlowStep, int>();
         private readonly Dictionary<int, FlowTemplate> _groupTemplates = new Dictionary<int, FlowTemplate>();
         private readonly List<string> _stages = new List<string>();
+        private readonly List<FlowCsvColumn> _addedInputs = new List<FlowCsvColumn>();
 
-        // Where the recording goes: under this step, or at the top of the flow when null. The steps
-        // already there after the position move down one for each step added beside them.
-        private readonly FlowStep? _start;
-        private readonly List<FlowStep> _after;
-        private int _startCount;
+        private int _actionIndex = -1;
 
-        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService, FlowStep? under, int? index, bool includeScreenNotes)
+        public RecordingDraft(FlowScriptSchema schema, RecordingResultDto result, Func<int, RecordingScreenDto?> screenAt, IScreenshotService screenshotService, FlowStep? under, int? index)
         {
             Schema = schema;
             _result = result;
             _screenAt = screenAt;
             _screenshotService = screenshotService;
-            _includeScreenNotes = includeScreenNotes;
+            _layout = new DraftLayout(schema, under, index);
 
             MainArea = schema.Areas.FirstOrDefault(x => x.IsMain);
 
-            // Steps, areas and points share one namespace.
-            IEnumerable<string> taken = schema.Steps.Select(x => x.Name).Concat(schema.Areas.Select(x => x.Name)).Concat(schema.Points.Select(x => x.Name));
+            // Steps, areas, points and inputs share one namespace.
+            IEnumerable<string> taken = schema.Steps.Select(x => x.Name)
+                .Concat(schema.Areas.Select(x => x.Name))
+                .Concat(schema.Points.Select(x => x.Name))
+                .Concat(schema.Inputs.Select(x => x.Name));
             _names = new HashSet<string>(taken.Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
             _templateNames = schema.Steps.SelectMany(x => x.FlowStepTemplates).Select(x => x.FlowTemplate.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            // Numbered as the tree shows them, so the ones after the position can move down. With no
-            // position, after what is already there: the setup's Launch step comes first.
-            List<FlowStep> siblings = schema.Steps.Where(x => x.ParentFlowStep == under).OrderBy(x => x.OrderNumber).ToList();
-            for (int i = 0; i < siblings.Count; i++)
-                siblings[i].OrderNumber = i;
-
-            _start = under;
-            _startCount = Math.Clamp(index ?? siblings.Count, 0, siblings.Count);
-            _after = siblings.Skip(_startCount).ToList();
-            Parent = under;
         }
 
         public FlowScriptSchema Schema { get; }
@@ -80,13 +74,22 @@ namespace Business.Recording.Draft
         /// <summary>The window the flow works in. A search looks inside it, and a point is placed in it.</summary>
         public FlowArea? MainArea { get; }
 
-        /// <summary>Where the steps added go: where the recording started, or the Success branch of the last search.</summary>
-        public FlowStep? Parent { get; private set; }
+        /// <summary>What the recording became, in the order it was done.</summary>
+        public List<DraftItem> Items { get; } = [];
+
+        /// <summary>The inputs this recording added, which the flow did not have.</summary>
+        public IReadOnlyList<FlowCsvColumn> AddedInputs { get { return _addedInputs; } }
 
 
         // ================================================================
-        // Public methods
+        // Public methods - what every builder adds through
         // ================================================================
+
+        /// <summary>The action the entries added from now came from.</summary>
+        public void StartAction(RecordedActionDto action)
+        {
+            _actionIndex = action.Index;
+        }
 
         public ClickedElementDto? ElementOf(RecordedActionDto action)
         {
@@ -94,16 +97,35 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
-        /// What a press is named for: the text read on it, or when nothing was - an icon - its name
-        /// as its application told Windows.
+        /// What a press is named for, the first of these there is: its name as its application told
+        /// Windows, when that names the thing itself rather than what it sits in; the words read on
+        /// it - the whole line under the click first, where its rectangle is only a box around the
+        /// click and cuts the words; what the local model called it; and last what it sits in.
         /// </summary>
         public string TextOf(RecordedActionDto action)
         {
-            string text = ElementOf(action)?.Text ?? string.Empty;
-            if (text.Length > 0)
-                return text;
+            PressedElementDto? pressed = _result.PressedElements.FirstOrDefault(x => x.ActionIndex == action.Index);
+            if (pressed != null && pressed.Name.Length > 0 && !SURROUNDING_ROLES.Contains(pressed.Role))
+                return pressed.Name;
 
-            return _result.PressedElements.FirstOrDefault(x => x.ActionIndex == action.Index)?.Name ?? string.Empty;
+            ClickedElementDto? element = ElementOf(action);
+            string read = element?.Text ?? string.Empty;
+            string line = element?.LineText ?? string.Empty;
+
+            if (element?.FoundBy == ElementFoundByEnum.FALLBACK && line.Length > 0)
+                return line;
+
+            if (read.Length > 0)
+                return read;
+
+            if (line.Length > 0)
+                return line;
+
+            string seen = _result.ScreenDescriptions.FirstOrDefault(x => x.ActionIndex == action.Index)?.Element ?? string.Empty;
+            if (seen.Length > 0)
+                return seen;
+
+            return pressed?.Name ?? string.Empty;
         }
 
         /// <summary>The name, or with the first free number after it when the flow has it already.</summary>
@@ -132,30 +154,24 @@ namespace Business.Recording.Draft
             _stages.Add(name);
         }
 
-        /// <summary>
-        /// The stages begun since the last search, as stage markers where the recording started -
-        /// the top of the flow, where a marker is a stage - and steps go there from now.
-        /// </summary>
+        /// <summary>The stages begun since the last search, as stage markers before whatever is added next.</summary>
         public void AddStages()
         {
-            Parent = _start;
-
             foreach (string stage in _stages)
             {
                 string oneLine = string.Join(' ', stage.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-                Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = Name(oneLine) });
+                FlowStep marker = new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = Name(oneLine) };
+
+                Items.Add(new DraftItem { Kind = DraftItemKindEnum.STAGE, Step = marker, ActionIndex = _actionIndex, IsTesters = true });
             }
 
             _stages.Clear();
         }
 
-        /// <summary>Adds the step where steps go now, after the ones already there.</summary>
+        /// <summary>Adds the step after everything added so far.</summary>
         public FlowStep Add(FlowStep step)
         {
-            step.ParentFlowStep = Parent;
-            step.OrderNumber = NextOrder(Parent);
-            Schema.Steps.Add(step);
-
+            Items.Add(new DraftItem { Kind = DraftItemKindEnum.STEP, Step = step, ActionIndex = _actionIndex });
             return step;
         }
 
@@ -180,7 +196,7 @@ namespace Business.Recording.Draft
                     named = TextOf(action);
 
                 string name = Name(NameFrom(prefix, named, fallback) + suffix);
-                FlowArea? area = TextArea(action, review, $"{name} area");
+                FlowArea? area = TextArea(action, review, AreaNameOf(name));
                 if (area == null)
                     return null;
 
@@ -220,60 +236,26 @@ namespace Business.Recording.Draft
             });
         }
 
-        // Where the recording started, with its branches. What comes after it goes in its Success
-        // branch, until the next search.
-        private FlowStep AddWaiting(RecordedActionDto action, FlowStep search)
-        {
-            int timeout = TimeoutFor(action.WaitedMilliseconds);
-            search.TimeoutMilliseconds = timeout;
-            search.CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait";
-
-            if (_includeScreenNotes)
-            {
-                foreach (string note in ScreenNoteWriter.NotesFor(action.Index, _result))
-                    search.CodeComment += $"\n{note}";
-            }
-
-            string failed = $"{search.Name} found nothing within {Seconds(timeout)}";
-            if (search.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
-                failed = $"{search.Name}: still there after {Seconds(timeout)}";
-
-            AddStages();
-            Add(search);
-
-            FlowStep success = Branch(search, FlowStepTypeEnum.SUCCESS, 0);
-            FlowStep failure = Branch(search, FlowStepTypeEnum.FAILURE, 1);
-
-            Parent = failure;
-            Add(new FlowStep
-            {
-                FlowStepType = FlowStepTypeEnum.END_EXECUTION,
-                Message = failed,
-            });
-
-            Parent = success;
-            return search;
-        }
-
         /// <summary>
         /// A step in a search's Failure branch, ahead of the End Execution the branch ends with, so
         /// it is done before the execution stops.
         /// </summary>
         public FlowStep AddToFailure(FlowStep search, FlowStep step)
         {
-            FlowStep failure = Schema.Steps.First(x => x.ParentFlowStep == search && x.FlowStepType == FlowStepTypeEnum.FAILURE);
-
-            foreach (FlowStep later in Schema.Steps.Where(x => x.ParentFlowStep == failure))
-                later.OrderNumber++;
-
-            _childCounts.TryGetValue(failure, out int count);
-            _childCounts[failure] = count + 1;
-
-            step.ParentFlowStep = failure;
-            step.OrderNumber = 0;
-            Schema.Steps.Add(step);
+            DraftItem item = Items.First(x => x.Kind == DraftItemKindEnum.SEARCH && x.Step == search);
+            item.BeforeEnd.Add(step);
 
             return step;
+        }
+
+        /// <summary>A Find All Images, with what is done at each hit: clicks on one picture in several places, as one step.</summary>
+        public FlowStep AddEvery(FlowStep findAll, IReadOnlyList<FlowStep> eachHit)
+        {
+            DraftItem item = new DraftItem { Kind = DraftItemKindEnum.EVERY, Step = findAll, ActionIndex = _actionIndex };
+            item.EachHit.AddRange(eachHit);
+            Items.Add(item);
+
+            return findAll;
         }
 
         /// <summary>
@@ -359,21 +341,17 @@ namespace Business.Recording.Draft
         /// <summary>An input with what was typed as its default. A secret keeps no value at all.</summary>
         public FlowCsvColumn Input(string desired, string value, bool isSecret)
         {
-            HashSet<string> taken = Schema.Inputs.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            string name = desired;
-            for (int suffix = 2; taken.Contains(name); suffix++)
-                name = $"{desired}_{suffix}";
-
             FlowCsvColumn input = new FlowCsvColumn
             {
-                Name = name,
+                Name = FreeInputName(desired),
                 DefaultValue = isSecret ? string.Empty : value,
                 IsSecret = isSecret,
                 OrderNumber = Schema.Inputs.Count,
             };
 
             Schema.Inputs.Add(input);
+            _addedInputs.Add(input);
+
             return input;
         }
 
@@ -393,34 +371,183 @@ namespace Business.Recording.Draft
             return Math.Clamp(scaled, MINIMUM_TIMEOUT_MILLISECONDS, MAXIMUM_TIMEOUT_MILLISECONDS);
         }
 
+        /// <summary>Gives every entry its place in the flow, and returns the flow.</summary>
+        public FlowScriptSchema Lay()
+        {
+            _layout.Lay(Items);
+            return Schema;
+        }
+
+
+        // ================================================================
+        // Public methods - changed once it is built
+        // ================================================================
+
+        /// <summary>
+        /// Another name for a step of the draft, numbered when the flow has it already. An area made
+        /// for the step's words, and a failure message that only named the step, follow it.
+        /// </summary>
+        public void Rename(FlowStep step, string desired)
+        {
+            DraftItem? search = Items.FirstOrDefault(x => x.Kind == DraftItemKindEnum.SEARCH && x.Step == step);
+            bool isNamedInFailure = search?.End != null && search.End.Message == FailureOf(step);
+            FlowArea? ownArea = OwnAreaOf(step);
+
+            _names.Remove(step.Name);
+            step.Name = Name(desired);
+
+            if (ownArea != null)
+            {
+                _names.Remove(ownArea.Name);
+                ownArea.Name = Name(AreaNameOf(step.Name));
+            }
+
+            if (isNamedInFailure)
+                search!.End!.Message = FailureOf(step);
+        }
+
+        /// <summary>
+        /// Another name for an input this recording added, with every step that types it. False for
+        /// one the flow already had, or a name already taken.
+        /// </summary>
+        public bool RenameInput(FlowCsvColumn input, string desired)
+        {
+            bool isTaken = Schema.Inputs.Any(x => x != input && string.Equals(x.Name, desired, StringComparison.OrdinalIgnoreCase));
+            if (!_addedInputs.Contains(input) || isTaken || desired.Length == 0)
+                return false;
+
+            string typed = $"{{{{{input.Name}}}}}";
+            string renamed = $"{{{{{desired}}}}}";
+
+            foreach (FlowStep step in Items.Select(x => x.Step).Where(x => x.FlowStepType == FlowStepTypeEnum.KEYBOARD_INPUT && x.KeyboardInputText == typed))
+                step.KeyboardInputText = renamed;
+
+            input.Name = desired;
+            return true;
+        }
+
+        /// <summary>
+        /// A stage marker before a search, which a model proposed. Null when one already begins
+        /// there: the tester's stands, and two stages cannot begin at one step.
+        /// </summary>
+        public DraftItem? AddStageBefore(DraftItem search, string name, string comment)
+        {
+            int at = Items.IndexOf(search);
+            if (at < 0 || (at > 0 && Items[at - 1].Kind == DraftItemKindEnum.STAGE))
+                return null;
+
+            FlowStep marker = new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = Name(name), CodeComment = comment };
+            DraftItem stage = new DraftItem { Kind = DraftItemKindEnum.STAGE, Step = marker };
+            Items.Insert(at, stage);
+
+            return stage;
+        }
+
+        /// <summary>
+        /// A check for words in the main area, which a model proposed, after everything the search
+        /// before it does: it waits for them, and ends the execution when they never show. Null with
+        /// no main area to read them in.
+        /// </summary>
+        public DraftItem? AddCheckAfter(DraftItem search, string words, string name, string comment, string notFound)
+        {
+            int at = Items.IndexOf(search);
+            if (at < 0 || MainArea == null)
+                return null;
+
+            // After what the search does, up to the next search, stage or repeat.
+            int end = at + 1;
+            while (end < Items.Count && Items[end].Kind == DraftItemKindEnum.STEP)
+                end++;
+
+            int timeout = TimeoutFor(0);
+            FlowStep check = new FlowStep
+            {
+                FlowStepType = FlowStepTypeEnum.SEARCH_TEXT,
+                Name = Name(name),
+                SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND,
+                FlowArea = MainArea,
+                ConditionType = ConditionTypeEnum.CONTAINS,
+                ConditionText = words,
+                TimeoutMilliseconds = timeout,
+                CodeComment = comment,
+            };
+
+            string failed = notFound;
+            if (failed.Length == 0)
+                failed = FailureOf(check);
+
+            DraftItem item = new DraftItem
+            {
+                Kind = DraftItemKindEnum.SEARCH,
+                Step = check,
+                End = new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, Message = failed },
+                IsCheck = true,
+                IsProposed = true,
+            };
+
+            Items.Insert(end, item);
+            return item;
+        }
+
+        /// <summary>A QA test says when it has passed: an End Execution passed, after everything recorded.</summary>
+        public FlowStep AddPassed(string message)
+        {
+            FlowStep passed = new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, EndExecutionAsSuccess = true, Message = message };
+            Items.Add(new DraftItem { Kind = DraftItemKindEnum.STEP, Step = passed });
+
+            return passed;
+        }
+
+        /// <summary>What a search's Failure branch says when it only names the search and how long it waited.</summary>
+        public static string FailureOf(FlowStep search)
+        {
+            if (search.SearchMode == SearchModeEnum.WAIT_UNTIL_NOT_FOUND)
+                return $"{search.Name}: still there after {Seconds(search.TimeoutMilliseconds)}";
+
+            return $"{search.Name} found nothing within {Seconds(search.TimeoutMilliseconds)}";
+        }
+
+        /// <summary>Text written inside a quote, on one line and without the quote's own brackets.</summary>
+        public static string Quotable(string text)
+        {
+            string unquoted = text.Replace("<[", " ").Replace("]>", " ");
+            return string.Join(' ', unquoted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        /// <summary>Text read on an element as a name holds it: quotable, and cut to a name's length.</summary>
+        public static string ShortText(string text)
+        {
+            string quotable = Quotable(text);
+            if (quotable.Length > NAME_LENGTH)
+                quotable = quotable[..NAME_LENGTH].TrimEnd();
+
+            return quotable;
+        }
+
 
         // ================================================================
         // Private methods
         // ================================================================
 
-        private FlowStep Branch(FlowStep search, FlowStepTypeEnum type, int order)
+        // What comes after it goes in its Success branch, until the next search, and its Failure
+        // branch ends the execution, failed, with a reason: a flow that carries on clicks blind.
+        private FlowStep AddWaiting(RecordedActionDto action, FlowStep search)
         {
-            FlowStep branch = new FlowStep { FlowStepType = type, ParentFlowStep = search, OrderNumber = order };
-            _childCounts[search] = order + 1;
-            Schema.Steps.Add(branch);
+            search.TimeoutMilliseconds = TimeoutFor(action.WaitedMilliseconds);
+            search.CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait";
 
-            return branch;
-        }
-
-        private int NextOrder(FlowStep? parent)
-        {
-            if (parent == null || parent == _start)
+            AddStages();
+            Items.Add(new DraftItem
             {
-                foreach (FlowStep later in _after)
-                    later.OrderNumber++;
+                Kind = DraftItemKindEnum.SEARCH,
+                Step = search,
+                ActionIndex = action.Index,
+                End = new FlowStep { FlowStepType = FlowStepTypeEnum.END_EXECUTION, Message = FailureOf(search) },
+                Page = _result.ScreenPages.FirstOrDefault(x => x.ActionIndex == action.Index)?.Page,
+                IsCheck = action.Kind == RecordedActionKindEnum.CHECK,
+            });
 
-                return _startCount++;
-            }
-
-            _childCounts.TryGetValue(parent, out int count);
-            _childCounts[parent] = count + 1;
-
-            return count;
+            return search;
         }
 
         private int? GroupOf(RecordedActionDto action)
@@ -461,21 +588,30 @@ namespace Business.Recording.Draft
             return area;
         }
 
-        /// <summary>Text written inside a quote, on one line and without the quote's own brackets.</summary>
-        public static string Quotable(string text)
+        private static string AreaNameOf(string searchName)
         {
-            string unquoted = text.Replace("<[", " ").Replace("]>", " ");
-            return string.Join(' ', unquoted.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            return $"{searchName} area";
         }
 
-        /// <summary>Text read on an element as a name holds it: quotable, and cut to a name's length.</summary>
-        public static string ShortText(string text)
+        // The area a search by its words reads them in, when it was made for that search alone.
+        private FlowArea? OwnAreaOf(FlowStep step)
         {
-            string quotable = Quotable(text);
-            if (quotable.Length > NAME_LENGTH)
-                quotable = quotable[..NAME_LENGTH].TrimEnd();
+            FlowArea? area = step.FlowArea;
+            if (area == null || area == MainArea || area.Name != AreaNameOf(step.Name))
+                return null;
 
-            return quotable;
+            return area;
+        }
+
+        private string FreeInputName(string desired)
+        {
+            HashSet<string> taken = Schema.Inputs.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            string name = desired;
+            for (int suffix = 2; taken.Contains(name); suffix++)
+                name = $"{desired}_{suffix}";
+
+            return name;
         }
 
         // As Review left it, or as the model found it when Review said nothing.

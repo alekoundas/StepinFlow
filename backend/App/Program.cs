@@ -113,6 +113,7 @@ namespace App
             builder.Services.AddSingleton<IRecordedScreenReader, RecordedScreenReader>();
             builder.Services.AddSingleton<IRecordingScreenDescriber, RecordingScreenDescriber>();
             builder.Services.AddSingleton<IRecordingDraftBuilder, RecordingDraftBuilder>();
+            builder.Services.AddSingleton<IRecordingWordsService, RecordingWordsService>();
             builder.Services.AddSingleton<IFlowGenerationService, FlowGenerationService>();
             builder.Services.AddSingleton<IFlowGenerationSessionService, FlowGenerationSessionService>();
             builder.Services.AddSingleton<IElementLocator, ElementLocator>();
@@ -165,6 +166,7 @@ namespace App
             // Singletons, unlike the rest of AI: these hold the loaded onnx model and the built index, which cost seconds to produce and nothing to keep.
             builder.Services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
             builder.Services.AddSingleton<IAiDocumentIndexService, AiDocumentIndexService>();
+            builder.Services.AddSingleton<IFlowExampleIndex, FlowExampleIndex>();
 
             // Ollama is on this machine, so a short timeout is right.
             builder.Services.AddHttpClient(nameof(OllamaService), client =>

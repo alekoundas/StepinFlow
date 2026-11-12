@@ -222,14 +222,14 @@ namespace Business.Tests.Ai
                 if (answer.Steps.Any(y => y.Name == "Find the sign-in field"))
                     return [];
 
-                return [Diagnostic.Error(DiagnosticCodeEnum.STAGE_MARKER_MISSING, 1, 1, "Name the search after the sign-in field.")];
+                return [Diagnostic.Error(DiagnosticCodeEnum.TEMPLATE_NOT_CUT, 1, 1, "Name the search after the sign-in field.")];
             };
 
             ScriptRevisionResult result = await _service.ReviseAsync(_script, INSTRUCTION, requireSignIn, null, Ct);
 
             result.IsRevised.ShouldBeTrue();
             result.Attempts.ShouldBe(2);
-            model.Requests[1].Last().Text.ShouldContain("STAGE_MARKER_MISSING: Name the search after the sign-in field.");
+            model.Requests[1].Last().Text.ShouldContain("TEMPLATE_NOT_CUT: Name the search after the sign-in field.");
         }
 
         [Fact]

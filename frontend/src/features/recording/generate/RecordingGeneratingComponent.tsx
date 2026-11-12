@@ -149,9 +149,8 @@ export default function RecordingGeneratingComponent({
               className="text-xs"
               style={MUTED}
             >
-              The standing instructions and the flow format go with it, and hold nothing of yours. To send nothing read
-              off the screen, cancel, turn off &quot;Let the cloud model see your screen&quot; under Settings, AI, and
-              generate again.
+              The standing instructions go with it, and hold nothing of yours. To send nothing read off the screen,
+              cancel, turn off &quot;Let the cloud model see your screen&quot; under Settings, AI, and generate again.
             </span>
           </section>
         )}
@@ -354,8 +353,8 @@ function SentComponent({
     .filter((x) => choiceOf(x.index) === ReviewChoiceEnum.INPUT)
     .map((x) => `{{${reviews[x.index].inputName}}}`);
 
-  let script = "Being written";
-  if (progress.scriptLength > 0) script = `${(progress.scriptLength / 1024).toFixed(1)} KB`;
+  let searches = "Being written";
+  if (progress.scriptLength > 0) searches = `${(progress.scriptLength / 1024).toFixed(1)} KB`;
 
   let readText = plural(labels, "label");
   if (!progress.isReadTextSent) readText = "Not sent";
@@ -377,10 +376,9 @@ function SentComponent({
       </h2>
       <ul className="list-none m-0 p-0 flex flex-column gap-2">
         <SentRowComponent label="Your description">{sentencesOf(flow?.description ?? "")}</SentRowComponent>
-        <SentRowComponent label="The draft, as a script">{script}</SentRowComponent>
+        <SentRowComponent label="The searches, by id, never the script">{searches}</SentRowComponent>
         <SentRowComponent label="Text read under each click">{readText}</SentRowComponent>
         {asWritten > 0 && <SentRowComponent label="Text typed as written">{plural(asWritten, "entry", "entries")}</SentRowComponent>}
-        <SentRowComponent label="Which clicks hit the same picture">{plural(recording.clickGroups.length, "group")}</SentRowComponent>
       </ul>
 
       {!progress.isReadTextSent && (
@@ -466,7 +464,7 @@ function stagesOf(
   let cut = `From ${plural(searched, "click")}`;
   if (recording.clickGroups.length > 0) cut += "; the clicks on one picture share one";
 
-  let attempt = "Naming the steps and grouping the repeated clicks, with your description";
+  let attempt = "Naming each search and saying what it is for, with your description";
   if (progress.stage === FlowGenerationStageEnum.WAITING_TO_SEND) attempt = "Waiting until you have read the request and sent it";
   if (progress.attempt > 0) attempt += ` · attempt ${progress.attempt} of ${progress.attemptCount}`;
 
@@ -476,7 +474,7 @@ function stagesOf(
     looked = "Nothing looked at: no picture for a model that takes none";
   if (!progress.isReadTextSent) looked = "Not asked: the cloud model may not be told what is on screen";
 
-  const readBack: Stage = { title: "Read the script back", detail: "Parsed and checked the way an imported file is" };
+  const readBack: Stage = { title: "Put its words on the steps", detail: "Each name, comment and message taken on its own" };
   if (progress.refused.length > 0) {
     readBack.refused = progress.refused;
     readBack.refusedNote = `Sent back to the model with the lines. Attempt ${progress.attempt} of ${progress.attemptCount}.`;
@@ -485,7 +483,8 @@ function stagesOf(
   const saved: Stage = { title: "Saved and validated", detail: "Imported into the flow, and checked as any flow is" };
 
   if (result?.isModelDraft) {
-    readBack.detail = `Read cleanly on attempt ${result.attempts} of ${progress.attemptCount}`;
+    readBack.detail = `Answered on attempt ${result.attempts} of ${progress.attemptCount}`;
+    if (result.notTaken.length > 0) readBack.detail += `; ${plural(result.notTaken.length, "part")} left out, said on Check`;
     saved.detail = validationOf(result);
   }
 
@@ -502,8 +501,8 @@ function stagesOf(
     { title: "Read the text under each click", detail: `${plural(labels, "label")}, read on this machine` },
     { title: "Cut the templates", detail: cut },
     { title: "Looked at the screens with the local model", detail: looked },
-    { title: "Wrote the draft", detail: "Every wait sized from how long you waited" },
-    { title: "Asked the model to shape it", detail: attempt },
+    { title: "Wrote the draft", detail: "Every wait sized from how long you waited, each page under the click that opened it" },
+    { title: "Asked the model for the words", detail: attempt },
     readBack,
     saved,
   ];

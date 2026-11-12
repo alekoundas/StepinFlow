@@ -142,14 +142,15 @@ namespace Business.Tests.Recording
             ]);
         }
 
-        [Fact]
-        public void Every_note_comes_out_of_a_script_and_nothing_else_does()
+        [Theory]
+        [InlineData("    screen: on it \"Products\"", true)]
+        [InlineData("# screen: on it \"Products\"", true)]
+        [InlineData(" #  Screen: after the click went \"Login\"", true)]
+        [InlineData("## Sign in", false)]
+        [InlineData("S1  Find Login", false)]
+        public void A_note_is_told_as_an_outline_writes_it_or_as_a_comment(string line, bool isNote)
         {
-            string script = "Steps:\r\n# recorded after a 1.2s wait\r\n# screen: on it \"Products\"\r\n## Sign in\r\n #  Screen: after the click went \"Login\"\r\nFind Image      <[ Find Login ]>\r\n";
-
-            string cleaned = ScreenNoteWriter.WithoutNotes(script);
-
-            cleaned.ShouldBe("Steps:\r\n# recorded after a 1.2s wait\r\n## Sign in\r\nFind Image      <[ Find Login ]>\r\n");
+            ScreenNoteWriter.IsNote(line).ShouldBe(isNote);
         }
     }
 }

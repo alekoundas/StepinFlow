@@ -71,7 +71,7 @@ namespace Business.Ai.Helpers
             StringBuilder line = new StringBuilder();
 
             line.Append(CultureInfo.InvariantCulture, $"[{step.Sequence}] ");
-            line.Append(new string(' ', step.Depth * 2));
+            line.Append(' ', step.Depth * 2);
             line.Append(step.Name);
             line.Append(CultureInfo.InvariantCulture, $"  {step.FlowStepType}");
             line.Append(CultureInfo.InvariantCulture, $"  {step.Outcome}");

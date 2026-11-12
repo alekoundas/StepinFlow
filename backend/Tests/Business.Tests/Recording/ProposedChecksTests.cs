@@ -1,4 +1,3 @@
-using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
@@ -116,15 +115,12 @@ namespace Business.Tests.Recording
 
         // Tested as an execution tests it, so case does not matter.
         [Fact]
-        public void Words_no_screenshot_showed_are_refused()
+        public void Words_are_read_on_screen_when_a_line_satisfies_them_as_an_execution_would()
         {
-            List<FlowStep> added = ProposedChecks.Find(Read(ADD_TO_CART), Read(REMOVE_CHECK), []);
+            FlowStep check = ProposedChecks.Find(Read(ADD_TO_CART), Read(REMOVE_CHECK), []).ShouldHaveSingleItem();
 
-            Diagnostic refused = ProposedChecks.Unseen(added, ["Products", "Add to cart"]).ShouldHaveSingleItem();
-            refused.Code.ShouldBe(DiagnosticCodeEnum.CHECK_TEXT_UNSEEN);
-            refused.Message.ShouldContain("<[ Cart shows Remove ]> looks for <[ Remove ]>");
-
-            ProposedChecks.Unseen(added, ["Products", "REMOVE"]).ShouldBeEmpty();
+            ProposedChecks.IsReadOnScreen(check, ["Products", "Add to cart"]).ShouldBe(false);
+            ProposedChecks.IsReadOnScreen(check, ["Products", "REMOVE"]).ShouldBe(true);
         }
 
         [Fact]

@@ -1,4 +1,3 @@
-using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Core.Enums;
 using Core.Helpers;
@@ -67,15 +66,6 @@ namespace Business.Recording.Generation
                 return null;
 
             return lines.Any(x => ConditionEvaluatorHelper.IsSatisfied(RegexHelper.Extract(x, check.ResultExtractPattern), check.ConditionType, check.ConditionText, check.ConditionTextEnd));
-        }
-
-        /// <summary>A refusal for each added check whose words no screenshot of the recording showed.</summary>
-        public static List<Diagnostic> Unseen(IEnumerable<FlowStep> added, IReadOnlyList<string> lines)
-        {
-            return added
-                .Where(x => IsReadOnScreen(x, lines) == false)
-                .Select(x => Diagnostic.Error(DiagnosticCodeEnum.CHECK_TEXT_UNSEEN, 1, 1, $"<[ {x.Name} ]> looks for <[ {x.ConditionText} ]>, which no screenshot of the recording showed, so it would fail the first execution. Add a check only for words a screen: note shows, exactly as it shows them, without the … that ends a line cut short."))
-                .ToList();
         }
 
         public static List<ProposedCheckDto> ToDtos(IEnumerable<FlowStep> checks, string script, IReadOnlyList<string> lines)

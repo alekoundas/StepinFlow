@@ -7,7 +7,6 @@ using Business.Recording.Screens;
 using Business.Recording.Setup;
 using Core.Catalogs;
 using Core.Enums;
-using Core.Helpers;
 using Core.Models.Business;
 using Core.Models.Business.AreaPointResolution;
 using Core.Models.Database;
@@ -15,25 +14,24 @@ using Core.Models.Dtos;
 using Core.Ports;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing;
 using System.Threading.Channels;
 
 namespace Business.Recording.Session
 {
     /// <summary>
-    /// Owns one recording at a time.
-    /// It collects the raw inputs (presses, releases, scrolls, keys) and the screenshots taken around them,
-    /// and has RecordingActionBuilder fold them into actions: a few times a second for the live list, and once more at the stop.
-    /// It decides nothing about what the inputs mean.
+    /// Owns one recording at a time: its start, pause, resume and stop, and the inputs between them.
+    /// It collects the raw inputs (presses, releases, scrolls, keys) and the screenshot each press
+    /// took, and has RecordingActionBuilder fold them into actions: a few times a second for the
+    /// live list, and once more at the stop. It decides nothing about what the inputs mean.
     ///
-    /// While recording, the main area is captured a few times a second and the last few kept. A
-    /// press takes the newest from before it, picked at the hook, so its screenshot shows the
-    /// screen the tester decided on rather than what the press changed. Encoding happens on the
-    /// drain side, never in the hook handler, which must return at once.
+    /// What it does beside that is each a part of its own, sharing the one cache:
+    /// RecordingScreenCapture keeps the main area's last few screenshots, PressedElementLookups
+    /// asks each press's application what it landed on, RecordingGestureAsker pauses at a gesture
+    /// and asks what it is for, and RecordingProcessor works a stopped recording through.
     ///
-    /// Every press is also asked of its application, through the system's accessibility interface,
-    /// what it landed on - a button, a link, a text field, with its name - at once and off the drain,
-    /// and the stop waits a moment for the last answer.
+    /// A press takes the newest screenshot from before it, picked at the hook, so its screenshot
+    /// shows the screen the tester decided on rather than what the press changed. Encoding happens
+    /// on the drain side, never in the hook handler, which must return at once.
     ///
     /// The recording bar's hotkeys are read at the hook before anything else sees the input, so
     /// pressing one is never recorded, whatever window is in front.
@@ -47,17 +45,8 @@ namespace Business.Recording.Session
     /// on it: the review asks for an image when it draws that action.
     ///
     /// A stop, from the page, the bar or its hotkey, starts working the recording through in the
-    /// background, stage by stage, and returns: finding what each click hit is seconds per click,
-    /// and the request pipe answers one call at a time. Never while recording, where the
-    /// application being recorded would feel it. RECORDING_PROGRESS says which stage and how far,
-    /// then READY, and GetResult has it.
-    ///
-    /// A gesture pauses the recording itself and asks what it is for, unless the setting leaves it
-    /// for Review: RECORDING_PROGRESS carries the question until it is answered, and a resume or a
-    /// stop meanwhile leaves it for Review. While it asks, what a check pressed is found - the CPU is
-    /// the tester's while paused - and the stop's finding takes it as it was found. The answer is
-    /// kept by the press, for Review to start from, and the window that had the keyboard gets it
-    /// back.
+    /// background and returns. RECORDING_PROGRESS says which stage and how far, then READY, and
+    /// GetResult has it.
     /// </summary>
     public sealed class RecordingSessionService : IRecordingSessionService, IDisposable
     {
@@ -65,22 +54,8 @@ namespace Business.Recording.Session
         // is not lost to the stop that follows it.
         private static readonly TimeSpan DRAIN_DELAY = TimeSpan.FromMilliseconds(150);
 
-        // Often enough that the newest screenshot is from just before a press, and no more often:
-        // a capture is real work beside the application being recorded.
-        private static readonly TimeSpan CAPTURE_INTERVAL = TimeSpan.FromMilliseconds(250);
-
         // Often enough that the live list keeps up, and no more: a fold reads the whole recording.
         private static readonly TimeSpan FOLD_INTERVAL = TimeSpan.FromMilliseconds(250);
-
-        // What a stopped recording is worked through, in order.
-        private static readonly RecordingStageEnum[] STAGES = [RecordingStageEnum.FINDING_ELEMENTS, RecordingStageEnum.GROUPING_CLICKS, RecordingStageEnum.READING_SCREENS];
-
-        // Long enough for the last press's question to an application to come back, and no longer:
-        // a busy application costs the review what it would have said, never the review.
-        private static readonly TimeSpan PRESSED_ELEMENT_WAIT = TimeSpan.FromSeconds(3);
-
-        // Says nothing a window's title does not: what an application that draws its own pixels answers with.
-        private static readonly HashSet<string> UNSAID_ROLES = ["", "window", "pane", "title bar"];
 
         private readonly IInputRecordService _inputRecordService;
         private readonly IScreenshotService _screenshotService;
@@ -89,41 +64,31 @@ namespace Business.Recording.Session
         private readonly IWindowService _windowService;
         private readonly IAreaPointResolver _areaPointResolver;
         private readonly IClickedElementFinder _clickedElementFinder;
-        private readonly IClickedElementGrouper _clickedElementGrouper;
-        private readonly IRecordedScreenReader _recordedScreenReader;
-        private readonly IAccessibleElementService _accessibleElementService;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
 
         private readonly RecordingInputFilter _filter;
         private readonly RecordingHotkeyReader _hotkeys = new RecordingHotkeyReader();
         private readonly RecordingSessionCache _cache = new RecordingSessionCache();
+        private readonly RecordingScreenCapture _screens;
+        private readonly PressedElementLookups _pressedElements;
+        private readonly RecordingGestureAsker _gestureAsker;
+        private readonly RecordingProcessor _processor;
 
         // The bar, a hotkey and the page can all stop a recording, at the same moment.
         private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
         private readonly Lock _progressLock = new Lock();
-        private readonly Lock _lookupsLock = new Lock();
-
-        // Each press's question to its application, and which recording asked: one that answers
-        // after the next recording began is not that recording's.
-        private readonly List<Task> _lookups = new List<Task>();
-        private int _recordingNumber;
 
         // The gestures this recording holds back, from the settings when it began, and whether one
         // pauses it to ask what it is for.
         private IReadOnlyList<PressGesture> _gestures = [];
         private bool _isAskingAtGesture;
 
-        // The browser window a website's tab was found in when the recording began.
-        private WindowHandle _tabWindow = WindowHandle.None;
-
         private Channel<PendingInput>? _queue;
         private Task? _drain;
-        private Task? _capture;
-        private Task? _fold;
+        private Task? _captureLoop;
+        private Task? _foldLoop;
         private CancellationTokenSource? _loopsCts;
-        private Task? _processing;
-        private CancellationTokenSource? _processingCts;
 
         public RecordingSessionService(
             IInputRecordService inputRecordService,
@@ -146,13 +111,14 @@ namespace Business.Recording.Session
             _windowService = windowService;
             _areaPointResolver = areaPointResolver;
             _clickedElementFinder = clickedElementFinder;
-            _clickedElementGrouper = clickedElementGrouper;
-            _recordedScreenReader = recordedScreenReader;
-            _accessibleElementService = accessibleElementService;
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
 
             _filter = new RecordingInputFilter(windowService);
+            _screens = new RecordingScreenCapture(areaPointResolver, windowService, screenshotService, _cache, _filter, timeProvider);
+            _pressedElements = new PressedElementLookups(accessibleElementService, _cache, timeProvider);
+            _gestureAsker = new RecordingGestureAsker(_cache, _filter, windowService, clickedElementFinder, Pause, Resume, SendProgressAsync);
+            _processor = new RecordingProcessor(_cache, _pressedElements, clickedElementFinder, clickedElementGrouper, recordedScreenReader, SendProgressAsync);
         }
 
         public bool IsRecording { get { return _queue != null; } }
@@ -235,8 +201,9 @@ namespace Business.Recording.Session
 
             try
             {
+                // Under the gate, straight after the stop, so nothing can start or discard in between.
                 if (await EndAsync(ct))
-                    await BeginProcessingAsync();
+                    await _processor.BeginAsync();
 
                 return _cache.GetInputs();
             }
@@ -253,7 +220,7 @@ namespace Business.Recording.Session
             try
             {
                 await EndAsync(ct);
-                await StopProcessingAsync();
+                await _processor.StopAsync();
 
                 // A gesture asked about may have loaded the detector, and no stop will let it go.
                 _clickedElementFinder.Unload();
@@ -278,67 +245,26 @@ namespace Business.Recording.Session
                 ClickedElements = _cache.ClickedElements.ToList(),
                 ClickGroups = _cache.ClickGroups.ToList(),
                 ScreenChanges = _cache.ScreenChanges.ToList(),
+                ScreenPages = _cache.ScreenPages.ToList(),
                 ScreenLines = _cache.ScreenLines.ToList(),
-                PressedElements = PressedElementsOf(_cache.Actions),
-                GestureAnswers = GestureAnswersOf(_cache.Actions),
+                PressedElements = _pressedElements.ElementsOf(_cache.Actions),
+                GestureAnswers = _gestureAsker.AnswersOf(_cache.Actions),
             };
         }
 
         public RecordingGestureDto? GetGesture()
         {
-            RecordingGestureAsk? asking = _cache.Asking;
-            if (asking == null)
-                return null;
-
-            RecordedInput? press = _cache.GetInputs().ElementAtOrDefault(asking.PressIndex);
-            RecordedPress? kept = _cache.GetPress(asking.PressIndex);
-
-            RecordingGestureDto gesture = new RecordingGestureDto
-            {
-                PressIndex = asking.PressIndex,
-                Gesture = asking.Gesture,
-                LocationX = press?.PhysicalX ?? 0,
-                LocationY = press?.PhysicalY ?? 0,
-                Element = _cache.GetGestureElement(asking.PressIndex),
-                IsElementFound = _cache.HasLookedForGestureElement(asking.PressIndex),
-            };
-
-            if (kept != null)
-            {
-                gesture.Image = kept.Screenshot;
-                gesture.X = kept.MainAreaBounds.X;
-                gesture.Y = kept.MainAreaBounds.Y;
-                gesture.Width = kept.MainAreaBounds.Width;
-                gesture.Height = kept.MainAreaBounds.Height;
-                gesture.Dpi = kept.Dpi;
-            }
-
-            return gesture;
+            return _gestureAsker.GetAsked();
         }
 
         public ResultDto<bool> DecideGesture(RecordingGestureDecisionDto decision)
         {
-            RecordingGestureAsk? asking = _cache.Asking;
-            if (asking == null || asking.PressIndex != decision.PressIndex)
-                return ResultDto<bool>.Failure("The recording is no longer asking about that.");
-
-            if (decision.Answer != null)
-                _cache.AddGestureAnswer(asking.PressIndex, decision.Answer);
-
-            Resume();
-
-            // Whichever window the question's window took the keyboard from. Not every system lets
-            // one application give another the keyboard, so this is a try.
-            if (asking.InFront.IsValid)
-                _windowService.FocusWindow(asking.InFront);
-
-            return ResultDto<bool>.Success(true);
+            return _gestureAsker.Decide(decision);
         }
 
         public bool TestGestureRule(RecordingGestureRuleDto rule)
         {
-            ClickedElementDto? element = _cache.GetGestureElement(rule.PressIndex);
-            return ConditionEvaluatorHelper.IsSatisfied(element?.Text, rule.ConditionType, rule.Text ?? string.Empty, rule.TextEnd ?? string.Empty);
+            return _gestureAsker.TestRule(rule);
         }
 
         public RecordingScreenDto? GetScreen(int actionIndex)
@@ -393,9 +319,18 @@ namespace Business.Recording.Session
             return _cache.GetPress(index);
         }
 
+        public void Dispose()
+        {
+            _inputRecordService.ActionRecorded -= OnActionRecorded;
+            _queue?.Writer.TryComplete();
+            _queue = null;
+            _loopsCts?.Cancel();
+            _processor.Cancel();
+        }
+
 
         // ================================================================
-        // Private methods
+        // Private methods - start and stop
         // ================================================================
 
         private async Task<ResultDto<bool>> BeginAsync(int flowId, int electronProcessId, CancellationToken ct)
@@ -407,14 +342,13 @@ namespace Business.Recording.Session
             if (electronProcessId <= 0)
                 return ResultDto<bool>.Failure("StepinFlow could not tell which windows are its own.");
 
-            await StopProcessingAsync();
+            await _processor.StopAsync();
             _cache.Clear();
             _filter.Reset();
             _filter.ElectronProcessId = electronProcessId;
 
-            Interlocked.Increment(ref _recordingNumber);
-            lock (_lookupsLock)
-                _lookups.Clear();
+            _pressedElements.Reset();
+            _gestureAsker.Reset();
             _hotkeys.Reset();
 
             string pauseKeys = await _appSettingService.GetTextAsync(AppSettingCatalog.RecordingHotkeyPause, ct);
@@ -439,8 +373,8 @@ namespace Business.Recording.Session
                 return ResultDto<bool>.Failure(notSized);
 
             // The first screenshot is taken before the first press can happen.
-            _tabWindow = WindowHandle.None;
-            string? notOnScreen = CaptureScreenshot(mainArea);
+            _screens.Reset();
+            string? notOnScreen = _screens.Capture(mainArea);
             if (notOnScreen != null)
                 return ResultDto<bool>.Failure(notOnScreen);
 
@@ -460,8 +394,8 @@ namespace Business.Recording.Session
 
             CancellationTokenSource loopsCts = new CancellationTokenSource();
             _loopsCts = loopsCts;
-            _fold = Task.Run(() => FoldLoopAsync(loopsCts.Token), CancellationToken.None);
-            _capture = Task.Run(() => CaptureLoopAsync(mainArea, loopsCts.Token), CancellationToken.None);
+            _foldLoop = Task.Run(() => FoldLoopAsync(loopsCts.Token), CancellationToken.None);
+            _captureLoop = Task.Run(() => _screens.LoopAsync(mainArea, loopsCts.Token), CancellationToken.None);
 
             await SendProgressAsync();
             return ResultDto<bool>.Success(true);
@@ -559,6 +493,31 @@ namespace Business.Recording.Session
             return true;
         }
 
+        private async Task StopLoopsAsync()
+        {
+            CancellationTokenSource? loopsCts = _loopsCts;
+            if (loopsCts == null)
+                return;
+
+            await loopsCts.CancelAsync();
+
+            if (_captureLoop != null)
+                await _captureLoop;
+
+            if (_foldLoop != null)
+                await _foldLoop;
+
+            loopsCts.Dispose();
+            _loopsCts = null;
+            _captureLoop = null;
+            _foldLoop = null;
+        }
+
+
+        // ================================================================
+        // Private methods - from the hook to the cache
+        // ================================================================
+
         // On the hook's event thread, which every input after this one waits on. Nothing here may
         // block, a stop included.
         private void OnActionRecorded(RecordedInput input)
@@ -648,102 +607,10 @@ namespace Business.Recording.Session
                 KeepPress(index, pending.Input, pending.Screenshot);
 
             if (pending.Input.Type == RecordedInputTypeEnum.BUTTON_DOWN)
-                LookUpPressedElement(index, pending.Input);
+                _pressedElements.Ask(index, pending.Input);
 
             if (pending.Input.Type == RecordedInputTypeEnum.BUTTON_DOWN && pending.Input.Gesture != null && _isAskingAtGesture)
-                Ask(index, pending.Input, pending.Input.Gesture.Value);
-        }
-
-        // Paused, so nothing the tester does in the question's window, or meanwhile, is recorded.
-        // The press's release is still held back: the hook holds back the button it held, whatever
-        // the pause does to the list.
-        private void Ask(int pressIndex, RecordedInput press, RecordingGestureEnum gesture)
-        {
-            if (_filter.IsPaused)
-                return;
-
-            TopLevelWindow inFront = _windowService.GetWindowInFront();
-            _cache.Asking = new RecordingGestureAsk { PressIndex = pressIndex, Gesture = gesture, InFront = inFront.Handle };
-
-            // A step that is not a click is looked at for nothing.
-            if (gesture == RecordingGestureEnum.CHECK)
-                FindGestureElement(pressIndex, press);
-            else
-                _cache.AddGestureElement(pressIndex, null);
-
-            Pause();
-        }
-
-        // Off the drain, which every input after this one waits on.
-        private void FindGestureElement(int pressIndex, RecordedInput press)
-        {
-            int recordingNumber = Volatile.Read(ref _recordingNumber);
-
-            _ = Task.Run(async () =>
-            {
-                ClickedElementDto? found = null;
-                try
-                {
-                    RecordedPress? kept = _cache.GetPress(pressIndex);
-                    if (kept != null)
-                        found = await _clickedElementFinder.FindAtAsync(kept, press.PhysicalX, press.PhysicalY, CancellationToken.None);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"[Recording] Could not find what a check pressed while asking about it: {ex.Message}");
-                }
-
-                if (recordingNumber != Volatile.Read(ref _recordingNumber))
-                    return;
-
-                _cache.AddGestureElement(pressIndex, found);
-                await SendProgressAsync();
-            });
-        }
-
-        // Each answer by the action its press became.
-        private List<ReviewedActionDto> GestureAnswersOf(IReadOnlyList<RecordedActionDto> actions)
-        {
-            List<ReviewedActionDto> answers = new List<ReviewedActionDto>();
-
-            foreach (RecordedActionDto action in actions.Where(x => x.PressIndex != null))
-            {
-                ReviewedActionDto? answer = _cache.GetGestureAnswer(action.PressIndex!.Value);
-                if (answer == null)
-                    continue;
-
-                answer.ActionIndex = action.Index;
-                answers.Add(answer);
-            }
-
-            return answers;
-        }
-
-        // Asked at once, before the screen changes, and off the drain, which every input after this
-        // one waits on: an application asked about its elements can take its time.
-        private void LookUpPressedElement(int index, RecordedInput press)
-        {
-            Point point = new Point(press.PhysicalX, press.PhysicalY);
-            int recordingNumber = Volatile.Read(ref _recordingNumber);
-
-            Task lookup = Task.Run(() =>
-            {
-                try
-                {
-                    AccessibleElement? element = _accessibleElementService.ElementAt(point);
-                    bool isSaid = element != null && !UNSAID_ROLES.Contains(element.Role);
-
-                    if (isSaid && recordingNumber == Volatile.Read(ref _recordingNumber))
-                        _cache.AddPressedElement(index, element!);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"[Recording] Could not ask what a press landed on: {ex.Message}");
-                }
-            });
-
-            lock (_lookupsLock)
-                _lookups.Add(lookup);
+                _gestureAsker.Ask(index, pending.Input, pending.Input.Gesture.Value);
         }
 
         // The whole main area, which Review shows and the draft cuts its templates from. A failed
@@ -769,70 +636,10 @@ namespace Business.Recording.Session
             }
         }
 
-        // Null when it worked, else why not.
-        private string? CaptureScreenshot(FlowArea mainArea)
-        {
-            AreaResolution area = ResolveMainArea(mainArea);
-            if (!area.IsResolved)
-                return area.Error;
 
-            int processId = _windowService.GetProcessId(area.Window);
-            RecordingTarget target = new RecordingTarget(area.Bounds, area.Dpi, area.Window, processId);
-            RawImage image = _screenshotService.CaptureRaw(area.Bounds);
-            DateTime capturedOn = _timeProvider.GetLocalNow().DateTime;
-
-            _cache.AddRecentScreenshot(new RecordingScreenshot(capturedOn, target, image));
-            _filter.Target = target;
-            return null;
-        }
-
-        // A website's tab is found by its address once, as the recording begins, and its window
-        // followed after: a page that goes on to a sign-in on another site is still the one being
-        // recorded. Found again by the address only once that window is closed or minimised.
-        private AreaResolution ResolveMainArea(FlowArea mainArea)
-        {
-            if (mainArea.Type != FlowAreaTypeEnum.BROWSER_TAB)
-                return _areaPointResolver.ResolveArea(mainArea);
-
-            if (_tabWindow.IsValid)
-            {
-                AreaResolution followed = _areaPointResolver.ResolveTabPage(mainArea, _tabWindow);
-                if (followed.IsResolved)
-                    return followed;
-            }
-
-            AreaResolution found = _areaPointResolver.ResolveArea(mainArea);
-            if (found.IsResolved)
-                _tabWindow = found.Window;
-
-            return found;
-        }
-
-        // A main area minimised or closed for a moment keeps the screenshots from before it,
-        // rather than ending the recording.
-        private async Task CaptureLoopAsync(FlowArea mainArea, CancellationToken ct)
-        {
-            using PeriodicTimer timer = new PeriodicTimer(CAPTURE_INTERVAL, _timeProvider);
-
-            try
-            {
-                while (await timer.WaitForNextTickAsync(ct))
-                {
-                    try
-                    {
-                        CaptureScreenshot(mainArea);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"[Recording] Missed a screenshot: {ex.Message}");
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Stopped.
-            }
-        }
+        // ================================================================
+        // Private methods - the live list
+        // ================================================================
 
         // Folds only when something new arrived, so a tester reading the screen costs nothing.
         private async Task FoldLoopAsync(CancellationToken ct)
@@ -885,212 +692,6 @@ namespace Business.Recording.Session
                 RecordingProgressDto progress = RecordingProgressBuilder.Build(_cache, now);
                 return _broadcastService.SendAsync(BroadcastTypeEnum.RECORDING_PROGRESS, progress).AsTask();
             }
-        }
-
-        // Under the gate, straight after the stop, so nothing can start or discard in between.
-        private async Task BeginProcessingAsync()
-        {
-            IReadOnlyList<RecordedActionDto> actions = _cache.Actions;
-
-            _cache.State = RecordingStateEnum.PROCESSING;
-            _cache.Stage = StageProgress(STAGES[0], 0, null);
-            await SendProgressAsync();
-
-            CancellationTokenSource processingCts = new CancellationTokenSource();
-            _processingCts = processingCts;
-            _processing = Task.Run(() => ProcessAsync(actions, processingCts.Token), CancellationToken.None);
-        }
-
-        // A stage that fails costs the review what it would have added, never the recording.
-        private async Task ProcessAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
-        {
-            try
-            {
-                await AwaitPressedElementsAsync(ct);
-                await FindElementsAsync(actions, ct);
-                GroupClicks(actions, ct);
-                await ReadScreensAsync(actions, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                // Discarded, or a new recording started.
-                return;
-            }
-
-            _cache.Stage = null;
-            _cache.State = RecordingStateEnum.READY;
-            await SendProgressAsync();
-        }
-
-        // The last press's question may still be on its way.
-        private async Task AwaitPressedElementsAsync(CancellationToken ct)
-        {
-            Task[] lookups;
-            lock (_lookupsLock)
-                lookups = _lookups.ToArray();
-
-            try
-            {
-                await Task.WhenAll(lookups).WaitAsync(PRESSED_ELEMENT_WAIT, _timeProvider, ct);
-            }
-            catch (TimeoutException)
-            {
-                Console.Error.WriteLine("[Recording] An application took too long to say what a press landed on.");
-            }
-        }
-
-        // By the action each press became, its name and what it sits in as they read: document "Swag Labs".
-        private List<PressedElementDto> PressedElementsOf(IReadOnlyList<RecordedActionDto> actions)
-        {
-            List<PressedElementDto> elements = new List<PressedElementDto>();
-
-            foreach (RecordedActionDto action in actions.Where(x => x.ScreenshotIndex != null))
-            {
-                AccessibleElement? element = _cache.GetPressedElement(action.ScreenshotIndex!.Value);
-                if (element == null)
-                    continue;
-
-                elements.Add(new PressedElementDto
-                {
-                    ActionIndex = action.Index,
-                    Role = element.Role,
-                    Name = element.Name,
-                    IsEnabled = element.IsEnabled,
-                    IsChecked = element.IsChecked,
-                    IsPassword = element.IsPassword,
-                    Inside = element.Inside.Select(x => $"{x.Role} \"{x.Name}\"").ToList(),
-                });
-            }
-
-            return elements;
-        }
-
-        private async Task FindElementsAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
-        {
-            try
-            {
-                _cache.ClickedElements = await _clickedElementFinder.FindAsync(actions, _cache.GetPress, _cache.GetGestureElements(), (done, total) =>
-                {
-                    ReportStage(RecordingStageEnum.FINDING_ELEMENTS, done, total);
-                }, ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Fail("Could not find what the clicks hit.", ex);
-            }
-        }
-
-        // Compares the clicked elements, so it comes after finding them.
-        private void GroupClicks(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
-        {
-            ReportStage(RecordingStageEnum.GROUPING_CLICKS, 0, null);
-
-            try
-            {
-                _cache.ClickGroups = _clickedElementGrouper.Group(_cache.ClickedElements, actions, _cache.GetPress, (done, total) =>
-                {
-                    ReportStage(RecordingStageEnum.GROUPING_CLICKS, done, total);
-                }, ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Fail("Could not group the clicks that hit the same picture.", ex);
-            }
-        }
-
-        private async Task ReadScreensAsync(IReadOnlyList<RecordedActionDto> actions, CancellationToken ct)
-        {
-            ReportStage(RecordingStageEnum.READING_SCREENS, 0, null);
-
-            try
-            {
-                RecordedScreens screens = await _recordedScreenReader.ReadAsync(actions, _cache.GetPress, _cache.LastScreenshot, (done, total) =>
-                {
-                    ReportStage(RecordingStageEnum.READING_SCREENS, done, total);
-                }, ct);
-
-                _cache.ScreenChanges = screens.Changes;
-                _cache.ScreenLines = screens.Lines;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Fail("Could not read the text on the screens.", ex);
-            }
-
-            // Kept whole rather than encoded as a press is, so it goes once it is read.
-            _cache.LastScreenshot = null;
-        }
-
-        private void ReportStage(RecordingStageEnum stage, int done, int? total)
-        {
-            _cache.Stage = StageProgress(stage, done, total);
-            _ = SendProgressAsync();
-        }
-
-        // The first failure is the one said: the ones after it are usually its consequence.
-        private void Fail(string message, Exception ex)
-        {
-            Console.Error.WriteLine($"[Recording] {message} {ex.Message}");
-            _cache.ErrorMessage ??= message;
-        }
-
-        private static RecordingStageProgress StageProgress(RecordingStageEnum stage, int done, int? total)
-        {
-            int number = Array.IndexOf(STAGES, stage) + 1;
-
-            return new RecordingStageProgress
-            {
-                Stage = stage,
-                Number = number,
-                Count = STAGES.Length,
-                Done = done,
-                Total = total,
-            };
-        }
-
-        private async Task StopProcessingAsync()
-        {
-            CancellationTokenSource? processingCts = _processingCts;
-            if (processingCts == null)
-                return;
-
-            await processingCts.CancelAsync();
-
-            if (_processing != null)
-                await _processing;
-
-            processingCts.Dispose();
-            _processingCts = null;
-            _processing = null;
-        }
-
-        private async Task StopLoopsAsync()
-        {
-            CancellationTokenSource? loopsCts = _loopsCts;
-            if (loopsCts == null)
-                return;
-
-            await loopsCts.CancelAsync();
-
-            if (_capture != null)
-                await _capture;
-
-            if (_fold != null)
-                await _fold;
-
-            loopsCts.Dispose();
-            _loopsCts = null;
-            _capture = null;
-            _fold = null;
-        }
-
-        public void Dispose()
-        {
-            _inputRecordService.ActionRecorded -= OnActionRecorded;
-            _queue?.Writer.TryComplete();
-            _queue = null;
-            _loopsCts?.Cancel();
-            _processingCts?.Cancel();
         }
 
 
