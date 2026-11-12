@@ -14,12 +14,9 @@ the history.
       the input without touching the value: it says "Saved" and still types. Tick Secret on an input
       with a value: the value moves into the dots. Switch branch and back, or ask the model for a
       change: the secret is still set. On a Type step, "Insert an input" adds `{{name}}` at the end
-      and "New input" adds one and puts it in.
-- [ ] **Extracting a sub-flow leaves the inputs behind.** Found 2026-11-12.
-      `FlowDataService.CopyAreasAndPointsAsync` copies the areas and points the moved steps use, not
-      the inputs, so a moved step typing `{{username}}` is `VARIABLE_UNKNOWN` in the sub-flow and
-      Start refuses the flow. Copy them the same way, and a secret's saved value with it, since it
-      is the same value on the same machine.
+      and "New input" adds one and puts it in. Extract that Type step to a sub-flow: the sub-flow's
+      Inputs tab has the input, a secret still "Saved", and the flow still starts; extracting a step
+      that uses `{{Read the total}}` without the Read Text it names is refused, saying which.
 
 - [ ] **Not tried by hand: Test now's Details.** Verified by the type check, the lint and the
       build, 2026-11-01. Test a step with several templates, one found and one not: the used row,

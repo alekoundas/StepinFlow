@@ -356,12 +356,13 @@ namespace Business.Flows.DataService.DataHandlers
         ///
         /// The rows are moved, not copied. Ids survive, so a reference between two extracted steps
         /// keeps resolving with no remapping. Only RootId, and the parentage of the step at the top,
-        /// change. That is also why a reference crossing the boundary is the one case that has to be
-        /// refused rather than fixed up: everything else takes care of itself.
+        /// change. That is also why a reference crossing the boundary - a step picked, or a step's
+        /// value written {{name}} - is the one case that has to be refused rather than fixed up:
+        /// everything else takes care of itself.
         ///
-        /// Search areas, points and templates are the exception. Those belong to a flow, so the ones
-        /// the moved steps use are copied into the new sub-flow and the steps repointed, which is
-        /// what makes it self contained enough to call from anywhere.
+        /// Search areas, points, templates and inputs are the exception. Those belong to a flow, so
+        /// the ones the moved steps use are copied into the new sub-flow and the steps repointed,
+        /// which is what makes it self contained enough to call from anywhere.
         ///
         /// Saves more than once, so in a transaction. Every refusal comes before the first save.
         /// </summary>
@@ -385,7 +386,7 @@ namespace Business.Flows.DataService.DataHandlers
             moving.Add(head.Id);
 
             // Validate that a step doesnt reference a step outside of the subflow.
-            string? crossing = FindCrossingReference(steps, moving);
+            string? crossing = FindCrossingReference(steps, moving) ?? FindCrossingVariable(steps, moving);
             if (crossing != null)
                 return ResultDto<ExtractSubFlowResultDto>.Failure(crossing);
 
@@ -412,6 +413,7 @@ namespace Business.Flows.DataService.DataHandlers
 
             await CopyAreasAndPointsAsync(dbContext, subFlow, moved, ct);
             await CopyTemplatesAsync(dbContext, subFlow, moved, ct);
+            await CopyInputsAsync(dbContext, head.RootId, subFlow, moved, ct);
 
             foreach (FlowStep step in moved)
                 step.RootId = subFlow.Id;
@@ -551,6 +553,43 @@ namespace Business.Flows.DataService.DataHandlers
             return null;
         }
 
+        // The same for a step's value written {{name}}: a sub-flow's steps are not its caller's, so
+        // neither side could fill it in. Inputs are copied instead, so only steps are looked for.
+        private static string? FindCrossingVariable(IReadOnlyList<FlowStep> steps, HashSet<int> moving)
+        {
+            ILookup<string, FlowStep> stepsByName = steps
+                .Where(x => !TreeStepHelper.IsBranchChild(x.FlowStepType) && x.Name.Trim().Length > 0)
+                .ToLookup(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase);
+
+            foreach (FlowStep step in steps)
+            {
+                foreach (string name in TypedNames([step]))
+                {
+                    FlowStep? source = stepsByName[name].FirstOrDefault();
+                    if (source == null || moving.Contains(step.Id) == moving.Contains(source.Id))
+                        continue;
+
+                    string where = "is being extracted";
+                    if (moving.Contains(step.Id))
+                        where = "is staying behind";
+
+                    string written = "{{" + name + "}}";
+                    return $"\"{step.Name}\" uses {written}, the value of \"{source.Name}\", which {where}. Move it in, or take {written} out of that step, then extract again.";
+                }
+            }
+
+            return null;
+        }
+
+        // Every {{name}} the steps write.
+        private static HashSet<string> TypedNames(IEnumerable<FlowStep> steps)
+        {
+            return steps
+                .SelectMany(VariableTranslator.VariableBearingText)
+                .SelectMany(VariableTranslator.Names)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
         // Areas and points belong to a flow, so the moved steps would keep pointing at ones the
         // sub-flow cannot list or edit. Copied rather than shared: a sub-flow meant to be reused
         // should not change when the flow it came from is edited.
@@ -643,6 +682,31 @@ namespace Business.Flows.DataService.DataHandlers
 
             foreach (FlowStepTemplate link in links)
                 link.FlowTemplate = copies[link.FlowTemplateId];
+        }
+
+        // Inputs belong to a flow too: the ones the moved steps type are copied whole, a secret's
+        // saved value with them, since it is the same value on the same machine. The flow keeps its
+        // own, as it keeps its areas, and a sub-flow called from it is still given the flow's value.
+        private static async Task CopyInputsAsync(AppDbContext dbContext, int sourceRootId, Flow subFlow, List<FlowStep> moved, CancellationToken ct)
+        {
+            HashSet<string> typed = TypedNames(moved);
+
+            List<FlowInput> inputs = await dbContext.FlowInputs
+                .AsNoTracking()
+                .Where(x => x.FlowId == sourceRootId)
+                .OrderBy(x => x.OrderNumber)
+                .ToListAsync(ct);
+
+            List<FlowInput> copies = inputs.Where(x => typed.Contains(x.Name.Trim())).ToList();
+            for (int i = 0; i < copies.Count; i++)
+            {
+                copies[i].Id = 0;
+                copies[i].FlowId = subFlow.Id;
+                copies[i].UpdatedOn = null;
+                copies[i].OrderNumber = i;
+            }
+
+            dbContext.FlowInputs.AddRange(copies);
         }
 
         // The areas asked for and every area above them, however deep, so each copy has its

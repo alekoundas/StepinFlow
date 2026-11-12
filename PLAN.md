@@ -310,6 +310,9 @@ Done 2026-11-12, for the first release, which has no CSV:
 - [x] **The app says which inputs are unset before the execution starts**: `INPUT_VALUE_MISSING`,
       an error on the input, for a secret with no value saved or an empty default a step types.
 - [x] A Type step's form puts an input into its text, or adds a new one.
+- [x] **Extracting a sub-flow copies the inputs its steps type**, a secret's saved value with them;
+      it left them behind, so the sub-flow had `VARIABLE_UNKNOWN` and Start refused the flow. It
+      also refuses a `{{name}}` of a step that would end up on the other side of the split.
 
 Left:
 

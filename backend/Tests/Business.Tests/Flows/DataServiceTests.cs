@@ -1,4 +1,5 @@
 using Business.Flows.DataService;
+using Business.Flows.FlowValidationService;
 using Business.FlowScript;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Scanner;
@@ -1159,6 +1160,113 @@ namespace Business.Tests.Flows
             subFlowPictures.Select(x => x.TemplateImage).ShouldBe([[1, 2, 3], [8]], ignoreOrder: true);
             Templates(extracted.Data.SubFlowId).ShouldAllBe(x => subFlowPictures.Any(y => y.Id == x.FlowTemplateId));
             Templates(flowId).Single(x => x.FlowStepId == keptId).FlowTemplateId.ShouldBe(sharedId);
+        }
+
+        // Steps in script order, each under the one before it when told; the first is extracted
+        // unless another is named.
+        private async Task<Dictionary<string, int>> StepsAsync(int flowId, params (string Name, FlowStepTypeEnum Type, string Text, string? Under)[] steps)
+        {
+            using AppDbContext db = _database.CreateDbContext();
+            Dictionary<string, FlowStep> byName = new Dictionary<string, FlowStep>();
+
+            foreach ((string name, FlowStepTypeEnum type, string text, string? under) in steps)
+            {
+                FlowStep step = new FlowStep { RootId = flowId, FlowStepType = type, Name = name, KeyboardInputText = text, OrderNumber = byName.Count };
+                if (under == null)
+                    step.FlowId = flowId;
+                else
+                    step.ParentFlowStep = byName[under];
+
+                db.FlowSteps.Add(step);
+                byName[name] = step;
+            }
+
+            db.SaveChanges();
+            return byName.ToDictionary(x => x.Key, x => x.Value.Id);
+        }
+
+        private Task<ResultDto<ExtractSubFlowResultDto>> ExtractAsync(int flowId, int stepId)
+        {
+            return _dataService.Flow.ExtractSubFlowAsync(
+                new ExtractSubFlowDto { FlowStepId = stepId, Name = "Sign in to Swag Labs", SourceRootId = flowId, SourceFlowId = flowId, SourceOrderNumber = 0 }, Ct);
+        }
+
+        // Copied as its areas are, and a secret's saved value with it, since it is the same value on
+        // the same machine. Only what the moved steps type goes, and the flow keeps all of its own.
+        [Fact]
+        public async Task An_extracted_step_takes_copies_of_the_inputs_it_types()
+        {
+            int flowId = await NewFlowAsync();
+            using (AppDbContext db = _database.CreateDbContext())
+            {
+                db.FlowInputs.AddRange(
+                    new FlowInput { FlowId = flowId, Name = "username", DefaultValue = "standard_user", OrderNumber = 0 },
+                    new FlowInput { FlowId = flowId, Name = "coupon", DefaultValue = "SAVE10", OrderNumber = 1 },
+                    new FlowInput { FlowId = flowId, Name = "password", IsSecret = true, SecretValue = "secret_sauce", OrderNumber = 2 });
+                db.SaveChanges();
+            }
+
+            Dictionary<string, int> ids = await StepsAsync(flowId, ("Sign in", FlowStepTypeEnum.KEYBOARD_INPUT, "{{ Username }}{{password}}", null));
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await ExtractAsync(flowId, ids["Sign in"]);
+            extracted.IsSuccess.ShouldBeTrue(extracted.ErrorMessage);
+
+            using AppDbContext after = _database.CreateDbContext();
+            List<FlowInput> copies = after.FlowInputs.Where(x => x.FlowId == extracted.Data!.SubFlowId).OrderBy(x => x.OrderNumber).ToList();
+            copies.Select(x => x.Name).ShouldBe(["username", "password"]);
+            copies.Select(x => x.OrderNumber).ShouldBe([0, 1]);
+            copies[0].DefaultValue.ShouldBe("standard_user");
+            copies[1].IsSecret.ShouldBeTrue();
+            copies[1].SecretValue.ShouldBe("secret_sauce");
+            after.FlowInputs.Count(x => x.FlowId == flowId).ShouldBe(3);
+
+            FlowValidationResultDto validation = await new FlowValidationService(new FakeOcrService()).ValidateAsync(after, extracted.Data!.SubFlowId, Ct);
+            validation.Issues.ShouldBeEmpty();
+        }
+
+        // A sub-flow keeps no value for the flow that calls it, and the flow's steps are not the
+        // sub-flow's, so either way round nothing could fill it in.
+        [Fact]
+        public async Task An_extraction_is_refused_when_a_moved_step_uses_the_value_of_one_left_behind()
+        {
+            int flowId = await NewFlowAsync();
+            Dictionary<string, int> ids = await StepsAsync(flowId,
+                ("Read the total", FlowStepTypeEnum.SEARCH_TEXT, string.Empty, null),
+                ("Type the total", FlowStepTypeEnum.KEYBOARD_INPUT, "{{Read the total}}", null));
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await ExtractAsync(flowId, ids["Type the total"]);
+
+            extracted.IsSuccess.ShouldBeFalse();
+            extracted.ErrorMessage.ShouldBe("\"Type the total\" uses {{Read the total}}, the value of \"Read the total\", which is staying behind. Move it in, or take {{Read the total}} out of that step, then extract again.");
+            Steps(flowId).Count.ShouldBe(2);
+        }
+
+        [Fact]
+        public async Task An_extraction_is_refused_when_a_step_left_behind_uses_the_value_of_a_moved_one()
+        {
+            int flowId = await NewFlowAsync();
+            Dictionary<string, int> ids = await StepsAsync(flowId,
+                ("Read the total", FlowStepTypeEnum.SEARCH_TEXT, string.Empty, null),
+                ("Type the total", FlowStepTypeEnum.KEYBOARD_INPUT, "{{Read the total}}", null));
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await ExtractAsync(flowId, ids["Read the total"]);
+
+            extracted.IsSuccess.ShouldBeFalse();
+            extracted.ErrorMessage!.ShouldContain("which is being extracted");
+        }
+
+        [Fact]
+        public async Task A_step_and_the_one_under_it_that_uses_its_value_are_extracted_together()
+        {
+            int flowId = await NewFlowAsync();
+            Dictionary<string, int> ids = await StepsAsync(flowId,
+                ("Read the total", FlowStepTypeEnum.SEARCH_TEXT, string.Empty, null),
+                ("Type the total", FlowStepTypeEnum.KEYBOARD_INPUT, "{{Read the total}}", "Read the total"));
+
+            ResultDto<ExtractSubFlowResultDto> extracted = await ExtractAsync(flowId, ids["Read the total"]);
+
+            extracted.IsSuccess.ShouldBeTrue(extracted.ErrorMessage);
+            extracted.Data!.MovedCount.ShouldBe(2);
         }
     }
 }

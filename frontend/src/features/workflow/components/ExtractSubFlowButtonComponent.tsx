@@ -118,7 +118,7 @@ function ExtractDialog({
       />
 
       <LabelComponent
-        text="The search areas and points it uses are copied, so the sub-flow works from any flow. Later edits to the originals will not reach the copies."
+        text="The search areas, points and inputs it uses are copied, so the sub-flow works from any flow. Later edits to the originals will not reach the copies, though a flow that calls it gives its own value for an input of the same name."
         size="xs"
         color="secondary"
       />

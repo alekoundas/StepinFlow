@@ -1925,7 +1925,10 @@ before the steps' results. An empty value is none, and the step says which name 
 validator catches, at save rather than at execution, a variable that names nothing, a step that
 keeps no value, a step this one does not sit under, and an input a step types with no value
 (`INPUT_VALUE_MISSING`, on the input, so the Issues tab opens its row). Renaming an input does not
-rewrite the steps; the validator says which still use the old name.
+rewrite the steps; the validator says which still use the old name. Extracting a sub-flow copies the
+inputs its steps type, a secret's saved value with them, as it copies their areas and points, and
+refuses a `{{name}}` of a step that would end up on the other side of the split, as it refuses a
+picked one: a sub-flow keeps no value for its caller.
 
 ### Coordinates
 
@@ -2997,14 +3000,14 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1577 tests, all passing, in eight projects under `backend/Tests/` - one
+1581 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1192 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `Business.Tests` | 1196 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
 | `DataAccess.Tests` | 49 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
