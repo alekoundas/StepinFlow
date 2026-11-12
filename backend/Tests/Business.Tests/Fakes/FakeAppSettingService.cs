@@ -12,6 +12,9 @@ namespace Business.Tests.Fakes
 
         public Task<int> GetAsync(IntAppSettingDefinition definition, CancellationToken ct = default)
         {
+            if (Stored.TryGetValue(definition.Key, out string? value))
+                return Task.FromResult(definition.Parse(value));
+
             return Task.FromResult(definition.DefaultValue);
         }
 

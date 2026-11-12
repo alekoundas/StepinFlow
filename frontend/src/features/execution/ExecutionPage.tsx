@@ -177,6 +177,7 @@ export default function ExecutionPage() {
             parentStep={parentStep}
             fatalSequence={overview.fatalSequence}
             historyLevel={isPastExecution ? openedExecution?.historyLevel : liveHistoryLevel}
+            executionStatus={isPastExecution ? openedExecution?.status : undefined}
             isLive={isLive}
             onSelect={setSelectedSequence}
           />

@@ -16,8 +16,8 @@ namespace Business.Executions
     /// 1) the execution steps a step below can still read - dropped as the walk leaves a branch.
     /// 2) the hits a FIND_ALL search came back with - dropped with the step that produced them.
     ///
-    /// Screenshots are not held here. Each belongs to the step that took it and goes straight to
-    /// that step, so there is nothing to roll out of a ring and nothing to hand over on failure.
+    /// Screenshots are not held here. Each belongs to the step that took it and goes with that step
+    /// to the history, which keeps the last few.
     ///
     /// Nothing here is written anywhere. A run with history off keeps all of it and saves none of
     /// it, which is why turning history off can never change what a flow does.

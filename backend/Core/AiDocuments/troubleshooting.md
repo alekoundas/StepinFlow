@@ -94,9 +94,11 @@ size.
 Open the execution. The step that ended it is red and says so. Failures that a Failure branch caught are
 amber and marked **handled** — those are the flow working, not the problem.
 
-If screenshots were kept, the failed step has the screenshots leading up to it. Most of them belong to
-earlier steps, which is deliberate: the screenshot at the moment of failure usually shows a screen the
-thing was never on.
+If screenshots were kept, the last ones lead up to the step that ended it. Most of them belong to
+earlier steps, which is the point: the screenshot at the moment of failure usually shows a screen the
+thing was never on. Only the last few are kept, so in a loop that searches several times a second
+they cover its last seconds; raise **Screenshots kept per execution** in Settings, Execution to see
+further back.
 
 If AI is on, the **Explain** tab reads the execution and says what it thinks went wrong.
 

@@ -20,5 +20,7 @@ namespace Business.Executions
         void StepInto();
         void StepOver();
         void SetBreakpoints(IEnumerable<int> flowStepIds);
+
+        bool IsExecuting(int flowId);
     }
 }

@@ -24,10 +24,14 @@ namespace Business.Tests.Executions
         private readonly TestDatabase _database = new TestDatabase();
         private readonly FakeIpcBroadcastService _broadcast = new FakeIpcBroadcastService();
         private readonly ScriptedWorkers _workers = new ScriptedWorkers();
+        private readonly string _historyFolder = Path.Combine(Path.GetTempPath(), "stepinflow-history-" + Guid.NewGuid().ToString("N")[..8]);
 
         public void Dispose()
         {
             _database.Dispose();
+
+            if (Directory.Exists(_historyFolder))
+                Directory.Delete(_historyFolder, recursive: true);
         }
 
         private ExecutionEngine Engine()
@@ -35,7 +39,7 @@ namespace Business.Tests.Executions
             FakeAppSettingService settings = new FakeAppSettingService();
             ExecutionCacheService cache = new ExecutionCacheService(settings, new FakeScreenshotService(), TimeProvider.System);
             FlowScriptExporter exporter = new FlowScriptExporter(_database, new Printer());
-            ExecutionHistoryService history = new ExecutionHistoryService(_database, cache, settings, new FakeGitRepositoryService(), exporter, TimeProvider.System, NullLogger<ExecutionHistoryService>.Instance);
+            ExecutionHistoryService history = new ExecutionHistoryService(_database, settings, new FakeGitRepositoryService(), exporter, TimeProvider.System, NullLogger<ExecutionHistoryService>.Instance, _historyFolder);
 
             return new ExecutionEngine(_database, _workers, cache, history, _broadcast, new FakeInputSimulatorService(), TimeProvider.System, NullLogger<ExecutionEngine>.Instance);
         }

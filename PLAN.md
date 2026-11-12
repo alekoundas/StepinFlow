@@ -362,8 +362,9 @@ it looked at, and the execution it is compared with has to still point at the st
       screenshot needs where the area was. Two numbers, or the point stored relative to the area.
 - [ ] **A validation execution keeps every failed or close-miss search's screenshot**, and the one
       before it, which `ExecutionScreenshotReader` already sends a model - outside "Screenshots kept
-      per execution" and whatever the history level. Passing steps follow the setting. Today the 20
-      fill in the first pass of a long flow, and a failure at step 60 has none. Whether every
+      per execution" and whatever the history level. Passing steps follow the setting. Since
+      2026-11-12 an execution keeps its last 50, so the step that ended it is among them, but a
+      failure a Failure branch handled earlier on has made way for newer ones. Whether every
       execution should keep failures first: to decide.
 - [ ] **History that survives an import.** A fix is an import, and an import swaps the flow's step
       rows, so the last passing execution's steps point at rows that are gone. Comparing with it and

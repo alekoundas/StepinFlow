@@ -1,6 +1,10 @@
-﻿using Core.Enums;
+﻿using System.Data.Common;
+using System.Globalization;
+
+using Core.Enums;
 using Core.Helpers;
 using DataAccess.Interceptors;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +13,8 @@ namespace DataAccess
 {
     public static class AppDbContextInitialize
     {
+        private const long AUTO_VACUUM_INCREMENTAL = 2;
+
         public static IServiceCollection AddCustomDbContextFactory(this IServiceCollection services)
         {
 
@@ -48,6 +54,72 @@ namespace DataAccess
         }
 
         /// <summary>
+        /// Lets a delete hand its space back to the disk, through ReclaimFreeSpaceAsync, rather than
+        /// leave the file at the largest it ever was. Switching it on rewrites the file once - a few
+        /// seconds a gigabyte - and the file keeps the mode, so later calls change nothing. False when
+        /// the switch failed, out of disk space say, which costs the space and nothing else.
+        /// </summary>
+        public static bool UseIncrementalVacuum(this DatabaseFacade database)
+        {
+            if (ReadPragma(database, "auto_vacuum") == AUTO_VACUUM_INCREMENTAL)
+                return true;
+
+            // One connection throughout: the mode asked for belongs to the connection that asked,
+            // until a VACUUM on that same connection writes it into the file.
+            database.OpenConnection();
+
+            try
+            {
+                database.ExecuteSqlRaw("PRAGMA auto_vacuum = INCREMENTAL;");
+                database.ExecuteSqlRaw("VACUUM;");
+                database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE);"); // The rewrite went through the log, which is now the size of the file.
+            }
+            catch (SqliteException)
+            {
+                return false;
+            }
+            finally
+            {
+                database.CloseConnection();
+            }
+
+            return ReadPragma(database, "auto_vacuum") == AUTO_VACUUM_INCREMENTAL;
+        }
+
+        /// <summary>
+        /// Hands the pages deletes freed back to the disk, then empties the log beside the file. Only
+        /// what sits past a hole is moved, so it costs what was deleted, not what is kept. Never
+        /// inside a transaction.
+        /// </summary>
+        public static async Task ReclaimFreeSpaceAsync(this AppDbContext dbContext, CancellationToken ct = default)
+        {
+            DbConnection connection = dbContext.Database.GetDbConnection();
+            await dbContext.Database.OpenConnectionAsync(ct);
+
+            try
+            {
+                // It frees a page a row, and only while it is read.
+                await using (DbCommand vacuum = connection.CreateCommand())
+                {
+                    vacuum.CommandText = "PRAGMA incremental_vacuum;";
+
+                    await using DbDataReader reader = await vacuum.ExecuteReaderAsync(ct);
+                    while (await reader.ReadAsync(ct))
+                    {
+                    }
+                }
+
+                await using DbCommand checkpoint = connection.CreateCommand();
+                checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                await checkpoint.ExecuteNonQueryAsync(ct);
+            }
+            finally
+            {
+                await dbContext.Database.CloseConnectionAsync();
+            }
+        }
+
+        /// <summary>
         /// An execution still RUNNING as the app starts was going when the app went away. It is marked
         /// abandoned, and its steps are counted from what its history kept, since its walk never got
         /// to write how many it executed.
@@ -60,6 +132,24 @@ namespace DataAccess
                     .SetProperty(execution => execution.Status, ExecutionStatusEnum.ABANDONED)
                     .SetProperty(execution => execution.CompletedAt, timeProvider.GetUtcNow().UtcDateTime)
                     .SetProperty(execution => execution.StepCount, execution => execution.ExecutionSteps.Count()));
+        }
+
+        private static long ReadPragma(DatabaseFacade database, string name)
+        {
+            DbConnection connection = database.GetDbConnection();
+            database.OpenConnection();
+
+            try
+            {
+                using DbCommand command = connection.CreateCommand();
+                command.CommandText = $"PRAGMA {name};";
+
+                return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+            }
+            finally
+            {
+                database.CloseConnection();
+            }
         }
 
 

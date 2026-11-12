@@ -11,6 +11,13 @@ import { BackendService, ON_DEMAND_CONNECT_ATTEMPTS } from "../services/backend-
 import { setBackendReady } from "../services/backend-status-service.js";
 
 export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
+
+// A delete waits for its rows to go and for the disk to get their space back, which for a flow
+// executed day and night for weeks is most of a minute.
+const TIMEOUT_MS = 30_000;
+const DELETE_TIMEOUT_MS = 10 * 60_000;
+const DELETE_ACTIONS = new Set(["Flow.delete", "Execution.delete", "Execution.deleteForFlow"]);
+
 interface PendingResolver {
   resolve: (value: any) => void;
   reject: (reason: any) => void;
@@ -102,7 +109,7 @@ export async function registerBackendRequestHandler(
           pending.delete(correlationId);
           reject(new Error(`[BackendHandler] Timeout for "${action}"`));
         }
-      }, 30_000);
+      }, DELETE_ACTIONS.has(action) ? DELETE_TIMEOUT_MS : TIMEOUT_MS);
 
       pending.set(correlationId, { resolve, reject, timeoutId });
     });

@@ -85,10 +85,10 @@ namespace Core.Catalogs
         public static readonly IntAppSettingDefinition ExecutionScreenshotLimit = new IntAppSettingDefinition(
             AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT,
             "Screenshots kept per execution",
-            "How many screenshots one execution may leave on disk, whether the steps worked or not. Raise it if a long flow stops keeping them before the part you care about.",
-            defaultValue: 20,
+            "How many of an execution's last screenshots it keeps, written to disk as it ends. A loop that searches several times a second fills them in seconds; raise it to see further back before the end.",
+            defaultValue: 50,
             minimum: 0,
-            maximum: 500);
+            maximum: 100);
 
 
         // AI. Nothing is on until Ollama answers with the local model chosen here: every feature

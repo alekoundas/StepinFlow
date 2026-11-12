@@ -347,6 +347,8 @@ namespace App
             builder.Services.AddTransient<GetExecutionFeedHandler>();
             builder.Services.AddTransient<GetExecutionStatsHandler>();
             builder.Services.AddTransient<GetExecutionStepScreenshotHandler>();
+            builder.Services.AddTransient<DeleteExecutionHandler>();
+            builder.Services.AddTransient<DeleteFlowExecutionsHandler>();
             builder.Services.AddTransient<ExplainExecutionHandler>();
             builder.Services.AddTransient<GetAiStatusHandler>();
             builder.Services.AddTransient<GetAiLocalModelStatusHandler>();
@@ -382,6 +384,9 @@ namespace App
             await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
             dbContext.Database.Migrate();
             dbContext.Database.UseWriteAheadLog();
+
+            if (!dbContext.Database.UseIncrementalVacuum())
+                scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup").LogWarning("The database could not switch on incremental vacuum, so deleting keeps the file at its size.");
 
             TimeProvider timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
             await dbContext.AbandonUnfinishedExecutionsAsync(timeProvider);

@@ -4,6 +4,7 @@ import PageComponent from "@/shared/components/PageComponent";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
 import { MUTED } from "@/features/execution/execution-format";
 import { useExecutionStats, useFlowExecutionSummaries } from "@/features/execution/hooks/use-execution";
+import { useDeleteExecutions } from "@/features/execution/hooks/use-delete-executions";
 import { useLiveExecution } from "@/features/execution/hooks/use-live-execution";
 import ExecutionFeedComponent from "@/features/execution/components/executions/ExecutionFeedComponent";
 import ExecutionFlowListComponent from "@/features/execution/components/executions/ExecutionFlowListComponent";
@@ -23,9 +24,11 @@ export default function ExecutionsPage() {
   const { data: summaries } = useFlowExecutionSummaries();
   const { data: allStats } = useExecutionStats(null, null);
   const live = useLiveExecution();
+  const { deleteOne, deleteAll } = useDeleteExecutions();
 
   const selectedFlowId = Number(searchParams.get("flow")) || null;
   const picked = summaries?.find((x) => x.flowId === selectedFlowId);
+  const isPickedExecuting = !!picked && live?.flowId === picked.flowId;
 
   const select = (flowId: number | null) => {
     setSearchParams(flowId === null ? {} : { flow: String(flowId) }, { replace: true });
@@ -91,13 +94,20 @@ export default function ExecutionsPage() {
           className="flex flex-column gap-3 min-w-0"
           style={{ flex: "1 1 560px" }}
         >
-          {picked && <PickedFlowHeaderComponent summary={picked} />}
+          {picked && (
+            <PickedFlowHeaderComponent
+              summary={picked}
+              isExecuting={isPickedExecuting}
+              onDeleteExecutions={() => deleteAll(picked, isPickedExecuting)}
+            />
+          )}
           <ExecutionStatTilesComponent flowId={selectedFlowId} />
           <ExecutionFeedComponent
             flowId={selectedFlowId}
             live={live}
             showsFlowName={selectedFlowId === null}
             onOpen={open}
+            onDelete={deleteOne}
           />
         </div>
       </div>

@@ -1575,8 +1575,8 @@ result - which is what makes the most intricate code in the repository the cheap
 `ExecutionEngine` drives it: run the worker, place the result, ask for the next step.
 
 Everything an execution needs sits in memory rather than in the database. History is written in
-batches and only if it was asked for — turning history off changes what gets stored and never what a
-flow does. **A step's result is kept for the steps under it** and dropped as the walk leaves it,
+batches, a failed step with the rest, and only if it was asked for — turning history off changes
+what gets stored and never what a flow does. **A step's result is kept for the steps under it** and dropped as the walk leaves it,
 since 2026-10-26: a location for the Success side, a value for both, because a Read Text or a System
 Command keeps what it read or printed either way. The validator holds a `{{name}}` written in text
 to the same rule as a step picked from a dropdown. Until then the walker dropped nothing - two lines
@@ -2406,7 +2406,8 @@ add instead of a modification, and the point of a folder of loose images is that
 see which one changed. Two git branches drawing the same name for one flow is a merge conflict,
 never a silent duplicate.
 
-Screenshots are per-execution, large, and grow without bound. They travel as build artifacts.
+Screenshots are per-execution and large, and pile up with every execution until it is deleted. They
+travel as build artifacts.
 
 ### Results travel as an execution bundle
 
@@ -2511,10 +2512,33 @@ what the execution recorded, not from the step's settings. It posts through one 
 per bot, so a flow in a retry loop cannot flood a channel. The webhook URL is the credential: it is never logged and never shown
 to a model.
 
-**Execution history** records every step's result, duration, location, closest score and message.
-**Screenshots**: nothing is written while a flow goes well. A failure writes out the last few
-screenshots leading up to it, each named after the step that took it, and the execution page shows
-them beside the step.
+**Execution history** records every step's result, duration, location, closest score and message,
+in batches: 200 steps or a second, whichever comes first, a failed step with the rest. Writing each
+failure straight away was a transaction for four steps in five of a polling loop like Firestone's,
+where a search that finds nothing is the usual case. A pause writes what is waiting, so the page
+shows every step the execution stopped after.
+
+**Screenshots**: an execution keeps its last ones, 50 unless Settings says otherwise, 100 at most.
+They stay in memory - about 200 KB each - older ones letting go of their picture as newer ones
+arrive, and are written to disk as the execution ends, each named after the step that took it; the
+rows it kept them for are then named after their files. While it goes, the screenshot call answers
+from memory (`IExecutionHistoryService.GetKeptScreenshot`). Until 2026-11-12 it kept its first 20:
+a 17-hour Firestone execution kept steps 3 to 25, its first three seconds, and nothing of the 495,000
+steps after. Writing every screenshot and deleting the oldest would have kept the right ones at a
+megabyte a second of disk writes, so they wait in memory instead. An execution the app closes on
+before it ends writes none; before, it wrote them and never recorded the folder, which came to the
+same.
+
+**Deleting** is by hand: an execution, every execution of a flow but one still going (both from the
+Executions page), or a flow with all of its executions (`ExecutionDeleteService`). The steps go in
+one statement before the rows they hang off, the screenshots folders after, and then the database
+hands the space back to the disk. It is in incremental auto-vacuum since 2026-11-12, switched on at
+start, a VACUUM done once (16 s on a 1 GB database); after that a delete moves only what sits past
+its holes. On a copy of a 1 GB database, deleting a 17-hour execution took 2.2 s and its space back
+0.1 s; a full VACUUM after it would have taken 13 s, and grows with everything kept. Deleting a flow
+executed for three weeks, four million steps, took 16 s and 8.5 s, and half as long again when the
+cascades did it, which is why calls that delete wait ten minutes before giving up, not thirty
+seconds. Nothing is deleted on its own, and there is no limit on the steps an execution keeps.
 
 **Planned - phase 15.** Every check that can fail an execution is a thing worth counting. A flow
 that ran a hundred times — fifty at one viewport, fifty at another — with four failures is a
@@ -3000,15 +3024,15 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1581 tests, all passing, in eight projects under `backend/Tests/` - one
+1595 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1196 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
-| `DataAccess.Tests` | 49 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, and every delete rule |
+| `Business.Tests` | 1208 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the history's batches and the last screenshots it keeps, deleting executions with their folders, the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
+| `DataAccess.Tests` | 51 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, every delete rule, and a delete's space handed back to the disk |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
 | `Platform.Windows.Tests` | 1 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
@@ -3139,7 +3163,7 @@ In active development, not released.
 
 Working: the flow builder, the recorder with Review and its plain draft, image search that survives another monitor
 and DPI, OCR, sub-flows, validation, Discord notifications, the execution engine with breakpoints,
-step into and step over, execution history with failure screenshots, the flow script in both
+step into and step over, execution history with the screenshots leading up to its end, the flow script in both
 directions, flows kept and committed in a local git repository, and the AI assistant on a local Ollama model
 with OpenAI on top. 1129 backend tests.
 

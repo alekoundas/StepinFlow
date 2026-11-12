@@ -11,6 +11,7 @@ import ExecutionPanelComponent from "@/features/execution/components/templates/E
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
+import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { getFlowStepCatalogEntry, hasBranches } from "@/shared/models/flow-step-catalog";
 import { DONE_COLOR, HANDLED_COLOR, INSET, MONO, MUTED } from "@/features/execution/execution-format";
@@ -34,6 +35,9 @@ interface Props {
   /** What the execution was set to keep, which is why a step has no screenshot. */
   historyLevel: ExecutionHistoryLevelEnum | undefined;
 
+  /** How a past execution ended: one abandoned never wrote its screenshots. */
+  executionStatus: ExecutionStatusEnum | undefined;
+
   isLive: boolean;
   onSelect: (sequence: number) => void;
 }
@@ -47,6 +51,7 @@ export default function ExecutionStepDetailComponent({
   parentStep,
   fatalSequence,
   historyLevel,
+  executionStatus,
   isLive,
   onSelect,
 }: Props) {
@@ -96,6 +101,8 @@ export default function ExecutionStepDetailComponent({
         executionStep={executionStep}
         parentStep={parentStep}
         historyLevel={historyLevel}
+        executionStatus={executionStatus}
+        isLive={isLive}
         onSelect={onSelect}
       />
     </ExecutionPanelComponent>
@@ -106,10 +113,12 @@ interface StepDetailProps {
   executionStep: ExecutionStepDto;
   parentStep: ExecutionStepDto | undefined;
   historyLevel: ExecutionHistoryLevelEnum | undefined;
+  executionStatus: ExecutionStatusEnum | undefined;
+  isLive: boolean;
   onSelect: (sequence: number) => void;
 }
 
-function StepDetail({ executionStep, parentStep: parent, historyLevel, onSelect }: StepDetailProps) {
+function StepDetail({ executionStep, parentStep: parent, historyLevel, executionStatus, isLive, onSelect }: StepDetailProps) {
   const isFailure = executionStep.outcome === StepOutcomeEnum.FAILURE;
   const isSearchImage = executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE;
   const isAtTop = executionStep.parentSequence === null || executionStep.parentSequence === undefined;
@@ -191,6 +200,8 @@ function StepDetail({ executionStep, parentStep: parent, historyLevel, onSelect 
         <StepScreenshot
           executionStep={executionStep}
           historyLevel={historyLevel}
+          executionStatus={executionStatus}
+          isLive={isLive}
         />
       ) : null}
 
@@ -521,11 +532,16 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
 interface StepScreenshotProps {
   executionStep: ExecutionStepDto;
   historyLevel: ExecutionHistoryLevelEnum | undefined;
+  executionStatus: ExecutionStatusEnum | undefined;
+  isLive: boolean;
 }
 
-function StepScreenshot({ executionStep, historyLevel }: StepScreenshotProps) {
+// While the execution is going, a saved step is asked about whether or not it names a file: the
+// last screenshots are in memory and get their files as it ends.
+function StepScreenshot({ executionStep, historyLevel, executionStatus, isLive }: StepScreenshotProps) {
   const fileName = executionStep.screenshotFileName;
-  const { data: screenshot } = useExecutionStepScreenshot(fileName ? executionStep.id : null);
+  const asks = !!fileName || (isLive && executionStep.id > 0);
+  const { data: screenshot } = useExecutionStepScreenshot(asks ? executionStep.id : null);
 
   if (screenshot)
     return (
@@ -557,13 +573,15 @@ function StepScreenshot({ executionStep, historyLevel }: StepScreenshotProps) {
         <ScreenshotNote
           executionStep={executionStep}
           historyLevel={historyLevel}
+          executionStatus={executionStatus}
+          isLive={isLive}
         />
       </span>
     </div>
   );
 }
 
-function ScreenshotNote({ executionStep, historyLevel }: StepScreenshotProps) {
+function ScreenshotNote({ executionStep, historyLevel, executionStatus, isLive }: StepScreenshotProps) {
   const { data: settings = [] } = useAppSettings();
   const limit = settings.find((x) => x.key === AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT)?.value;
 
@@ -572,11 +590,23 @@ function ScreenshotNote({ executionStep, historyLevel }: StepScreenshotProps) {
   if (executionStep.screenshotFileName) return <>That screenshot is no longer on disk.</>;
   if (historyLevel && historyLevel !== ExecutionHistoryLevelEnum.STEPS_AND_IMAGES)
     return <>No screenshot. This execution kept steps only.</>;
+  if (executionStatus === ExecutionStatusEnum.ABANDONED)
+    return <>No screenshot. The app closed while this execution was going, before its screenshots were written.</>;
+
+  const settingLink = <Link to="/settings/execution">Settings, Execution</Link>;
+
+  if (isLive)
+    return (
+      <>
+        No screenshot any more. An execution keeps its last {limit ?? "few"}, and newer ones took this
+        one's place; the limit is under {settingLink}.
+      </>
+    );
 
   return (
     <>
-      No screenshot. An execution keeps its first {limit ?? "few"}, and they went on earlier steps;
-      the limit is under <Link to="/settings/execution">Settings, Execution</Link>.
+      No screenshot. An execution keeps its last {limit ?? "few"}, and this step came before them;
+      the limit is under {settingLink}.
     </>
   );
 }

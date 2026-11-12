@@ -172,6 +172,18 @@ export function useExecutionMutations() {
       backendApiService.Execution.setBreakpoints(flowStepIds),
   });
 
+  // Every list, count and summary of executions is out of date after a delete. Awaited, so the
+  // dialog closes on a page that no longer shows what went.
+  const deleteExecutionMutation = useMutation({
+    mutationFn: (executionId: number) => backendApiService.Execution.delete(executionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execution"] }),
+  });
+
+  const deleteFlowExecutionsMutation = useMutation({
+    mutationFn: (flowId: number) => backendApiService.Execution.deleteForFlow(flowId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execution"] }),
+  });
+
   return {
     startExecutionMutation,
     stopExecutionMutation,
@@ -180,5 +192,7 @@ export function useExecutionMutations() {
     stepIntoExecutionMutation,
     stepOverExecutionMutation,
     setBreakpointsMutation,
+    deleteExecutionMutation,
+    deleteFlowExecutionsMutation,
   };
 }

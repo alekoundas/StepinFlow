@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Transport.Ipc.Handlers.Execution
 {
     /// <summary>
-    /// Past runs of one flow, newest first. Capped, because nothing prunes the table yet and the
-    /// history panel only ever shows the recent ones - see TODO.md, keep-last-X-runs retention.
+    /// Past executions of one flow, newest first. Capped, because executions are only deleted by
+    /// hand and the history panel only ever shows the recent ones.
     /// </summary>
     public class GetExecutionListHandler
     {

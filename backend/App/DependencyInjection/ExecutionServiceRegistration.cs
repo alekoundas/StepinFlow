@@ -1,6 +1,7 @@
 using Business.Executions;
 using Business.Executions.Workers;
 using Core.Enums;
+using Core.Helpers;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -64,8 +65,9 @@ namespace App.DependencyInjection
                 x.GetRequiredService<PassThroughStepWorker>()));
 
             services.AddSingleton<IExecutionCacheService, ExecutionCacheService>();
-            services.AddSingleton<IExecutionHistoryService, ExecutionHistoryService>();
+            services.AddSingleton<IExecutionHistoryService>(x => ActivatorUtilities.CreateInstance<ExecutionHistoryService>(x, PathHelper.GetExecutionHistoryDataPath()));
             services.AddSingleton<IExecutionEngine, ExecutionEngine>();
+            services.AddSingleton<IExecutionDeleteService>(x => ActivatorUtilities.CreateInstance<ExecutionDeleteService>(x, PathHelper.GetExecutionHistoryDataPath()));
             services.AddSingleton<IDebuggerHotkeyService, DebuggerHotkeyService>();
 
             return services;

@@ -27,7 +27,7 @@ export function useDeleteFlow() {
       confirmLabel: `Delete the ${noun}`,
       confirmSeverity: "danger",
       children: (
-        <LabelComponent text={`${size}${used} This cannot be undone.`} />
+        <LabelComponent text={`${size}${used} Its executions go too, screenshots and all. This cannot be undone.`} />
       ),
       onConfirm: async () => {
         await deleteFlowMutation.mutateAsync(flow.id);

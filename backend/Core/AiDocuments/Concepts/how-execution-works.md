@@ -35,31 +35,39 @@ it.
 Returning from a sub-flow is the stack unwinding, so it needs no machinery. Nesting is limited to a
 depth of 50, which is what stops runaway recursion.
 
-## What an execution keeps while it is running
+## What an execution keeps while it is going
 
 - The results a step below can still read. These are dropped as the walk leaves the branch they
   belong to.
 - Every hit from a `FIND_ALL` search.
-- The last few screenshots.
+- Its last few screenshots.
 
-All of it is bounded by how deep the tree is, not by how long the execution has been going, so an execution
-lasting three weeks holds no more than one lasting three seconds.
+All of it is bounded, by how deep the tree is and by the screenshot setting, never by how long the
+execution has been going, so an execution lasting three weeks holds no more than one lasting three
+seconds.
 
 ## What an execution leaves behind
 
 History has three levels: nothing, steps only, or steps and screenshots.
 
-Turning history off changes what is **stored**, never what a flow **does**. The runner keeps the
+Turning history off changes what is **stored**, never what a flow **does**. The engine keeps the
 same values in memory either way, so a step still reads the step above it.
+
+Steps are written in batches while the execution goes, a second behind it at most. Nothing is
+deleted on its own: an execution, or every execution of a flow, is deleted from the Executions page,
+and deleting a flow deletes its executions. Their screenshots go with them, and the database gives the
+space back to the disk.
 
 ## Screenshots
 
-Screenshots work like a dashcam. Nothing is written while a flow is going well. When a step fails,
-the last few screenshots are written out, each named after the step that took it — most of them belong
-to steps that ran earlier, which is the point: the screenshot at the moment of failure usually shows a
-screen the thing was never on.
+An execution keeps its **last** screenshots. They stay in memory, older ones making way for newer
+ones, and are written to disk as the execution ends, each named after the step that took it. A long
+execution keeps what led up to its end — the step that failed, or the moment it was stopped — not how
+it started. In a loop that searches several times a second, that is its last seconds.
 
-The number of screenshots kept is a setting.
+An execution the app closed on before it ended writes none.
+
+How many are kept is the setting **Screenshots kept per execution**: 50 unless changed.
 
 ## The debugger
 

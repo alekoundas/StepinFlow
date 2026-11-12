@@ -73,10 +73,12 @@ it was looking for, and the screenshot it searched if the execution kept one.
 
 ## Screenshots
 
-Whether screenshots are kept depends on the history level chosen for the execution and on the per-execution
-limit in Settings, Execution, which keeps an execution's first screenshots. If a step has none, the
-panel says which of those it was. While an execution is under way, its rows come from the broadcast,
-which carries no screenshot; the kept ones show once it has ended.
+Whether screenshots are kept depends on the history level chosen for the execution and on the
+per-execution limit in Settings, Execution. An execution keeps its **last** screenshots, that many,
+and writes them to disk as it ends. If a step has none, the panel says why: the execution kept steps
+only, newer screenshots took its place, or the app closed before the execution ended. While an
+execution is going, a step shows its screenshot once the step is saved, as long as it is still one of
+the last ones.
 
 ## Explain
 

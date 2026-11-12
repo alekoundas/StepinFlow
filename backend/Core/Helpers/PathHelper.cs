@@ -103,17 +103,12 @@
             return path;
         }
 
-        /// <summary> Create and get ".../Execution History/{flowName} - {startedOn}" path. </summary>
-        public static string GetExecutionRunPath(string flowName, DateTime startedOn)
+        /// <summary> The folder one execution's screenshots go in, "{flowName} - {startedOn}", inside ".../Execution History". </summary>
+        public static string GetExecutionFolderName(string flowName, DateTime startedOn)
         {
             string safeName = FileNameHelper.Clean(flowName, "Flow");
-            string folder = $"{safeName} - {startedOn:yyyy-MM-dd HH.mm.ss}";
-            string path = Path.Combine(GetExecutionHistoryDataPath(), folder);
 
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-
-            return path;
+            return $"{safeName} - {startedOn:yyyy-MM-dd HH.mm.ss}";
         }
     }
 }

@@ -15,8 +15,8 @@ namespace Transport.Ipc.Handlers.Execution
     /// </summary>
     public class GetFlowExecutionSummariesHandler
     {
-        // Read once and grouped in memory rather than a query per flow. Nothing prunes the table
-        // yet, so this is also what stops a year of history being loaded to draw ten bars.
+        // Read once and grouped in memory rather than a query per flow. Executions are only deleted
+        // by hand, so this is also what stops a year of history being loaded to draw ten bars.
         private const int _maxRuns = 500;
         private const int _recentOutcomes = 10;
 

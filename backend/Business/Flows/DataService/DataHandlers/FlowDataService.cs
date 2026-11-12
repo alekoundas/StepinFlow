@@ -1,3 +1,4 @@
+using Business.Executions;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Business.Flows.FlowValidationService;
@@ -20,13 +21,19 @@ namespace Business.Flows.DataService.DataHandlers
     public sealed class FlowDataService : BaseDataService
     {
         private readonly IGitRepositoryService _gitRepositoryService;
+        private readonly IExecutionEngine _executionEngine;
+        private readonly IExecutionDeleteService _executionDeleteService;
 
         public FlowDataService(
             IDbContextFactory<AppDbContext> dbContextFactory,
             IFlowValidationService flowValidationService,
-            IGitRepositoryService gitRepositoryService) : base(dbContextFactory, flowValidationService)
+            IGitRepositoryService gitRepositoryService,
+            IExecutionEngine executionEngine,
+            IExecutionDeleteService executionDeleteService) : base(dbContextFactory, flowValidationService)
         {
             _gitRepositoryService = gitRepositoryService;
+            _executionEngine = executionEngine;
+            _executionDeleteService = executionDeleteService;
         }
 
 
@@ -143,8 +150,18 @@ namespace Business.Flows.DataService.DataHandlers
             return ResultDto<Flow>.Success(flow);
         }
 
+        /// <summary>
+        /// Deletes a flow with its executions, their screenshots folders too, and hands the space
+        /// back to the disk. Refused while an execution is using the flow, as its own or as a
+        /// sub-flow it calls.
+        /// </summary>
         public async Task<ResultDto<bool>> DeleteAsync(int id, CancellationToken ct)
         {
+            if (_executionEngine.IsExecuting(id))
+                return ResultDto<bool>.Failure("An execution is using this flow. Stop it, then delete the flow.");
+
+            await _executionDeleteService.DeleteForFlowAsync(id, ct);
+
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
             int count = await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
@@ -152,6 +169,7 @@ namespace Business.Flows.DataService.DataHandlers
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
 
             _gitRepositoryService.Changed(id);
+            await dbContext.ReclaimFreeSpaceAsync(CancellationToken.None);
 
             return ResultDto<bool>.Success(true);
         }

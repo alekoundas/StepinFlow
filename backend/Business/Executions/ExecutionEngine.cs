@@ -245,6 +245,15 @@ namespace Business.Executions
             _debuggerBreakpoints = flowStepIds.ToHashSet();
         }
 
+        /// <summary>Whether the execution going now started from that flow, or calls it as a sub-flow.</summary>
+        public bool IsExecuting(int flowId)
+        {
+            if (!IsRunning)
+                return false;
+
+            return FlowId == flowId || _cache.StepsById.Values.Any(x => x.RootId == flowId);
+        }
+
 
         // ================================================================
         // Private methods
@@ -442,6 +451,7 @@ namespace Business.Executions
             {
             }
 
+            await _history.FlushAsync();
             await BroadcastAsync(ExecutionEventDto.Paused(ExecutionId, step));
 
             // Woken by Continue, Step Into or Step Over, and ended by Stop cancelling.

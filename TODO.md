@@ -17,6 +17,15 @@ the history.
       and "New input" adds one and puts it in. Extract that Type step to a sub-flow: the sub-flow's
       Inputs tab has the input, a secret still "Saved", and the flow still starts; extracting a step
       that uses `{{Read the total}}` without the Read Text it names is refused, saying which.
+- [ ] **Not tried by hand: the last screenshots, and deleting executions.** Built 2026-11-12, checked
+      by the tests, the type checks and the lint. The first start after it takes about 16 s longer on
+      a 1 GB database, once, while the file switches to incremental vacuum. Execute Firestone a few
+      minutes and stop it: the camera opens a folder of its last 50 screenshots, the step that
+      stopped among them, and a step from its first minute says newer ones took its place. While it
+      goes, pause on a breakpoint after a search: the step shows its screenshot. On the Executions
+      page delete one execution: the dialog stays until it is gone, its folder is gone, and the
+      database file is smaller. Delete a flow's executions while one of them is going: that one
+      stays. Delete a flow, or a sub-flow, an execution is using: the dialog says to stop it first.
 
 - [ ] **Not tried by hand: Test now's Details.** Verified by the type check, the lint and the
       build, 2026-11-01. Test a step with several templates, one found and one not: the used row,
@@ -113,8 +122,6 @@ the history.
       sit in the cache until the next run resets it. Clear on end of walk, and log if anything was
       still there, so "a finished flow leaves no cached values" is a property you find out about
       when it breaks rather than one you hope for.
-- [ ] **Keep-last-X-runs retention.** Nothing prunes `Executions` / `ExecutionSteps` today. Needs a
-      setting and a sweep, or the history grows without bound.
 - [ ] **Startup check that every `FlowStepTypeEnum` has a worker** or is on an explicit structural
       list (SUCCESS, FAILURE, LOOP, GO_BACK, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op

@@ -31,8 +31,9 @@ const STATUSES: Record<Filter, ExecutionStatusEnum[]> = {
   inconclusive: [ExecutionStatusEnum.INCONCLUSIVE],
 };
 
-// The status, its number, who and how it went, when, how long, how many steps, the version, what it kept.
-const ROW_COLUMNS = "24px 56px minmax(0, 1fr) 52px 72px 116px minmax(0, 150px) 20px 12px";
+// The status, its number, who and how it went, when, how long, how many steps, the version, what it
+// kept, delete.
+const ROW_COLUMNS = "24px 56px minmax(0, 1fr) 52px 72px 116px minmax(0, 150px) 20px 20px 12px";
 
 interface Props {
   flowId: number | null;
@@ -41,10 +42,11 @@ interface Props {
   /** Every flow's feed names each execution's flow; one flow's would only repeat it. */
   showsFlowName: boolean;
   onOpen: (execution: ExecutionFeedItemDto) => void;
+  onDelete: (execution: ExecutionFeedItemDto) => void;
 }
 
 /** Executions newest first, by day, filtered by how they ended. Older ones come a page at a time. */
-export default function ExecutionFeedComponent({ flowId, live, showsFlowName, onOpen }: Props) {
+export default function ExecutionFeedComponent({ flowId, live, showsFlowName, onOpen, onDelete }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const { data: counts } = useExecutionStats(flowId, null);
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useExecutionFeed(flowId, STATUSES[filter]);
@@ -122,6 +124,7 @@ export default function ExecutionFeedComponent({ flowId, live, showsFlowName, on
                   liveStepCount={execution.id === live?.executionId ? live.stepCount : null}
                   hasTopLine={index > 0}
                   onOpen={() => onOpen(execution)}
+                  onDelete={() => onDelete(execution)}
                 />
               ))}
             </section>
@@ -180,9 +183,10 @@ interface RowProps {
   liveStepCount: number | null;
   hasTopLine: boolean;
   onOpen: () => void;
+  onDelete: () => void;
 }
 
-function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTopLine, onOpen }: RowProps) {
+function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTopLine, onOpen, onDelete }: RowProps) {
   const [isHovered, setIsHovered] = useState(false);
   const look = outcomeLookOf(execution.status, execution.errorStepName);
 
@@ -287,6 +291,8 @@ function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTop
 
       <KeptComponent execution={execution} />
 
+      {isLive ? <span /> : <DeleteComponent onDelete={onDelete} />}
+
       <i
         className="pi pi-angle-right text-xs"
         style={MUTED}
@@ -339,6 +345,30 @@ function KeptComponent({ execution }: { execution: ExecutionFeedItemDto }) {
       title={title}
       aria-label={title}
     />
+  );
+}
+
+/** Asks first. The one executing now has none: it is stopped before it can be deleted. */
+function DeleteComponent({ onDelete }: { onDelete: () => void }) {
+  const remove = (event: MouseEvent) => {
+    event.stopPropagation();
+    onDelete();
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={remove}
+      title="Delete this execution"
+      aria-label="Delete this execution"
+      className="flex align-items-center justify-content-center p-0 border-none cursor-pointer"
+      style={{ background: "transparent", ...MUTED }}
+    >
+      <i
+        className="pi pi-trash text-sm"
+        aria-hidden="true"
+      />
+    </button>
   );
 }
 

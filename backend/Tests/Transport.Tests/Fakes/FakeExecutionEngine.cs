@@ -46,5 +46,10 @@ namespace Transport.Tests.Fakes
         public void SetBreakpoints(IEnumerable<int> flowStepIds)
         {
         }
+
+        public bool IsExecuting(int flowId)
+        {
+            return false;
+        }
     }
 }

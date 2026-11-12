@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
+import { Message } from "primereact/message";
 
 export interface IDialogConfirmComponentProps {
   headerText?: string;
@@ -22,7 +23,8 @@ export interface IDialogConfirmComponentProps {
 }
 
 /**
- * Ask a yes/no question with an arbitrary body.
+ * Ask a yes/no question with an arbitrary body. It stays open, and can't be dismissed, until
+ * onConfirm settles; when it throws, the dialog stays and says why.
  *
  * The busy state lives here rather than in the caller: dialogs are stored as elements in the
  * dialog store, so a prop passed at open time would be frozen at the value it had back then.
@@ -40,12 +42,16 @@ export function DialogConfirmComponent({
   onClose,
 }: IDialogConfirmComponentProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
     setIsBusy(true);
+    setError(null);
     try {
       await onConfirm?.();
       onClose?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsBusy(false);
     }
@@ -79,6 +85,13 @@ export function DialogConfirmComponent({
       }
     >
       {children}
+      {error && (
+        <Message
+          severity="error"
+          className="w-full justify-content-start mt-3"
+          text={error}
+        />
+      )}
     </Dialog>
   );
 }

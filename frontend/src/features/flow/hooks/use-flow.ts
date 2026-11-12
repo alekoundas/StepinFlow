@@ -49,6 +49,8 @@ export function useFlowMutations() {
     mutationFn: (id: number) => backendApiService.Flow.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
+      // Its executions went with it.
+      queryClient.invalidateQueries({ queryKey: ["execution"] });
       // Search area / location usage counts are computed server side.
       queryClient.invalidateQueries({ queryKey: ["flow"] });
       queryClient.invalidateQueries({ queryKey: ["lookup", "flowPoint"] });

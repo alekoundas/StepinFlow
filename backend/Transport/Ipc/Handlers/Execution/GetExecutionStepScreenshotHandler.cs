@@ -1,3 +1,4 @@
+using Business.Executions;
 using Core.Helpers;
 using Core.Models.Dtos;
 
@@ -7,20 +8,27 @@ using Microsoft.EntityFrameworkCore;
 namespace Transport.Ipc.Handlers
 {
     /// <summary>
-    /// One screenshot back off disk, base64 for the page to draw. The path is built here from the
-    /// run's folder and the step's file, so nothing the renderer sends decides what is read.
+    /// One screenshot, base64 for the page to draw: from memory while its execution is going and it
+    /// is one of the last ones kept, otherwise off disk. The path is built here from the
+    /// execution's folder and the step's file, so nothing the renderer sends decides what is read.
     /// </summary>
     public class GetExecutionStepScreenshotHandler
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly IExecutionHistoryService _history;
 
-        public GetExecutionStepScreenshotHandler(IDbContextFactory<AppDbContext> dbContextFactory)
+        public GetExecutionStepScreenshotHandler(IDbContextFactory<AppDbContext> dbContextFactory, IExecutionHistoryService history)
         {
             _dbContextFactory = dbContextFactory;
+            _history = history;
         }
 
         public async Task<ResultDto<string?>> HandleAsync(int executionStepId, CancellationToken ct)
         {
+            byte[]? kept = _history.GetKeptScreenshot(executionStepId);
+            if (kept != null)
+                return ResultDto<string?>.Success(Convert.ToBase64String(kept));
+
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
             ScreenshotLocation? location = await dbContext.ExecutionSteps

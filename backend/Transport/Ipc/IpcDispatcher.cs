@@ -223,6 +223,8 @@ namespace Transport.Ipc
                     "Execution.getFeed" => await Handler<GetExecutionFeedHandler>().HandleAsync(Payload<ExecutionFeedRequestDto>(request), ct),
                     "Execution.getStats" => await Handler<GetExecutionStatsHandler>().HandleAsync(Payload<ExecutionStatsRequestDto>(request), ct),
                     "Execution.getStepScreenshot" => await Handler<GetExecutionStepScreenshotHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Execution.delete" => await Handler<DeleteExecutionHandler>().HandleAsync(Payload<int>(request), ct),
+                    "Execution.deleteForFlow" => await Handler<DeleteFlowExecutionsHandler>().HandleAsync(Payload<int>(request), ct),
 
                     // Ai
                     "Ai.explainExecution" => await Handler<ExplainExecutionHandler>().HandleAsync(Payload<int>(request), ct),

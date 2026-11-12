@@ -395,6 +395,9 @@ export const backendApiService = {
     getStats: (dto: ExecutionStatsRequestDto) => call<ExecutionStatsDto>("Execution.getStats", dto),
     getStepScreenshot: (executionStepId: number) =>
       callNullable<string>("Execution.getStepScreenshot", executionStepId),
+    delete: (executionId: number) => call<boolean>("Execution.delete", executionId),
+    // How many went: every execution of the flow but one still going.
+    deleteForFlow: (flowId: number) => call<number>("Execution.deleteForFlow", flowId),
   },
 
   Ai: {

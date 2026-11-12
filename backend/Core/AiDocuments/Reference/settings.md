@@ -2,11 +2,9 @@
 
 ## Execution
 
-**Screenshots kept before a failure** — how many screenshots of the lead-up are written out with a failed
-step. Nothing is written while a flow succeeds.
-
-**Screenshots kept per execution** — how many screenshots an execution leaves behind so you can see what a step
-was looking at. Zero keeps none.
+**Screenshots kept per execution** — how many of an execution's last screenshots it keeps, so you can
+see what a step was looking at before the execution ended. They are written to disk as it ends. 50
+unless changed, 100 at most; zero keeps none.
 
 ## Repository
 

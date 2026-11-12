@@ -13,15 +13,12 @@ namespace Business.Tests.Fakes
 
         public List<string> Commands { get; } = new List<string>();
 
-        public int ExecutionId
-        {
-            get { return 0; }
-        }
+        public int ExecutionId { get; set; }
 
-        public int FlowId
-        {
-            get { return 0; }
-        }
+        public int FlowId { get; set; }
+
+        /// <summary>The flows the execution going now uses, its own among them.</summary>
+        public HashSet<int> ExecutingFlowIds { get; } = new HashSet<int>();
 
         public int StepCount
         {
@@ -66,6 +63,11 @@ namespace Business.Tests.Fakes
         public void SetBreakpoints(IEnumerable<int> flowStepIds)
         {
             throw new NotImplementedException();
+        }
+
+        public bool IsExecuting(int flowId)
+        {
+            return IsRunning && ExecutingFlowIds.Contains(flowId);
         }
     }
 }
