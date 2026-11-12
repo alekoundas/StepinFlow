@@ -79,7 +79,7 @@ export default function OllamaModelDownloadComponent() {
       )}
 
       <LabelComponent
-        text="Anything else in Ollama's library works too — pull it with Ollama and it will appear in the model list."
+        text="Each of these can call tools and see images, which every AI feature needs. Other models in Ollama's library that can do both work too: pull one with Ollama and it appears in the model list."
         size="xs"
         color="secondary"
       />
@@ -106,9 +106,8 @@ function SuggestionRow({
         <div className="flex align-items-center gap-2">
           <LabelComponent text={`${suggestion.name} · ${suggestion.size}`} />
 
-          {/* Which one to pick turns on these: vision decides whether it can read a screenshot. */}
           {(suggestion.capabilities ?? [])
-            .filter((x) => x === "tools" || x === "vision" || x === "thinking")
+            .filter((x) => x === "tools" || x === "vision")
             .map((capability) => (
               <span
                 key={capability}

@@ -7,6 +7,9 @@ export interface AiModelDto {
 
   /** Tokens the model can hold at once. Zero when the provider did not say. */
   contextLength: number;
+
+  /** Why StepinFlow cannot use it, empty when it can. Every AI feature wants tools and vision. */
+  unusableReason: string;
 }
 
 /**

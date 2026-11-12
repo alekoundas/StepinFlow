@@ -109,9 +109,9 @@ Each run records the commit it executed at, shown in the run's header and in the
 marked "uncommitted" when the flow or a sub-flow it calls had changes not committed yet. A run like
 that also keeps the script it executed, since no commit holds it.
 
-**Settings › Repository** shows the folder, with Open folder, and the name and email commits are
-made as; left empty, they come from the computer's git configuration. The folder belongs to the
-app: a file changed there by another program is replaced the next time that flow is saved.
+**Settings › Repository** shows the folder, with Open folder. Commits are made as the name and email
+in the computer's git configuration, or as the computer's user name when it has none. The folder
+belongs to the app: a file changed there by another program is replaced the next time that flow is saved.
 
 **Discard changes**, in **Changes**, puts the flow back as the last commit has it, after asking,
 since what changed since is lost. **Restore this version**, on a commit in **History**, brings the

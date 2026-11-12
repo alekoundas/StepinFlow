@@ -103,7 +103,7 @@ export default function FlowStepSearchTextFormFieldsComponent({
         placeholderText="Latin"
         defaultValue=""
         isDisabled={isDisabled}
-        hintText="Latin reads English and most European languages. Download Greek, Cyrillic, Chinese and others in Settings."
+        hintText="Latin reads English and most European languages. Download Greek, Cyrillic, Chinese and others in Settings, Text recognition."
       />
 
       {/* Before the condition, because the condition is tested against what this leaves. */}

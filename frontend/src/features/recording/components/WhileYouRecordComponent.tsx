@@ -70,8 +70,7 @@ export default function WhileYouRecordComponent() {
         className="text-xs"
         style={MUTED}
       >
-        Before you stop, let the last screen finish loading: what it says after your last click is what a
-        QA test checks for at the end.
+        Before you stop, let the last screen finish loading: it shows what your last click changed.
       </span>
     </section>
   );

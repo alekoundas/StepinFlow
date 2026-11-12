@@ -12,6 +12,9 @@ namespace Business.Ai.AiModels
     /// </summary>
     public sealed class AiModelService : IAiModelService
     {
+        private const string TOOLS = "tools";
+        private const string VISION = "vision";
+
         // The ones worth offering. Asking OpenAI returns hundreds.
         // Hand kept, because OpenAI has no endpoint that answers this the way Ollama's /api/show
         // does. Every model here reads images and calls tools; the numbers are their published
@@ -69,6 +72,9 @@ namespace Business.Ai.AiModels
             // One /api/show per model, in parallel. Serially this is a visible pause on the
             // settings page as soon as somebody has more than a couple of models pulled.
             AiModelDto[] models = await Task.WhenAll(names.Select(x => _ollamaService.DescribeAsync(baseUrl, x, ct)));
+
+            foreach (AiModelDto model in models)
+                model.UnusableReason = UnusableReasonOf(model);
 
             return new AiModelsDto { Models = models, CloudModels = _openAiModels };
         }
@@ -168,12 +174,35 @@ namespace Business.Ai.AiModels
         /// </summary>
         public Task<bool> SupportsToolsAsync(CancellationToken ct = default)
         {
-            return SupportsAsync("tools", ct);
+            return SupportsAsync(TOOLS, ct);
         }
 
         public Task<bool> SupportsVisionAsync(CancellationToken ct = default)
         {
-            return SupportsAsync("vision", ct);
+            return SupportsAsync(VISION, ct);
+        }
+
+        // Ask answers by calling tools, and what a model is shown of an execution or a recording is
+        // screenshots, so a model short of either is greyed out with why. One whose capabilities
+        // Ollama did not say supports nothing, as everywhere else.
+        private static string UnusableReasonOf(AiModelDto model)
+        {
+            if (model.Capabilities.Count == 0)
+                return "Ollama did not say what it can do.";
+
+            bool canCallTools = model.Supports(TOOLS);
+            bool canSee = model.Supports(VISION);
+
+            if (!canCallTools && !canSee)
+                return "Cannot call tools or see images.";
+
+            if (!canCallTools)
+                return "Cannot call tools, so it could not read your flows.";
+
+            if (!canSee)
+                return "Cannot see images, so it would never be shown a screenshot.";
+
+            return string.Empty;
         }
 
         // Whether the model that answers reports a capability. Nothing set up supports nothing,

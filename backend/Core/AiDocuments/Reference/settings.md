@@ -11,8 +11,8 @@ unless changed, 100 at most; zero keeps none.
 Where every flow is kept as a file, in a git repository on this computer, with **Open folder**, the
 branch, the number of commits and how many flows have changes not committed yet.
 
-**Name** and **Email** — who every commit is by. Left empty, they come from the computer's git
-configuration, shown in the empty field; with neither, the commit is by the computer's user name.
+Every commit is by the name and email in the computer's git configuration, or by the computer's
+user name when it has none.
 
 ## AI
 
@@ -23,8 +23,11 @@ recording. The top of the panel says whether AI is on, and if not, what is in th
 
 **Ollama address** — where Ollama is listening. The default is right unless you moved it.
 
-**Model** — which of the models downloaded into Ollama to use. One can be downloaded from the list
-under it. The Home page has the same choice, and says whether the model is in memory and how much it
+**Model** — which of the models downloaded into Ollama to use. A model that cannot call tools or see
+images is greyed out with why, since every AI feature needs both. One can be downloaded from the
+list under it, which offers only models that can, from small to big: qwen3.5:4b, qwen3-vl:4b-instruct,
+qwen3.5:9b, gemma4:12b, ministral-3:14b, mistral-small3.2:24b and qwen3.5:27b. Any other model in
+Ollama's library that can do both works too. The Home page has the same choice, and says whether the model is in memory and how much it
 takes. **Free memory** there tells Ollama to let the model go: a busy model finishes what it is doing
 first, and the next thing that asks loads it again. Ollama lets it go by itself some minutes after
 its last use, 5 by default.

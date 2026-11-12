@@ -2114,6 +2114,16 @@ every time (`OllamaService`), because a model chosen once can be deleted and Oll
 key it answers in the local model's place. A model can be pulled into Ollama from the settings page;
 Ollama itself the tester installs for now, and the app fetching and starting it is in `TODO.md`, AI.
 
+**A model needs tools and vision.** Ask answers by calling tools, and what a model is shown of an
+execution or a recording is screenshots. Thinking is not needed: every request turns it off
+(`OllamaContextChatClient`). `AiModelService` says why a downloaded model falls short
+(`AiModelDto.UnusableReason`, from what `/api/show` reports), and both model dropdowns grey it out
+with that reason rather than leave it out, since a model that vanished once downloaded would look
+like a bug; one chosen before stays shown, with the reason under it. The list to download from
+(`AvailableAiModelsHelper`) is hand kept, since Ollama answers only for a model already pulled, and
+a test holds every entry to both. Qwen3-VL's plain tags are its thinking models, so the list offers
+its instruct one.
+
 **Free memory.** Home's Local model card is always the local model, whatever cloud model answers.
 `AiModelService.GetLocalModelStatusAsync` asks `/api/tags` and `/api/ps` each time, and the card asks
 every 15 seconds, because Ollama says nothing when it starts, stops or lets a model go. Free memory
@@ -2279,7 +2289,9 @@ writes the flows, reads the changes and commits - and `IGitService` reaches git.
   database has no flows at all. One flow that cannot be written costs its own files and is logged.
 - **Committing is a button.** `GitRepositoryService.CommitAsync` starts the index from the last
   commit and stages exactly the files picked, so nothing staged before comes along. The author is
-  the Settings fields, else the user's git config, else the system's user name.
+  the Settings fields, else the user's git config, else the system's user name with `user@computer`
+  for an email, since git refuses a commit without one. The fields are hidden with the remote for
+  now: who a commit is by only matters once its history is shared.
 - **One thing at a time.** A write, a read and a commit each wait their turn on the service's own
   lock, so a commit never takes a file half written. Writing takes its turn a flow at a time, after
   reading the flow from the database: requests are answered one at a time on one pipe, so a read

@@ -1,4 +1,5 @@
 using Business.Ai.AiModels;
+using Business.Ai.Helpers;
 using Business.Ai.Providers;
 using Business.Tests.Fakes;
 using Core.Enums;
@@ -15,6 +16,7 @@ namespace Business.Tests.Ai
     /// 2) A name with no tag means the same model as one with :latest
     /// 3) A cloud model is named beside the local model and changes nothing about it
     /// 4) Free memory unloads the local model, and has nothing to unload with none chosen
+    /// 5) A model short of tools or vision says why, and every model offered for download has both
     /// </summary>
     public sealed class AiModelServiceTests
     {
@@ -172,6 +174,42 @@ namespace Business.Tests.Ai
             _ollama.IsRunning = false;
 
             (await _service.FreeLocalModelAsync(Ct)).ShouldBeFalse();
+        }
+
+        // ================================================================
+        // What a model needs
+        // ================================================================
+
+        [Theory]
+        [InlineData(new[] { "completion", "tools" }, "Cannot see images, so it would never be shown a screenshot.")]
+        [InlineData(new[] { "completion", "vision" }, "Cannot call tools, so it could not read your flows.")]
+        [InlineData(new[] { "embedding" }, "Cannot call tools or see images.")]
+        [InlineData(new string[] { }, "Ollama did not say what it can do.")]
+        public async Task A_downloaded_model_short_of_tools_or_vision_says_why(string[] capabilities, string reason)
+        {
+            _ollama.Models.Add(LOCAL_MODEL);
+            _ollama.Capabilities.AddRange(capabilities);
+
+            AiModelsDto models = await _service.GetModelsAsync(Ct);
+
+            models.Models.ShouldHaveSingleItem().UnusableReason.ShouldBe(reason);
+        }
+
+        [Fact]
+        public async Task A_model_that_calls_tools_and_sees_images_can_be_chosen()
+        {
+            _ollama.Models.Add(LOCAL_MODEL);
+            _ollama.Capabilities.AddRange(["completion", "tools", "vision", "thinking"]);
+
+            AiModelsDto models = await _service.GetModelsAsync(Ct);
+
+            models.Models.ShouldHaveSingleItem().UnusableReason.ShouldBeEmpty();
+        }
+
+        [Fact]
+        public void Every_model_offered_for_download_calls_tools_and_sees_images()
+        {
+            AvailableAiModelsHelper.Suggestions.ShouldAllBe(x => x.Capabilities.Contains("tools") && x.Capabilities.Contains("vision"));
         }
 
         // ================================================================

@@ -310,12 +310,23 @@ namespace Business.Tests.Repository
             (author.Name, author.Email).ShouldBe(("Alex", "alex@example.com"));
         }
 
+        // Git refuses a commit with an empty email, so it is never left empty.
         [Fact]
         public async Task With_no_author_anywhere_a_commit_is_still_by_somebody()
         {
             GitSignature author = await CommitAuthorAsync();
 
-            author.Name.ShouldBe(Environment.UserName);
+            (author.Name, author.Email).ShouldBe((Environment.UserName, $"{Environment.UserName}@{Environment.MachineName}"));
+        }
+
+        [Fact]
+        public async Task A_git_config_with_a_name_and_no_email_still_gets_an_email()
+        {
+            _git.Configured = new GitSignature { Name = "Alex", Email = "" };
+
+            GitSignature author = await CommitAuthorAsync();
+
+            (author.Name, author.Email).ShouldBe(("Alex", $"{Environment.UserName}@{Environment.MachineName}"));
         }
 
         // ================================================================

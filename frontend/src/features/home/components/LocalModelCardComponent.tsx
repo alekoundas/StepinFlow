@@ -111,6 +111,7 @@ export default function LocalModelCardComponent() {
         options={available?.models ?? []}
         optionLabel="name"
         optionValue="name"
+        optionDisabled={(option: AiModelDto) => option.unusableReason !== ""}
         itemTemplate={(option: AiModelDto) => <AiModelOptionComponent model={option} />}
         // The list is empty until it is opened, and a model no longer downloaded is never in it.
         placeholder={status.model || "Choose a model"}

@@ -3,15 +3,12 @@ using Core.Models.Dtos;
 namespace Business.Ai.Helpers
 {
     /// <summary>
-    /// A handful of local models worth suggesting to somebody who has none.
+    /// A handful of local models worth suggesting to somebody who has none, smallest first. Each calls
+    /// tools and sees images, which every AI feature needs.
     ///
-    /// Ollama's library runs to hundreds, and it has no listing api worth relying on, so this is a
-    /// short opinionated list rather than a mirror of it. Anything not here can still be typed in -
-    /// the point is that a first choice is obvious rather than researched.
-    ///
-    /// Sizes and capabilities are approximate. Capabilities especially: Ollama will not answer for
-    /// a model you have not pulled, so these are hand kept and can drift. Once a model is installed
-    /// the real list comes from the provider instead.
+    /// Hand kept, since Ollama only answers for a model already pulled; sizes from Ollama's library,
+    /// 2026-11-13. Every request turns thinking off, and Qwen3-VL's plain tags are its thinking
+    /// models, so its instruct one is offered.
     /// </summary>
     public static class AvailableAiModelsHelper
     {
@@ -19,51 +16,52 @@ namespace Business.Ai.Helpers
         [
             new AiModelSuggestionDto
             {
-                Name = "qwen2.5:3b",
-                Size = "about 2 GB",
-                Description = "The small one. Runs on anything, and is enough to read a failed run.",
-                Capabilities = ["tools"],
-            },
-            new AiModelSuggestionDto
-            {
                 Name = "qwen3.5:4b",
-                Size = "about 3.5 GB",
-                Description = "The small one that can also see. Pick this to let the assistant read a run's screenshots.",
-                Capabilities = ["tools", "vision", "thinking"],
+                Size = "about 3.3 GB",
+                Description = "The small one, and the one StepinFlow is tested with. Start here.",
+                Capabilities = ["tools", "vision"],
             },
             new AiModelSuggestionDto
             {
-                Name = "qwen3-vl:4b",
-                Size = "about 3.5 GB",
-                Description = "Tuned for reading interfaces, so it is the better one at telling you what a screenshot shows.",
-                Capabilities = ["tools", "vision", "thinking"],
+                Name = "qwen3-vl:4b-instruct",
+                Size = "about 3.3 GB",
+                Description = "Just as small, and tuned for reading screens and interfaces. Try it if qwen3.5:4b misreads your application.",
+                Capabilities = ["tools", "vision"],
             },
             new AiModelSuggestionDto
             {
-                Name = "qwen2.5:7b",
-                Size = "about 5 GB",
-                Description = "A good balance. Start here if you have the disk and the memory.",
-                Capabilities = ["tools"],
+                Name = "qwen3.5:9b",
+                Size = "about 6.6 GB",
+                Description = "Qwen 3.5 again, bigger: a good balance once your graphics card has the memory for it.",
+                Capabilities = ["tools", "vision"],
             },
             new AiModelSuggestionDto
             {
-                Name = "llama3.1:8b",
-                Size = "about 5 GB",
-                Description = "Comparable to Qwen 7B. Worth trying if the other one disappoints.",
-                Capabilities = ["tools"],
+                Name = "gemma4:12b",
+                Size = "about 7.7 GB",
+                Description = "Google's, between the small ones and the big ones.",
+                Capabilities = ["tools", "vision"],
             },
             new AiModelSuggestionDto
             {
-                Name = "gemma2:9b",
-                Size = "about 5.5 GB",
-                Description = "Google's. Reads and summarises well.",
+                Name = "ministral-3:14b",
+                Size = "about 9.1 GB",
+                Description = "Mistral's, made to run on ordinary hardware.",
+                Capabilities = ["tools", "vision"],
             },
             new AiModelSuggestionDto
             {
-                Name = "phi4",
-                Size = "about 9 GB",
-                Description = "The biggest here, and the best at following instructions closely.",
-                Capabilities = ["tools"],
+                Name = "mistral-small3.2:24b",
+                Size = "about 15 GB",
+                Description = "Big, and careful at following instructions and calling tools.",
+                Capabilities = ["tools", "vision"],
+            },
+            new AiModelSuggestionDto
+            {
+                Name = "qwen3.5:27b",
+                Size = "about 17 GB",
+                Description = "The biggest here, for a strong graphics card. The bigger the model, the better it answers.",
+                Capabilities = ["tools", "vision"],
             },
         ];
     }

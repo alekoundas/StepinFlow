@@ -4,24 +4,22 @@ import { InputText } from "primereact/inputtext";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
+// import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
-import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
+// import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+// import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
 import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
 // import RepositoryRemoteComponent from "@/features/repository/components/RepositoryRemoteComponent";
 import { MONO, UNCOMMITTED_COLOR, formatWhen, plural } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
-/**
- * Where the flows are kept as files and who commits them. The folder is the app's own and made at
- * first launch.
- */
+/** Where the flows are kept as files. The folder is the app's own and made at first launch. */
 export default function RepositoryPanelComponent() {
   const { data: status, isError } = useRepositoryStatus();
-  const { data: settings = [] } = useAppSettings();
-  const { valueOf, edit, commit } = useSettingEditor();
+  // Hidden with who commits, below.
+  // const { data: settings = [] } = useAppSettings();
+  // const { valueOf, edit, commit } = useSettingEditor();
 
   // Opened inside the folder rather than at it: showing a file selects it in its folder. The
   // separator is the backend's, which is the system's.
@@ -32,6 +30,7 @@ export default function RepositoryPanelComponent() {
     void ElectronApiService.files.showInFolder(`${status.folderPath}${separator}.gitattributes`);
   };
 
+  /* Hidden for now: who commits.
   const authorField = (key: AppSettingKeyEnum, placeholder: string) => {
     const setting = settings.find((x) => x.key === key);
     if (!setting) return null;
@@ -58,6 +57,7 @@ export default function RepositoryPanelComponent() {
   };
 
   const fromConfig = (value: string | undefined) => (value ? `${value} (git config)` : "Not set");
+  */
 
   return (
     <Panel header="Repository">
@@ -121,10 +121,11 @@ export default function RepositoryPanelComponent() {
           </>
         )}
 
+        {/* Hidden for now: who commits, and the remote. A commit is still by somebody: the git
+            config's author, else this computer's user.
         {authorField(AppSettingKeyEnum.GIT_AUTHOR_NAME, fromConfig(status?.configuredAuthorName))}
         {authorField(AppSettingKeyEnum.GIT_AUTHOR_EMAIL, fromConfig(status?.configuredAuthorEmail))}
 
-        {/* Hidden for now: the remote.
         {status && (
           <div
             className="pt-3 border-top-1"

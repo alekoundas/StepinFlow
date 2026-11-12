@@ -16,7 +16,7 @@ export const DiscordBotSchema = z.object({
     .min(1, "Paste the webhook URL")
     .regex(
       WEBHOOK_PATTERN,
-      "That is not a Discord webhook URL. Copy it from the channel's Integrations settings.",
+      "That is not a Discord webhook URL. Copy it from Edit Channel → Integrations in Discord.",
     ),
 
   botName: z.string().max(80, "Too long for a Discord name"),

@@ -61,7 +61,6 @@ export default function AiSettingsPanelComponent() {
 
   const models = available?.models ?? [];
   const selectedModel = models.find((x) => x.name === ollamaModel);
-  const hasVision = selectedModel?.capabilities?.includes("vision") === true;
 
   // Hidden with the cloud half below.
   // const isScreenContentAllowed = savedOf(AppSettingKeyEnum.AI_SEND_SCREEN_CONTENT) === "true";
@@ -102,13 +101,15 @@ export default function AiSettingsPanelComponent() {
 
         <Row
           label="Model"
-          description="The models you have downloaded with Ollama."
+          description="The models you have downloaded with Ollama. One that cannot call tools or see images is greyed out."
         >
           <Dropdown
             value={ollamaModel}
             options={models}
             optionLabel="name"
             optionValue="name"
+            // Disabled rather than left out: a model that vanished once downloaded would look like a bug.
+            optionDisabled={(option: AiModelDto) => option.unusableReason !== ""}
             itemTemplate={(option: AiModelDto) => <AiModelOptionComponent model={option} />}
             // A model that is set but no longer downloaded would otherwise vanish from the box.
             placeholder={isFetchingModels ? "Looking..." : ollamaModel || "Choose a model"}
@@ -118,11 +119,11 @@ export default function AiSettingsPanelComponent() {
           />
         </Row>
 
-        {/* Under the dropdown it is about, and only once a model is chosen that cannot do it. */}
-        {!isCloud && selectedModel && !hasVision && (
+        {/* Under the dropdown it is about: a model chosen earlier can still fall short. */}
+        {!isCloud && selectedModel?.unusableReason && (
           <div className="flex justify-content-end -mt-2">
             <LabelComponent
-              text="Cannot read images, so run screenshots will not be sent."
+              text={selectedModel.unusableReason}
               size="xs"
               color="warning"
             />

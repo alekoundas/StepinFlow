@@ -956,9 +956,13 @@ namespace Business.Repository
                     email = configured?.Email ?? string.Empty;
             }
 
-            // Somebody, at least: a commit cannot be by nobody.
+            // Somebody, at least: git refuses a commit with no name or no email. The email is what git
+            // itself guesses, the user at this computer.
             if (name.Length == 0)
                 name = Environment.UserName;
+
+            if (email.Length == 0)
+                email = $"{Environment.UserName}@{Environment.MachineName}";
 
             return new GitSignature { Name = name, Email = email, When = _timeProvider.GetLocalNow() };
         }

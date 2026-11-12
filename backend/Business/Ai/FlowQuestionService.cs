@@ -71,7 +71,7 @@ namespace Business.Ai
             // the same approach as the OCR languages, where only what Windows can actually read is
             // offered.
             if (!await _modelService.SupportsToolsAsync(ct))
-                return Unavailable(model, $"{model} cannot call tools, so it would answer from nothing rather than from your flows. Qwen 2.5 and Llama 3.1 can; the bigger the model the better it chooses.");
+                return Unavailable(model, $"{model} cannot call tools, so it cannot read your flows to answer. Choose one that can under Settings, AI, such as qwen3.5:4b.");
 
             return new AiChatAvailabilityDto
             {

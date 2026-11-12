@@ -195,7 +195,7 @@ export default function RecordingSetupComponent({ isSubFlow, onCreated, onCancel
               className="text-sm"
               style={MUTED}
             >
-              The flow is saved as you press it, so its name is yours.
+              Record now saves the flow first, so the name is kept for it.
             </span>
             <Button
               type="submit"

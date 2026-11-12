@@ -9,30 +9,39 @@ interface Props {
  * A model and its badges, as a row of a model dropdown.
  *
  * Which model to pick is otherwise a guess: tools decides whether it can answer questions about
- * your flows at all, and vision decides whether it can be shown a screenshot.
+ * your flows at all, and vision decides whether it can be shown a screenshot. A model short of
+ * either is disabled in the dropdown, and says why under its name.
  */
 export default function AiModelOptionComponent({ model }: Props) {
   const capabilities = model.capabilities ?? [];
-  const shown = ["tools", "vision", "thinking"].filter((x) =>
-    capabilities.includes(x),
-  );
+  const shown = ["tools", "vision"].filter((x) => capabilities.includes(x));
 
   return (
-    <div className="flex align-items-center justify-content-between gap-2 w-full">
-      <LabelComponent text={model.name} />
+    <div className="flex flex-column gap-1 w-full">
+      <div className="flex align-items-center justify-content-between gap-2 w-full">
+        <LabelComponent text={model.name} />
 
-      <div className="flex align-items-center gap-1">
-        {shown.map((capability) => (
-          <CapabilityBadge
-            key={capability}
-            text={capability}
-          />
-        ))}
+        <div className="flex align-items-center gap-1">
+          {shown.map((capability) => (
+            <CapabilityBadge
+              key={capability}
+              text={capability}
+            />
+          ))}
 
-        {model.contextLength > 0 ? (
-          <CapabilityBadge text={`${Math.round(model.contextLength / 1024)}K`} />
-        ) : null}
+          {model.contextLength > 0 ? (
+            <CapabilityBadge text={`${Math.round(model.contextLength / 1024)}K`} />
+          ) : null}
+        </div>
       </div>
+
+      {model.unusableReason && (
+        <LabelComponent
+          text={model.unusableReason}
+          size="xs"
+          color="secondary"
+        />
+      )}
     </div>
   );
 }
