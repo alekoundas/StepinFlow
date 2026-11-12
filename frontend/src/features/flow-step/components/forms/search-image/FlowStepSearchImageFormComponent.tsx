@@ -30,7 +30,7 @@ import { FlowStepTemplateListComponent } from "@/features/flow-step/components/f
 import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestDialogComponent";
 import { FlowTemplateAddDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateAddDialogComponent";
 import { FlowTemplateSharedDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateSharedDialogComponent";
-import { defaultAccuracyFor } from "@/features/flow-step/components/forms/shared/match-modes";
+import { DEFAULT_ACCURACY } from "@/features/flow-step/components/forms/shared/match-modes";
 import type { ImageSearchTestRun } from "@/features/flow-step/components/forms/search-image/image-search-test";
 import { stepsSearchingFor, useFlowStepUses } from "@/features/workflow/hooks/use-flow-parts";
 
@@ -91,21 +91,6 @@ export default function FlowStepSearchImageFormComponent({
     [form],
   );
 
-  // A value tuned for one mode means nothing in the other - 0.80 under shape and brightness finds
-  // a template on a blank screen - so changing the mode puts every template on the new mode's
-  // default instead of carrying the number over. watch fires on changes only, never on load.
-  useEffect(() => {
-    const subscription = form.watch((values, { name }) => {
-      if (name !== "templateMatchMode") return;
-
-      const accuracy = defaultAccuracyFor(values.templateMatchMode);
-      applyImages((previous) =>
-        previous.map((x) => new FlowStepTemplateDto({ ...x, accuracy })),
-      );
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, applyImages]);
   const [testResult, setTestResult] = useState<ImageSearchTestResultDto | null>(
     null,
   );
@@ -222,7 +207,7 @@ export default function FlowStepSearchImageFormComponent({
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({
-        accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
+        accuracy: DEFAULT_ACCURACY,
         flowTemplate: new FlowTemplateDto({
           name: `Template ${previous.length + 1}`,
           templateImage: screenshot,
@@ -235,12 +220,12 @@ export default function FlowStepSearchImageFormComponent({
     ]);
   };
 
-  // The step links to the picture; the accuracy is its own, on the mode's default.
+  // The step links to the picture; the accuracy is its own, on the default.
   const reuseTemplate = (template: FlowTemplateDto) => {
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({
-        accuracy: defaultAccuracyFor(form.getValues().templateMatchMode),
+        accuracy: DEFAULT_ACCURACY,
         flowTemplateId: template.id,
         flowTemplate: new FlowTemplateDto(template),
       }),
@@ -356,7 +341,7 @@ export default function FlowStepSearchImageFormComponent({
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit((data) => onSubmit(buildDto(data)))}>
+      <form onSubmit={(e) => form.handleSubmit((data) => onSubmit(buildDto(data)))(e)}>
         <FlowStepFormLayoutComponent
           formMode={formMode}
           isValid={isValid}

@@ -165,7 +165,7 @@ namespace Business.Tests.FlowScript
         {
             RoundTrip trip = await ExportImportExportAsync();
 
-            trip.After.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS);
+            trip.After.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_IMAGE).TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_COLOUR);
         }
 
         // An export over an earlier one brings it up to date, and leaves alone what is not a PNG.
@@ -715,7 +715,7 @@ namespace Business.Tests.FlowScript
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.STAGE_MARKER, Name = "Sign in" }, null);
             Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SYSTEM_COMMAND, Name = "Open the shop", ShellCommandMode = ShellCommandModeEnum.LAUNCH_APP, ShellArguments = "https://www.saucedemo.com", FlowAreaId = browser.Id, CodeComment = "A fresh profile every time." }, null);
 
-            FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS }, null);
+            FlowStep find = Add(new FlowStep { FlowStepType = FlowStepTypeEnum.SEARCH_IMAGE, Name = "Find username field", SearchMode = SearchModeEnum.FIND_BEST, FlowAreaId = browser.Id, TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_COLOUR }, null);
             FlowTemplate username = new FlowTemplate { FlowId = flow.Id, Name = "template-u9d3n.png", TemplateImage = Png(120, 24), ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 };
             FlowTemplate usernameFocused = new FlowTemplate { FlowId = flow.Id, Name = "template-w2h6r.png", TemplateImage = Png(80, 20), ClickOffsetX = -4, ClickOffsetY = 30, AuthoredDpi = 96 };
             db.FlowStepTemplates.AddRange(

@@ -67,8 +67,8 @@ Wait For Image  <[ Ticker shows ]>   template <[ template-m4q8z.png ]> accuracy 
 `WAIT_UNTIL_FOUND`, written `Wait For Image`, takes the first match. It is for something that never
 stops: a bobbing icon, a scrolling ticker. A still wait on one waits out its timeout and fails with
 "found but still moving when the time ran out". A glow or a pulse in place is still, because only
-the position counts. A fade-in is not caught, since a fading thing does not move: raise that
-template's accuracy instead.
+the position counts. A fade-in is not caught, since a fading thing does not move; under
+`SHAPE_AND_COLOUR` its contrast holds it back until it has nearly faded in.
 
 Text has no still wait: `Wait For Text` reads words, and a click does not go to them.
 
@@ -135,8 +135,8 @@ Accuracy is how close a match has to be, between 0 and 1. **Each template a step
 its own**, on that step — one variant of an icon can need a looser bar than another, and two steps
 sharing a picture can search for it at different bars. There is no accuracy on the step.
 
-A new template starts on its mode's default, and changing the step's mode puts every template back
-on the new mode's default, because the same number means different things in the two modes.
+The accuracy is the shape score in both modes, so a new template starts on 0.80 whichever mode the
+step is in, and changing the mode keeps it.
 
 Raising it reduces false matches and increases misses. Lowering it does the reverse.
 
@@ -147,20 +147,38 @@ lowering the accuracy would only make the flow click the wrong thing.
 
 ## Match modes
 
-The mode is set on the step and applies to every template in it.
+The mode is set on the step and applies to every template in it. A step added in the editor starts
+on `SHAPE_AND_COLOUR`; a recorded one on `SHAPE`, because its template is cut under the cursor, often
+in its hover state.
 
-| Mode | Compares | Default accuracy | Use it for |
-|---|---|---|---|
-| `SHAPE` | the pattern, with each picture's own brightness taken out | 0.80 | nearly everything |
-| `SHAPE_AND_BRIGHTNESS` | the pixels as they are | 0.95 | telling states apart - an enabled button from a disabled one |
+| Mode | Compares | Use it for |
+|---|---|---|
+| `SHAPE` | the pattern, with each picture's own brightness and contrast taken out | something whose colour changes - an icon shown in several colours - or to find it in any state |
+| `SHAPE_AND_COLOUR` | the pattern, then the colour and the contrast where the pattern matched | telling states apart - an enabled button from a disabled one, a live research from a maxed one |
 
-`SHAPE` ignores how light or dark something is, so it finds a greyed-out button as readily as a
-live one. `SHAPE_AND_BRIGHTNESS` sees the difference, which is why it exists.
+`SHAPE` forgives how light, dark or grey something is, so it finds a greyed-out button as readily as
+a live one.
 
-Its default is high for a reason. A template is mostly background, and background always agrees,
-so at 0.80 `SHAPE_AND_BRIGHTNESS` finds a letter on a blank white screen. At 0.95 it does not.
+`SHAPE_AND_COLOUR` finds the candidates the same way and with the same score, then checks two more
+things at each one, against the template:
 
-Both compare in grayscale. Colour is never compared.
+- **Colour**: the average hue and saturation of the kept pixels, lightness left out. It may move by
+  28% of the template's own colour, or by 8 for a template with hardly any colour.
+- **Contrast**: how widely the lightness varies, after a light blur of both, so a screenshot at
+  another scale is not taken for a faded one. It must be 0.85 to 1.18 of the template's.
+
+A candidate that fails either is **refused**, and the search goes on to the next one down, so a
+greyed copy with a better shape does not hide the live one. Both limits are fixed, not per step: on
+simulated PCs a true match moved less than this, and another state of the same picture more.
+
+Night light, the monitor's brightness, its calibration and HDR do not reach a screenshot on
+Windows - an SDR app comes out the same with HDR on, at any SDR brightness - so none of them moves
+these numbers.
+
+A refusal names its check. "refused by its colour, 41 apart where 17 is allowed" in a step's
+message means the shape was found and is in another state: greyed, maxed, another colour. Lowering
+the accuracy changes nothing. If that state should count too, use `SHAPE`, or add a template of it
+as another alternative.
 
 ## How templates survive another screen
 
@@ -196,8 +214,11 @@ size it was captured, on every screen.
 - **A single-colour template matches everywhere** in `SHAPE` - a picture with no variation scores
   1.0 at every position, so the step succeeds and clicks the first spot. Capture something with
   detail in it.
-- **Colour is never compared**, so two states with the same lightness in a different hue look the
-  same to both modes.
+- **A small added detail is not a state.** `SHAPE_AND_COLOUR` compares the average colour, so a
+  button with a small badge and the same button without it look alike - the badge is a tenth of the
+  picture. Search for the badge as a template of its own.
+- **States less than about 20% apart pass.** A button 15% fainter or darker is within what another
+  PC can do to a true match, so neither mode tells it apart.
 
 Templates are stored as PNG, never JPEG. JPEG artifacts wreck normalised template matching.
 
@@ -209,8 +230,10 @@ found and with what score. It clicks nothing.
 **Details** opens what the test found, one template at a time. Each row has the template's score
 against its accuracy and a strip from 0 to 1 marking its hit, its accuracy, and the closest place
 on the screenshot that scored under it. Picking a row draws them on the screenshot - the hit solid,
-with where it would click, and the closest place dashed - and shows the template beside both, so
-"what did it nearly match instead?" is answered by looking. It suggests an accuracy: halfway between
+with where it would click, the closest place dashed, and under `SHAPE_AND_COLOUR` each shape its
+colour or contrast refused dotted, with the check that refused it - and shows the template beside
+them, so "what did it nearly match instead?" is answered by looking. A hit shows its colour and
+contrast too. It suggests an accuracy: halfway between
 the hit and the closest wrong place, or, when nothing was found, just under the closest place - which
 is only right if that place is the thing. **Use** writes it to the step's form, in edit mode, and
 Save keeps it. When the hit and the closest wrong place score close together, a tighter crop of the

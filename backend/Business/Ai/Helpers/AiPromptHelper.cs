@@ -30,6 +30,9 @@ namespace Business.Ai.Helpers
               against that template's. Just under means the accuracy is a shade tight; far under
               means the template was not on screen at the size it was searched for, and lowering the
               accuracy would only make the flow click the wrong thing.
+            - "refused by its colour" or "refused by its contrast" in that message means the shape
+              was found and looked different there: the thing is on screen in another state -
+              greyed, faded, dimmed, another colour. Lowering the accuracy changes nothing.
 
             Your answer:
             - Say which step failed and why, naming it.
@@ -119,6 +122,12 @@ namespace Business.Ai.Helpers
               says - see "How templates survive another screen" in the guide. Never suggest lowering
               the accuracy for a score like this: it would make the flow click something that is
               not the thing it was looking for.
+              "refused by its colour" or "refused by its contrast" in the Message -> a search in
+              SHAPE_AND_COLOUR found the shape, at the score given, and the colour or contrast there
+              did not match the template's: the thing is on screen in another state - greyed,
+              faded, dimmed, another colour. That is usually the flow working, and lowering the
+              accuracy changes nothing. Only if that state should count too is the fix SHAPE, or
+              a template of that state.
             - An area's ScalesWith says what its contents follow on another screen: DPI for a
               browser or a normal app, AREA for a game. The wrong one makes every template in it
               the wrong size, and is a better explanation than accuracy for a flow that works on one

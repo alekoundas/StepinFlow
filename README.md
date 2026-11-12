@@ -72,8 +72,9 @@ answer that here:
 
 ### See the screen
 
-- **Image search** — OpenCV template matching with two modes: *shape*, and *shape and brightness* for
-  telling an enabled button from a disabled one
+- **Image search** — OpenCV template matching with two modes: *shape*, and *shape and colour*, which
+  also checks the colour and contrast where the shape matched, for telling an enabled button from a
+  disabled one
 - **Accuracy per template**, and several templates as alternatives for one thing
 - **Four search modes** — best match, every match, wait until found, wait until gone
 - **Read text** — PaddleOCR's models over a region, the same on Windows, macOS and Linux, with a regex

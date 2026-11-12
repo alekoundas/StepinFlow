@@ -42,7 +42,7 @@ namespace Business.Tests.FlowScript
         [InlineData("on   screen   offset 1 2", "KEYWORD on screen | KEYWORD offset | NUMBER 1 | NUMBER 2 | END_OF_LINE")]
         [InlineData("is not empty", "KEYWORD is not empty | END_OF_LINE")]
         [InlineData("is not <[ x ]>", "KEYWORD is not | KEYWORD <[ | QUOTE x | KEYWORD ]> | END_OF_LINE")]
-        [InlineData("match shape and brightness", "KEYWORD match | KEYWORD shape and brightness | END_OF_LINE")]
+        [InlineData("match shape and colour", "KEYWORD match | KEYWORD shape and colour | END_OF_LINE")]
         public void Words_join_into_the_longest_keyword(string line, string expected)
         {
             Describe(line).ShouldBe(expected);

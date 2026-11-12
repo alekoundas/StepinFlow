@@ -1,3 +1,6 @@
+using Core.Enums;
+using Core.Models.Business.OpenCV;
+
 namespace Core.Models.Dtos
 {
     /// <summary>
@@ -24,6 +27,10 @@ namespace Core.Models.Dtos
         public int TotalMatches { get; set; }
         public bool WouldSucceed { get; set; }
 
+        /// <summary>The contrast Shape and colour allows, the same for every template.</summary>
+        public float ContrastMin { get; set; } = ColourCheckLimits.CONTRAST_MIN;
+        public float ContrastMax { get; set; } = ColourCheckLimits.CONTRAST_MAX;
+
         public List<ImageSearchTestImageDto> Images { get; set; } = new List<ImageSearchTestImageDto>();
     }
 
@@ -45,9 +52,10 @@ namespace Core.Models.Dtos
         public float Scale { get; set; }
 
         /// <summary>
-        /// Every hit, capped by MaxMatches, followed by the next candidates that did not clear the
-        /// accuracy. IsAccepted says which is which, so the details view can draw a near miss
-        /// differently from a real hit rather than hiding it.
+        /// Every hit, capped by MaxMatches, then the candidates whose shape passed and whose colour
+        /// or contrast did not, then the next ones that did not clear the accuracy. IsAccepted and
+        /// RefusedBy say which is which, so the details view can draw each its own way rather than
+        /// hiding any.
         /// </summary>
         public List<ImageSearchTestMatchDto> Matches { get; set; } = new List<ImageSearchTestMatchDto>();
     }
@@ -58,7 +66,7 @@ namespace Core.Models.Dtos
     /// </summary>
     public class ImageSearchTestMatchDto
     {
-        /// <summary>False for a candidate that scored under the accuracy and was not a match.</summary>
+        /// <summary>False for a candidate that scored under the accuracy, or that its colour or contrast refused.</summary>
         public bool IsAccepted { get; set; } = true;
 
         public int X { get; set; }
@@ -68,6 +76,12 @@ namespace Core.Models.Dtos
 
         public float Score { get; set; }
         public float Scale { get; set; }
+
+        /// <summary>Shape and colour only: the colour check at this candidate, its limit, the contrast, and what refused it.</summary>
+        public float? Colour { get; set; }
+        public float? ColourLimit { get; set; }
+        public float? Contrast { get; set; }
+        public MatchRefusalEnum? RefusedBy { get; set; }
 
         /// <summary>Where the cursor would actually land: the template's click offset, scaled.</summary>
         public int ClickX { get; set; }

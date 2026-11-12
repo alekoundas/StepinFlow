@@ -5,7 +5,7 @@ import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
-import { hitsOf, nearMissOf } from "@/features/flow-step/components/forms/search-image/image-search-test";
+import { hitsOf, nearMissOf, refusedOf } from "@/features/flow-step/components/forms/search-image/image-search-test";
 
 interface Props {
   name: string;
@@ -32,6 +32,7 @@ export function FlowStepSearchImageTestRowComponent({
 }: Props) {
   const hits = hitsOf(image);
   const nearMiss = nearMissOf(image);
+  const refused = refusedOf(image);
   const lowestHit = hits.length > 0 ? Math.min(...hits.map((x) => x.score)) : null;
   const isMoved = accuracy !== tested.accuracy;
 
@@ -43,6 +44,8 @@ export function FlowStepSearchImageTestRowComponent({
         value={hits.length > 1 ? `${hits.length} found · ${image.bestScore.toFixed(2)}` : `found ${image.bestScore.toFixed(2)}`}
       />
     );
+  else if (refused.length > 0)
+    verdict = <Tag severity="warning" value={`refused ${refused[0].score.toFixed(2)}`} />;
   else if (nearMiss !== null)
     verdict = <Tag severity="danger" value={`closest ${nearMiss.score.toFixed(2)}`} />;
 
@@ -103,6 +106,9 @@ export function FlowStepSearchImageTestRowComponent({
           <Tick score={tested.accuracy} colour="var(--text-color)" isBar />
           {isMoved && <Tick score={accuracy} colour="var(--primary-color)" isBar />}
           {nearMiss !== null && <Tick score={nearMiss.score} colour="var(--orange-400)" />}
+          {refused.map((x, index) => (
+            <Tick key={`refused-${index}`} score={x.score} colour="var(--red-400)" />
+          ))}
           {hits.map((x, index) => (
             <Tick key={index} score={x.score} colour="var(--green-500)" />
           ))}

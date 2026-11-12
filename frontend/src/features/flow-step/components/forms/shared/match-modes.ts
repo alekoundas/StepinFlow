@@ -4,28 +4,22 @@ export interface MatchMode {
   value: TemplateMatchModeEnum;
   label: string;
   description: string;
-  // Where a new template's accuracy starts. The two modes are different instruments, so one
-  // number cannot mean the same strictness in both.
-  defaultAccuracy: number;
 }
+
+// The accuracy is the shape score in both modes, so one default serves both.
+export const DEFAULT_ACCURACY = 0.8;
 
 export const MATCH_MODES: MatchMode[] = [
   {
     value: TemplateMatchModeEnum.SHAPE,
     label: "Shape",
     description:
-      "Matches the outline and forgives brightness, so it still finds the button on another PC's screen or theme. Cannot tell an enabled button from a disabled one.",
-    defaultAccuracy: 0.8,
+      "Matches the outline and forgives colour and brightness, so it finds the thing in any state. For something whose colour changes, such as an icon shown in several colours.",
   },
   {
-    value: TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS,
-    label: "Shape and brightness",
+    value: TemplateMatchModeEnum.SHAPE_AND_COLOUR,
+    label: "Shape and colour",
     description:
-      "Brightness counts too. For state: enabled or disabled, checked or not, lit or dim. Keep each template's accuracy high - around 0.95 - or it matches almost anything on a plain background.",
-    defaultAccuracy: 0.95,
+      "Finds the shape, then checks its colour and contrast there, so a greyed, faded or recoloured copy of the same picture is passed over. For telling states apart: enabled or disabled, live or done.",
   },
 ];
-
-export function defaultAccuracyFor(mode: TemplateMatchModeEnum | undefined): number {
-  return MATCH_MODES.find((x) => x.value === mode)?.defaultAccuracy ?? 0.8;
-}

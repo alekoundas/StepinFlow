@@ -28,9 +28,8 @@ namespace Business.FlowScript.Parsers.Steps
             };
 
             // A template is named by its file, and comes with what the Templates lines say about it.
-            // A template with no accuracy takes its mode's default, and the mode comes after the templates.
+            // A template with no accuracy keeps the default, which is the same in both modes.
             List<FlowStepTemplate> templates = new List<FlowStepTemplate>();
-            List<FlowStepTemplate> withoutAccuracy = new List<FlowStepTemplate>();
             while (ExpectOptionalKeyword(ScriptSymbolEnum.TEMPLATE))
             {
                 ExpectKeyword(ScriptSymbolEnum.QUOTE_OPEN);
@@ -45,8 +44,6 @@ namespace Business.FlowScript.Parsers.Steps
 
                 if (ExpectOptionalKeyword(ScriptSymbolEnum.ACCURACY))
                     template.Accuracy = ExtractFloat();
-                else
-                    withoutAccuracy.Add(template);
 
                 templates.Add(template);
             }
@@ -55,9 +52,6 @@ namespace Business.FlowScript.Parsers.Steps
 
             if (ExpectOptionalKeyword(ScriptSymbolEnum.MATCH))
                 step.TemplateMatchMode = ExtractKeyword<TemplateMatchModeEnum>();
-
-            foreach (FlowStepTemplate template in withoutAccuracy)
-                template.Accuracy = DefaultAccuracy(step.TemplateMatchMode);
 
             step.FlowArea = ExtractOptionalArea();
 
@@ -70,18 +64,6 @@ namespace Business.FlowScript.Parsers.Steps
             ExpectEnd();
 
             return step;
-        }
-
-        /// <summary>
-        /// What a template starts on when the file gives it no accuracy. Per mode, because the two
-        /// are different instruments and one number cannot mean the same in both.
-        /// </summary>
-        public static float DefaultAccuracy(TemplateMatchModeEnum mode)
-        {
-            if (mode == TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)
-                return 0.95f;
-
-            return 0.8f;
         }
     }
 }

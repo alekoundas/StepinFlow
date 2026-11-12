@@ -81,6 +81,41 @@ namespace Business.Tests.Executions.Workers
             result.BestTemplateId.ShouldBe(2);
         }
 
+        // The shape was there in another state, which lowering the accuracy would not mend.
+        [Fact]
+        public async Task A_miss_says_which_template_had_the_shape_and_what_refused_it()
+        {
+            _matcher.Answer(1, RefusedFor(MatchRefusalEnum.COLOUR, nearMiss: 0.4f)).NotFound(2, 0.62f);
+
+            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.FIND_BEST, Template(1, "research", 0.8f), Template(2, "research icon", 0.8f)));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.FAILURE);
+            result.Message.ShouldBe("no template matched, closest research icon at 0.62, research at 0.97 refused by its colour, 41 apart where 17 is allowed - research at 0.80, research icon at 0.80, FIND_BEST");
+            result.BestScore.ShouldBe(0.62f);
+        }
+
+        [Fact]
+        public async Task A_contrast_refusal_says_the_contrast_and_what_is_allowed()
+        {
+            _matcher.Answer(1, RefusedFor(MatchRefusalEnum.CONTRAST, nearMiss: 0.4f));
+
+            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.FIND_BEST, Template(1, "claim", 0.8f)));
+
+            result.Message.ShouldBe("no template matched, closest claim at 0.40, claim at 0.97 refused by its contrast, 0.70 where 0.85 to 1.18 is allowed - claim at 0.80, FIND_BEST");
+        }
+
+        // Gone as it was: the shape is still there, greyed, and the message says so.
+        [Fact]
+        public async Task Waiting_for_something_to_go_says_what_is_left_of_it()
+        {
+            _matcher.Answer(1, RefusedFor(MatchRefusalEnum.COLOUR, nearMiss: 0.4f));
+
+            (ExecutionStep result, _) = await SearchImage(ImageSearch(SearchModeEnum.WAIT_UNTIL_NOT_FOUND, Template(1, "start", 0.8f)));
+
+            result.Outcome.ShouldBe(StepOutcomeEnum.SUCCESS);
+            result.Message.ShouldBe("No longer on screen as it was: start at 0.97 refused by its colour, 41 apart where 17 is allowed.");
+        }
+
         [Fact]
         public async Task Find_all_keeps_every_hit_for_the_loop_and_answers_with_the_first()
         {
@@ -346,6 +381,16 @@ namespace Business.Tests.Executions.Workers
         private static AreaResolution NoWindow()
         {
             return AreaResolution.Fail(@"No window matches ""Browser"".", AreaUnresolvedEnum.NOT_ON_SCREEN);
+        }
+
+        // The shape at 0.97, its colour 41 apart where 17 is allowed or its contrast 0.70.
+        private static TemplateMatchOutcome RefusedFor(MatchRefusalEnum refusedBy, float nearMiss)
+        {
+            return new TemplateMatchOutcome
+            {
+                Refused = [new TemplateMatchResult { Width = 10, Height = 10, Score = 0.97f, Scale = 1f, Colour = 41.2f, ColourLimit = 16.8f, Contrast = 0.7f, RefusedBy = refusedBy }],
+                Rejected = [new TemplateMatchResult { Width = 10, Height = 10, Score = nearMiss, Scale = 1f }],
+            };
         }
     }
 }

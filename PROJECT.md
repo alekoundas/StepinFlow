@@ -1366,7 +1366,7 @@ Templates:
   <[ template-k3x9q.png ]>    click 150 20   captured 922x648 at 120dpi
 
 Steps:
-Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97   match shape and brightness   in <[ Browser ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.9   match shape and colour   in <[ Browser ]>
 ```
 
 Facts about the picture go in the header - the click point, and the area size and DPI it was
@@ -1723,31 +1723,77 @@ a 0 to 1 strip each - hit, accuracy, closest wrong place - and draws the picked 
 screenshot, its hit and near miss cut out beside the template. The accuracy to use sits between the
 lowest hit and that near miss, so it is suggested halfway (`image-search-test.ts`); with no hit, just
 under the near miss, worded as only right if that box is the thing. One near miss is all the bar
-needs: it is the highest wrong score. SikuliX's matching preview and Eggplant's Image Doctor answer
+needs: it is the highest wrong score. Under Shape and colour the shapes its checks refused come back
+too, drawn dotted with the check that refused them, and a hit carries its colour and contrast; a
+refused one is never the near miss, since lowering the bar would not find it. SikuliX's matching preview and Eggplant's Image Doctor answer
 the same question; a live slider was left out, since a suggestion and Test again do its job with
 less to read. The form renders the dialog itself rather than through the dialog store, which keeps
 elements, because **Use** writes to the form (in edit mode only, so Save keeps it) and **Test
 again** replaces the result under it. It resizes with the mouse (PrimeReact's `resizable`).
 
-**Two match modes, each with its own default accuracy.**
+**Two match modes, one accuracy.** Both find candidates with masked `CCoeffNormed` on grayscale,
+so the accuracy is the shape score in both and a template starts on 0.80 in either. Shape and
+colour then checks each candidate over the bar, and only those (`OpenCvService.IsSameColour`):
 
-| | `SHAPE` - default, 0.80 | `SHAPE_AND_BRIGHTNESS` - 0.95 |
+| | `SHAPE` | `SHAPE_AND_COLOUR` |
 | --- | --- | --- |
-| the right template | 1.000 | 1.000 |
-| letter A, screen blank white | 0.000 | **0.866** |
-| letter A, only B on screen | 0.523 | **0.878** |
-| enabled button, disabled one on screen | **1.000** | 0.937 |
+| the right template | 1.000 | 1.000, colour 0 apart, contrast 1.00 |
+| letter A, screen blank white | 0.000 | 0.000 |
+| letter A, only B on screen | 0.523 | 0.523 |
+| enabled button, disabled one on screen | **1.000**, found | 1.000, refused: colour 25 apart, 16 allowed |
+| the same, template cut 10 pixels wide | **1.000**, found | 1.000, refused: colour 18 apart, 12 allowed |
 
 `OpenCvServiceMatchModeTests` measures every cell on screenshots headless Edge rendered - a letter
 in Segoe UI on white, a PrimeReact button enabled and disabled - with each template cut from its
-screenshot 4 pixels wide of it, so the table is checked on every test pass rather than claimed. A UI
-crop is mostly background and background always agrees, so brightness-and-shape scores high
-whatever the foreground does - at 0.80 it finds an "A" on an empty screen; at 0.95 it rejects all
-three wrong cases. And shape alone clicks a disabled button, which is the reason the second mode
-exists: PrimeReact disables a button by drawing it at 60% opacity, and a fade is exactly the change
-shape is built to forgive. The other four OpenCV methods
-are gone: the unnormalised ones return scores in the millions that no 0..1 threshold can judge, and
+screenshot 4 pixels wide of it, so the table is checked on every test pass rather than claimed.
+Shape alone clicks a disabled button: PrimeReact disables one by drawing it at 60% opacity, and a
+fade is exactly the change shape is built to forgive. The other four OpenCV methods are gone: the
+unnormalised ones return scores in the millions that no 0..1 threshold can judge, and
 `CCorrNormed` scores 0.95 against blank grey.
+
+Colour is the distance between the average Lab a and b of the kept pixels, lightness left out,
+allowed up to 28% of the template's own colour and never less than 8 (`ColourCheckLimits`).
+Contrast is how widely Lab lightness varies over the kept pixels after a blur of sigma 1.5 that only
+kept pixels feed, allowed from 0.85 to 1.18 of the template's. A candidate failing either is refused
+and the search goes on to the next peak, up to 20 refusals, so a greyed copy with the better shape
+cannot hide the live one. The refusals come back as `TemplateMatchOutcome.Refused`, the best across
+the templates as `ImageSearchResult.BestRefused`, and a miss says so: `research at 0.97 refused by
+its colour, 41 apart where 17 is allowed`.
+
+**Why colour and contrast rather than brightness.** The mode this replaced, Shape and brightness,
+was `SqDiffNormed` on grayscale, which mostly measures average brightness. A UI crop is mostly
+background and background always agrees, so it found an "A" on an empty screen at 0.80, a phoenix
+for a potion in Firestone at 0.96, and the disabled button whenever the template was cut 10 pixels
+wide (0.964 against its 0.95). Hue alone is not enough either: the disabled PrimeReact button keeps
+its hue within 5 degrees and only loses saturation, so the colour is hue and saturation together.
+Colour cannot see a dimmed or faded grey thing, and contrast can. Contrast is measured blurred
+because a screenshot at another display scale is softer: a plain spread refused the true match of 9
+of 114 templates under a 0.8 pixel blur.
+
+**The limits are fixed, and sized on simulated PCs.** The 114 templates of every flow and the test
+assets were compared with copies of themselves changed the way another PC changes a screenshot -
+softer from scaling, a game's gamma at 0.85 and 1.15, a colour-managed browser on a wide-gamut
+screen either way round, saturation 15% either way - and every one was accepted but one, under the
+stronger gamma. Copies changed into another state - 20% fainter on white or on dark, 20% darker,
+greyed - were all refused, but for templates with too little colour to grey. A state 15% apart
+mostly passes: a 20% one reaches a contrast of 0.84 and a true match on another PC goes down to
+0.86, so 20% is about the finest a fixed limit separates. On the 175 Firestone screenshots stored at
+the time, the mode agreed with the old one on every step but a close button the old one missed at
+0.950. Night light, the monitor's brightness and its calibration do not reach a screenshot, and
+neither did HDR: on the development PC an SDR app scored 1.00 under Shape and brightness with HDR on,
+at every SDR brightness, against a template captured with it off. A second slider was left out,
+since a limit tuned on one PC is the one that fails on the next; Eggplant's own advice is to use its
+second tolerance sparingly.
+
+**The migration, `ShapeAndColour`, moves every Shape and brightness step across.** A template on the
+old default, 0.95, takes the new one, 0.80. One set stricter keeps a strict shape bar, 0.95, since
+it was raised for something the colour may not see: Firestone's Daily missions with its small red
+badge, which at the average colour is the same button without it (shape 0.90, colour 8 apart where
+17 is allowed). The badge as a template of its own is the lasting fix.
+
+**A step made in the editor starts on Shape and colour**, a recorded one on Shape, since its
+template is cut under the cursor and often in its hover state. A script line without `match` is
+Shape.
 
 **Accuracy belongs to each template**, because one variant of an icon can need a looser bar than
 another. A failure names the template that came closest - `no template matched, closest play hover
@@ -1791,9 +1837,11 @@ says the ratio was wrong.
 re-renders text rather than scaling it, so a word captured at 100% scores 0.67 at 125% where an
 icon scores 0.93: capture icons with Find Image, read words with Search Text. A single-colour
 template matches everywhere, because OpenCV defines a template with no variance as a perfect match.
-Brightness-and-shape is only as strict as the template is tight: the same button cut 10 pixels wide
-of it rather than 4 finds the disabled one at 0.964, past the bar, because every pixel of
-background added agrees. And colour is never compared - both modes match in grayscale.
+Shape and colour compares the average colour, so a state shown by a small detail - a badge - is not
+told apart; the badge is a template of its own. On macOS a screenshot comes in the display's colour
+space, often Display P3, which would move the colour of a flow made on a PC; the macOS capture will
+have to convert it to sRGB. A template cut from HDR content itself, such as an HDR game, is
+tone-mapped into the 8-bit screenshot and has not been tested.
 
 `SEARCH_TEXT` captures the area, reads it with OCR at the area's DPI, optionally keeps the part a
 regex captures, and evaluates the condition against it: as text, as a number, or by its length in

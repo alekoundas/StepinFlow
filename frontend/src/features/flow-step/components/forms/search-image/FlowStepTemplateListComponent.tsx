@@ -9,6 +9,8 @@ import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
+import { MatchRefusalEnum } from "@/shared/enums/backend/match-refusal-enum";
+import { refusedOf } from "@/features/flow-step/components/forms/search-image/image-search-test";
 
 interface Props {
   images: FlowStepTemplateDto[];
@@ -166,16 +168,7 @@ export function FlowStepTemplateListComponent({
                 </div>
               </div>
 
-              {result && (
-                <Tag
-                  severity={result.isFound ? "success" : "danger"}
-                  value={
-                    result.isFound
-                      ? `found ${result.matchCount} · ${result.bestScore.toFixed(2)}`
-                      : `not found · ${result.bestScore.toFixed(2)}`
-                  }
-                />
-              )}
+              {result && <ResultTag result={result} />}
 
               {!isDisabled && (
                 <ActionsMenuComponent
@@ -213,5 +206,33 @@ export function FlowStepTemplateListComponent({
         );
       })}
     </div>
+  );
+}
+
+// Found, the right shape refused for its colour, or not found, with the score that says how close.
+function ResultTag({ result }: { result: ImageSearchTestImageDto }) {
+  const refused = refusedOf(result);
+
+  if (result.isFound)
+    return (
+      <Tag
+        severity="success"
+        value={`found ${result.matchCount} · ${result.bestScore.toFixed(2)}`}
+      />
+    );
+
+  if (refused.length > 0)
+    return (
+      <Tag
+        severity="warning"
+        value={`refused for its ${refused[0].refusedBy === MatchRefusalEnum.CONTRAST ? "contrast" : "colour"} · ${refused[0].score.toFixed(2)}`}
+      />
+    );
+
+  return (
+    <Tag
+      severity="danger"
+      value={`not found · ${result.bestScore.toFixed(2)}`}
+    />
   );
 }

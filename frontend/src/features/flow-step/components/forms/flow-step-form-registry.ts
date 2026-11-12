@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import type { FormMode } from "@/shared/enums/form-mode-enum";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
+import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 import FlowStepWaitFormComponent from "@/features/flow-step/components/forms/wait/FlowStepWaitFormComponent";
@@ -99,9 +100,14 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
     newStepValues: () => ({}),
   },
 
+  // A new search tells states apart. A recorded one stays on shape, since its template is cut
+  // under the cursor, often in its hover state.
   [FlowStepTypeEnum.SEARCH_IMAGE]: {
     component: FlowStepSearchImageFormComponent,
-    newStepValues: () => ({ name: "Image Search" }),
+    newStepValues: () => ({
+      name: "Image Search",
+      templateMatchMode: TemplateMatchModeEnum.SHAPE_AND_COLOUR,
+    }),
   },
 
   [FlowStepTypeEnum.SEARCH_TEXT]: {

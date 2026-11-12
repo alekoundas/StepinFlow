@@ -772,21 +772,21 @@ modification, which throws away the one thing this layout is for.
 ### On the step: how it is searched for
 
 ```
-Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.97  template <[ template-q7m5c.png ]> accuracy 0.9   match shape and brightness   in <[ Login form ]>
+Find Image  <[ Find login ]>   template <[ template-k3x9q.png ]> accuracy 0.9  template <[ template-q7m5c.png ]> accuracy 0.85   match shape and colour   in <[ Login form ]>
 ```
 
 The templates are alternatives: any one found is enough, tried in the order written.
 
 - **`accuracy`** - follows the template it belongs to, so it cannot be read as the step's. Each
-  template has its own: one variant of an icon can need a looser bar than another. Left out, it is
-  the mode's default.
-- **`match shape and brightness`** - the mode, for every template in the step. Written only when it
-  is not the default, `match shape`.
+  template has its own: one variant of an icon can need a looser bar than another. It is the shape
+  score in both modes. Left out, it is 0.8.
+- **`match shape and colour`** - the mode, for every template in the step. Written only when it is
+  not `match shape`, which is what a line without it is.
 
-| mode | compares | default accuracy |
-| --- | --- | --- |
-| `shape` | the pattern, with each picture's own brightness subtracted | 0.8 |
-| `shape and brightness` | the pixels as they are - tells an enabled button from a disabled one | 0.95 |
+| mode | compares |
+| --- | --- |
+| `shape` | the pattern, with each picture's own brightness and contrast taken out |
+| `shape and colour` | the pattern, then the colour and the contrast where it matched - tells an enabled button from a disabled one |
 
 ### In the header: what the picture is
 

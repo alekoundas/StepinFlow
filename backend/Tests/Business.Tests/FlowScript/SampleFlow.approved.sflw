@@ -42,7 +42,7 @@ Steps:
 # A fresh profile every time.
 Launch          <[ Open the shop ]>   opens <[ Browser ]>   with <[ https://www.saucedemo.com ]>
 
-Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and brightness   in <[ Browser ]>
+Find Image      <[ Find username field ]>   template <[ template-u9d3n.png ]> accuracy 0.97  template <[ template-w2h6r.png ]> accuracy 0.9   match shape and colour   in <[ Browser ]>
  Success:
   Move            to <[ Find username field ]>
   Click

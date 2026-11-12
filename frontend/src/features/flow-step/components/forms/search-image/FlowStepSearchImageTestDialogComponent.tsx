@@ -12,11 +12,14 @@ import { FlowStepSearchImageTestRowComponent } from "@/features/flow-step/compon
 import { FlowStepSearchImageTestViewerComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestViewerComponent";
 import { FlowStepSearchImageTestPatchComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestPatchComponent";
 import {
+  checksOf,
   hitsOf,
   isSameTemplates,
   modeLineOf,
   nameOf,
   nearMissOf,
+  refusalOf,
+  refusedOf,
   suggestAccuracy,
   usedIndexes,
   verdictOf,
@@ -151,6 +154,7 @@ export default function FlowStepSearchImageTestDialogComponent({
                 height={result.searchAreaHeight}
                 hits={hitsOf(result.images[selected])}
                 nearMiss={nearMissOf(result.images[selected])}
+                refused={refusedOf(result.images[selected])}
               />
 
               <Detail
@@ -228,8 +232,10 @@ function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy
   const tested = run.images[index];
   const hits = hitsOf(image);
   const nearMiss = nearMissOf(image);
+  const refused = refusedOf(image);
   const suggestion = suggestAccuracy(image);
   const screenshot = result.screenshot ?? "";
+  const hitChecks = hits.length > 0 ? checksOf(hits[0]) : null;
 
   let advice = "Nothing on the screenshot resembles it.";
   if (hits.length > 0)
@@ -249,9 +255,16 @@ function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy
         )}
         {hits.length > 0 && (
           <FlowStepSearchImageTestPatchComponent
-            label={`Hit · ${hits[0].score.toFixed(2)}`}
+            label={`Hit · ${hits[0].score.toFixed(2)}${hitChecks ? ` · ${hitChecks}` : ""}`}
             outline="2px solid var(--green-400)"
             source={{ screenshot, box: hits[0] }}
+          />
+        )}
+        {refused.length > 0 && (
+          <FlowStepSearchImageTestPatchComponent
+            label={`Refused · ${refused[0].score.toFixed(2)} · ${refusalOf(refused[0], result)}`}
+            outline="2px dotted var(--red-400)"
+            source={{ screenshot, box: refused[0] }}
           />
         )}
         {nearMiss && (
@@ -271,7 +284,19 @@ function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy
         />
       )}
 
-      {suggestion === null && (
+      {refused.length > 0 && (
+        <Message
+          severity={hits.length > 0 ? "info" : "warn"}
+          className="w-full justify-content-start"
+          text={
+            hits.length > 0
+              ? `Passed over ${refused.length} with its shape but another colour or contrast - the same thing in another state - and took the one that matched.`
+              : "The dotted box has its shape but not its colour or contrast: most likely the same thing in another state - greyed, faded, another colour. Lowering the accuracy will not find it. If that state should count too, use Shape, or add a template of it."
+          }
+        />
+      )}
+
+      {suggestion === null && refused.length === 0 && (
         <LabelComponent
           text={advice}
           size="sm"

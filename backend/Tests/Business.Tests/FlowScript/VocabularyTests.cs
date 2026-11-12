@@ -160,7 +160,7 @@ namespace Business.Tests.FlowScript
 
         [Theory]
         [InlineData(TemplateMatchModeEnum.SHAPE)]
-        [InlineData(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS)]
+        [InlineData(TemplateMatchModeEnum.SHAPE_AND_COLOUR)]
         public void A_match_mode_is_read_back_as_written(TemplateMatchModeEnum mode)
         {
             FlowScriptSchema schema = Read($"Templates:\n  <[ a.png ]> click 1 2\nSteps:\nFind Image <[ x ]> template <[ a.png ]> match {ScriptKeywordCatalog.GetTextOfKeyword(mode)}");

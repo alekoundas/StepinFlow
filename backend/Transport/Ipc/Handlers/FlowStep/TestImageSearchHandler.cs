@@ -100,12 +100,18 @@ namespace Transport.Ipc.Handlers
                         Scale = match.Scale,
                         ClickX = click.X,
                         ClickY = click.Y,
+                        Colour = match.Colour,
+                        ColourLimit = match.ColourLimit,
+                        Contrast = match.Contrast,
+                        RefusedBy = match.RefusedBy,
                     };
                 }
 
-                // Hits first, then the next ones down, all in area relative coordinates so the
-                // details view can draw them on the screenshot as they are.
+                // Hits first, then the right shapes refused for their colour, then the next ones
+                // down, all in area relative coordinates so the details view can draw them on the
+                // screenshot as they are.
                 imageResult.Matches = matches.Select(x => ToDto(x, true))
+                    .Concat(outcome.Refused.Select(x => ToDto(x, false)))
                     .Concat(outcome.Rejected.Select(x => ToDto(x, false)))
                     .ToList();
 

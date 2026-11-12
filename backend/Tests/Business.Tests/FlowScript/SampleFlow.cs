@@ -62,7 +62,7 @@ namespace Business.Tests.FlowScript
                 Name = "Find username field",
                 SearchMode = SearchModeEnum.FIND_BEST,
                 FlowArea = browser,
-                TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS,
+                TemplateMatchMode = TemplateMatchModeEnum.SHAPE_AND_COLOUR,
                 FlowStepTemplates =
                 [
                     new FlowStepTemplate { OrderNumber = 0, Accuracy = 0.97f, FlowTemplate = new FlowTemplate { Name = "template-u9d3n.png", ClickOffsetX = 60, ClickOffsetY = 12, AuthoredFlowAreaWidth = 1920, AuthoredFlowAreaHeight = 1080, AuthoredDpi = 120 } },

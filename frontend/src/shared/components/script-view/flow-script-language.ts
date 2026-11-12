@@ -92,7 +92,7 @@ const OPTIONS = [
   "longer than",
   "shorter than",
   "starts with",
-  "shape and brightness",
+  "shape and colour",
   "shape",
   "right",
   "middle",

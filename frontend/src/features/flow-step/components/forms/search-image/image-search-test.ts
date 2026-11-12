@@ -1,3 +1,4 @@
+import { MatchRefusalEnum } from "@/shared/enums/backend/match-refusal-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type {
@@ -37,7 +38,46 @@ export const hitsOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[
 
 /** The best candidate under the bar. The search keeps one, the highest. */
 export const nearMissOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto | null =>
-  image.matches.find((x) => !x.isAccepted) ?? null;
+  image.matches.find((x) => !x.isAccepted && !x.refusedBy) ?? null;
+
+/** Shape and colour: the shapes over the bar whose colour or contrast refused them, best first. */
+export const refusedOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[] =>
+  image.matches.filter((x) => !!x.refusedBy);
+
+/** Which check refused a candidate, and its number against what is allowed. */
+export function refusalOf(match: ImageSearchTestMatchDto, result: ImageSearchTestResultDto): string {
+  if (match.refusedBy === MatchRefusalEnum.CONTRAST)
+    return `contrast ${(match.contrast ?? 0).toFixed(2)}, ${result.contrastMin.toFixed(2)} to ${result.contrastMax.toFixed(2)} allowed`;
+
+  return `colour ${Math.round(match.colour ?? 0)} apart, ${Math.round(match.colourLimit ?? 0)} allowed`;
+}
+
+/** What a Shape and colour hit was let through at, or null for a Shape one. */
+export function checksOf(match: ImageSearchTestMatchDto): string | null {
+  if (match.colour == null || match.contrast == null) return null;
+
+  return `colour ${Math.round(match.colour)} of ${Math.round(match.colourLimit ?? 0)} · contrast ${match.contrast.toFixed(2)}`;
+}
+
+// The right shape with the best score that its colour or contrast refused, in any template.
+function bestRefusal(result: ImageSearchTestResultDto, run: ImageSearchTestRun): string | null {
+  let best: ImageSearchTestMatchDto | null = null;
+  let bestIndex = -1;
+
+  for (let index = 0; index < result.images.length; index++) {
+    const refused = refusedOf(result.images[index])[0];
+    if (refused && (best === null || refused.score > best.score)) {
+      best = refused;
+      bestIndex = index;
+    }
+  }
+
+  if (best === null) return null;
+
+  const check = best.refusedBy === MatchRefusalEnum.CONTRAST ? "contrast" : "colour";
+
+  return `${nameOf(run, result, bestIndex)} has the shape at ${best.score.toFixed(2)} but not the ${check}: ${refusalOf(best, result)}.`;
+}
 
 export const nameOf = (run: ImageSearchTestRun, result: ImageSearchTestResultDto, index: number) =>
   run.images[index]?.flowTemplate.name || result.images[index]?.name || `Template ${index + 1}`;
@@ -90,16 +130,25 @@ export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTest
       ? ""
       : `${nameOf(run, result, first)} found at ${result.images[first].bestScore.toFixed(2)}, needs ${run.images[first]?.accuracy.toFixed(2)}`;
 
+  // With nothing found, a shape its colour refused is the likeliest reason, so it is said.
+  const refusal = first < 0 ? bestRefusal(result, run) : null;
+  const nothing = refusal ? `nothing passed. ${refusal}` : "no template passed its accuracy.";
+
   switch (run.searchMode) {
     case SearchModeEnum.WAIT_UNTIL_NOT_FOUND:
       if (first < 0)
-        return { severity: "success", text: "Would succeed: no template passes its accuracy, so it is gone." };
+        return {
+          severity: "success",
+          text: refusal
+            ? `Would succeed: it is gone as it was. ${refusal}`
+            : "Would succeed: no template passes its accuracy, so it is gone.",
+        };
 
       return { severity: "warn", text: `Would keep waiting: ${firstText}.` };
 
     case SearchModeEnum.FIND_ALL: {
       if (first < 0)
-        return { severity: "warn", text: "Would go on to the Failure steps: no template passed its accuracy." };
+        return { severity: "warn", text: `Would go on to the Failure steps: ${nothing}` };
 
       const hits = result.images.reduce((total, x) => total + hitsOf(x).length, 0);
       if (hits > run.maxMatches)
@@ -109,20 +158,17 @@ export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTest
     }
 
     case SearchModeEnum.WAIT_UNTIL_FOUND:
-      if (first < 0)
-        return { severity: "warn", text: "Would keep trying: no template passed its accuracy yet." };
+      if (first < 0) return { severity: "warn", text: `Would keep trying: ${nothing}` };
 
       return { severity: "success", text: `Would succeed: ${firstText}.` };
 
     case SearchModeEnum.WAIT_UNTIL_STILL:
-      if (first < 0)
-        return { severity: "warn", text: "Would keep trying: no template passed its accuracy yet." };
+      if (first < 0) return { severity: "warn", text: `Would keep trying: ${nothing}` };
 
       return { severity: "success", text: `Would succeed once it is still: ${firstText}.` };
 
     default:
-      if (first < 0)
-        return { severity: "warn", text: "Would go on to the Failure steps: no template passed its accuracy." };
+      if (first < 0) return { severity: "warn", text: `Would go on to the Failure steps: ${nothing}` };
 
       return { severity: "success", text: `Would succeed: ${firstText}.` };
   }

@@ -24,7 +24,7 @@ OCR and no names from Windows, only pictures.
   research.
 - **A forever loop its own Failure branch ends** - the map's claims.
 - **Points and drags** for a map that has to be moved to be seen.
-- **Several templates in one search** where any of them will do, and **shape and brightness** where
+- **Several templates in one search** where any of them will do, and **shape and colour** where
   a greyed-out copy of the same picture must not match.
 - **Scales with area**: a game stretches its contents with its window, so its templates grow and
   shrink with it.
@@ -161,9 +161,9 @@ Loop            <[ Work through the notifications ]>   forever
          Find Image      <[ Find a free research slot ]>   template <[ template-3fe6m.png ]> accuracy 0.8   in <[ Firestone ]>
           Failure:
            Break           out of <[ Look through the research list ]>
-         # Shape and brightness at 0.95: a research that cannot be started is the same picture, greyed
-         # out. Any of the templates will do.
-         Find Image      <[ Find a research to start ]>   template <[ template-vhbsl.png ]> accuracy 0.95  template <[ template-195el.png ]> accuracy 0.95  template <[ template-unk19.png ]> accuracy 0.95   match shape and brightness   in <[ Firestone ]>
+         # Shape and colour: a research that cannot be started is the same picture in another
+         # colour, which refuses it. Any of the templates will do.
+         Find Image      <[ Find a research to start ]>   template <[ template-vhbsl.png ]> accuracy 0.8  template <[ template-195el.png ]> accuracy 0.8  template <[ template-unk19.png ]> accuracy 0.8   match shape and colour   in <[ Firestone ]>
           Success:
            Move            to <[ Find a research to start ]>
            Click
@@ -212,7 +212,7 @@ Loop            <[ Work through the notifications ]>   forever
          Failure:
           Break           out of <[ Start missions down the map ]>
         # Any of the mission markers will do.
-        Find All Images <[ Find every mission ]>   template <[ template-52k9t.png ]> accuracy 0.95  template <[ template-8rbof.png ]> accuracy 0.95  template <[ template-64naw.png ]> accuracy 0.95   match shape and brightness   in <[ Firestone ]>
+        Find All Images <[ Find every mission ]>   template <[ template-52k9t.png ]> accuracy 0.8  template <[ template-8rbof.png ]> accuracy 0.8  template <[ template-64naw.png ]> accuracy 0.8   match shape and colour   in <[ Firestone ]>
          Success:
           # The mission started at the hit before may have taken the last slot.
           Find Image      <[ Find a free mission slot again ]>   template <[ template-d72cc.png ]> accuracy 0.8   in <[ Firestone ]>
@@ -238,7 +238,7 @@ Loop            <[ Work through the notifications ]>   forever
             Move            to <[ Find mission start ]>
             Click
           # Whatever it offered, its window is closed before the next hit.
-          Find Image      <[ Find mission window close ]>   template <[ template-76cv5.png ]> accuracy 0.95   match shape and brightness   in <[ Firestone ]>
+          Find Image      <[ Find mission window close ]>   template <[ template-76cv5.png ]> accuracy 0.8   match shape and colour   in <[ Firestone ]>
            Success:
             Move            to <[ Find mission window close ]>
             Click

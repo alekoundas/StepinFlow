@@ -126,40 +126,17 @@ the history.
       list (SUCCESS, FAILURE, LOOP, GO_BACK, SUB_FLOW). Today an unmapped type silently falls through
       to `PassThroughStepWorker`, so a new step type with a forgotten registration runs as a no-op
       that reports success.
-- [ ] **Redesign the match modes: Shape, and Shape and colour.** Talked through 2026-11-09, to
-      continue with the user before building; nothing is decided or built yet.
-      - **Why.** Shape and brightness (`SqDiffNormed` on grayscale) mostly measures average
-        brightness, not the picture. Firestone's "Image Search Alchemist" (`template-gu6ei.png`, the
-        potion, accuracy 0.95) found a phoenix button at 0.956; Shape scores that spot 0.66. The
-        kept pixels average 151 with a variation of 40 against the screen's 150 and 39, so
-        brightness is about 93% of what the formula compares, and two unrelated pictures of the same
-        brightness score about 0.87. Erasing the template down to its icon only took it to 0.94.
-        The same was measured 2026-10-29 in `OpenCvServiceMatchModeTests`: a PrimeReact button's
-        template cut 4 pixels wide scores 0.937 against the disabled one, cut 10 wide 0.964.
-      - **The direction so far.** Two modes. Shape finds the candidates, as now (`CCoeffNormed`).
-        Shape and colour then compares, at each candidate only, the average hue and saturation (Lab
-        a and b, lightness left out) of the template's kept pixels with the same pixels on screen,
-        and refuses one over a tolerance, going on to the next candidate, so a greyed button with a
-        higher shape score does not hide the live one. A refused one shows both numbers ("shape
-        0.97, colour 18 apart"). Colour replaces brightness rather than joining it.
-      - **Ruled out.** A Brightness mode on its own finds anything: the phoenix is 0.9 of 100 apart.
-        Snapping pixels to named colours: a 10% brightness change flips 3-8% of pixels on
-        red/green/blue/white/black and 12-23% on 12 colours, and this button sits on the red/brown
-        boundary, so it would pass or fail by luck.
-      - **Measured on the potion, simulated.** Hue and saturation difference: brightness ±10%,
-        gamma 0.85 and 1.15, washed out like HDR, 2 to 6; greyed state 30; the phoenix 18. A
-        tolerance around 10-12, to confirm on real screenshots.
-      - **Open.** A fixed tolerance or one per step (start fixed). Lit against dim in the same colour
-        cannot be told apart and also survive brightness settings or HDR. The migration moves every
-        `SHAPE_AND_BRIGHTNESS` step and converts its accuracy, tuned for the old formula. Firestone
-        has several (the research greyed or live, the missions, the mission close, the Alchemist):
-        get a screenshot of a live and of a greyed research before switching it. Changes with it:
-        the script's `match shape and brightness`, the hints in `match-modes.ts`, `search-image.md`,
-        `flow-format.md`, `troubleshooting.md`, `example-firestone.md`.
-      - **macOS.** A Mac captures in the display's colour space, often Display P3, so the screen
-        must be converted to sRGB before comparing, or a flow made on a PC fails on a Mac.
-      - **Until then.** The docs and the form still call 0.95 safe for shape and brightness; it is
-        not when the template is mostly a frame other buttons share.
+- [ ] **Shape and colour on macOS and Linux.** A Mac captures in the display's colour space, often
+      Display P3, so the macOS capture has to convert the screenshot to sRGB before the colour
+      check, or a flow made on a PC is refused on a Mac: `ColourCheckLimits` were sized on sRGB.
+      KDE on Wayland has reports of night light reaching screenshots (bugs.kde.org 503824 and
+      512476), which would refuse a strongly tinted screen. Neither is tested; Windows was, HDR on
+      included, on 2026-11-12.
+- [ ] **Firestone's Daily missions badge as a template of its own.** "Image Search Campaign
+      Missions" (`template-n2l4w.png`) moved to Shape and colour at a strict 0.95 rather than 0.80,
+      because its average colour cannot tell the button with its red badge from the button without
+      it (shape 0.90, colour 8 apart where 17 is allowed). Cut the badge on its own, search for it,
+      and the step's accuracy can go back to 0.80.
 - [ ] **A step that sets the browser tab's zoom.** Zoom is indistinguishable from DPI from outside
       the browser, so a tab at 110% breaks every template captured at 100%. Resetting it is a
       keystroke with side effects and needs focus, which is why it is a step and not something a

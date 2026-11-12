@@ -561,7 +561,7 @@ namespace Business.Tests.FlowScript
               <[ described.png ]>   click 5 6   captured 800x600 at 144dpi
 
             Steps:
-            Find Image  <[ Strict ]>   template <[ a.png ]>  template <[ b.png ]> accuracy 0.9   match shape and brightness   in <[ Screen ]>
+            Find Image  <[ Strict ]>   template <[ a.png ]>  template <[ b.png ]> accuracy 0.9   match shape and colour   in <[ Screen ]>
             Find Image  <[Loose]>    template <[described.png]>
             """;
 
@@ -576,16 +576,17 @@ namespace Business.Tests.FlowScript
         {
             FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            schema.Steps[0].TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS);
+            schema.Steps[0].TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE_AND_COLOUR);
             schema.Steps[1].TemplateMatchMode.ShouldBe(TemplateMatchModeEnum.SHAPE);
         }
 
+        // The accuracy is the shape score in both modes, so one default serves both.
         [Fact]
-        public void A_template_with_no_accuracy_takes_its_modes_default()
+        public void A_template_with_no_accuracy_takes_the_default_in_either_mode()
         {
             FlowScriptSchema schema = new Scanner().Read(HandWritten);
 
-            schema.Steps[0].FlowStepTemplates.Select(x => x.Accuracy).ShouldBe([0.95f, 0.9f]);
+            schema.Steps[0].FlowStepTemplates.Select(x => x.Accuracy).ShouldBe([0.8f, 0.9f]);
             schema.Steps[1].FlowStepTemplates.Single().Accuracy.ShouldBe(0.8f);
         }
 

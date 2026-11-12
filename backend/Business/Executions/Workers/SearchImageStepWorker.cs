@@ -7,6 +7,7 @@ using Core.Enums;
 using Core.Models.Business;
 using Core.Models.Database;
 using Core.Models.Business.AreaPointResolution;
+using Core.Models.Business.OpenCV;
 
 namespace Business.Executions.Workers
 {
@@ -78,6 +79,7 @@ namespace Business.Executions.Workers
             ExecutionScreenshot? lastScreenshot = null;
             Sighting? lastSighting = null;
             string? stillMoving = null;
+            string? lastRefusal = null;
 
             while (true)
             {
@@ -122,11 +124,17 @@ namespace Business.Executions.Workers
                         }
                     }
 
+                    lastRefusal = Refusal(step, look);
+
                     // Gone is what this mode waits for, so it is a success - the search itself said
                     // "nothing matched", which on its own reads as a failure.
                     if (!found && !wantFound)
                     {
-                        ExecutionStep gone = ExecutionStep.Success(message: "No longer on screen.");
+                        string goneMessage = "No longer on screen.";
+                        if (lastRefusal != null)
+                            goneMessage = $"No longer on screen as it was: {lastRefusal}.";
+
+                        ExecutionStep gone = ExecutionStep.Success(message: goneMessage);
                         gone.Screenshot = search.Screenshot;
                         gone.BestScore = search.BestScore;
                         gone.BestTemplateId = search.BestTemplateId;
@@ -153,9 +161,9 @@ namespace Business.Executions.Workers
                 // A zero timeout waits for ever.
                 if (!isFirstSighting && step.TimeoutMilliseconds > 0 && _timeProvider.GetUtcNow().UtcDateTime >= giveUpAt)
                 {
-                    string message = Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls);
+                    string message = Detail(step, "gave up waiting", bestOverPolls, bestTemplateOverPolls, lastRefusal);
                     if (lastSighting != null)
-                        message = Detail(step, $"found but still moving when the time ran out, {stillMoving}", null, null);
+                        message = Detail(step, $"found but still moving when the time ran out, {stillMoving}", null, null, null);
                     else if (cannotLook != null)
                         message += $". The last try could not look: {cannotLook}";
 
@@ -224,7 +232,7 @@ namespace Business.Executions.Workers
         {
             if (search.Hits.Count == 0)
             {
-                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched", search.BestScore, bestTemplateId));
+                ExecutionStep missed = ExecutionStep.Failure(Detail(step, "no template matched", search.BestScore, bestTemplateId, Refusal(step, search)));
                 missed.BestScore = search.BestScore;
 
                 return missed;
@@ -254,22 +262,48 @@ namespace Business.Executions.Workers
 
         // What was looked for and how hard, and which template came closest: each has its own
         // accuracy, so 0.78 means nothing until it is read against the bar of the one that scored it.
-        private static string Detail(FlowStep step, string outcome, float? bestScore, int? bestTemplateId)
+        private static string Detail(FlowStep step, string outcome, float? bestScore, int? bestTemplateId, string? refusal)
         {
             string templates = string.Join(", ", step.FlowStepTemplates.Select(x => $"{x.FlowTemplate.Name} at {Score(x.Accuracy)}"));
             if (templates.Length == 0)
                 templates = "no templates";
 
-            FlowStepTemplate? closest = step.FlowStepTemplates.FirstOrDefault(x => x.Id == bestTemplateId);
-            if (bestScore == null || closest == null)
-                return $"{outcome} - {templates}, {step.SearchMode}";
+            string found = outcome;
 
-            return $"{outcome}, closest {closest.FlowTemplate.Name} at {Score(bestScore.Value)} - {templates}, {step.SearchMode}";
+            FlowStepTemplate? closest = step.FlowStepTemplates.FirstOrDefault(x => x.Id == bestTemplateId);
+            if (bestScore != null && closest != null)
+                found += $", closest {closest.FlowTemplate.Name} at {Score(bestScore.Value)}";
+
+            if (refusal != null)
+                found += $", {refusal}";
+
+            return $"{found} - {templates}, {step.SearchMode}";
+        }
+
+        // A template whose shape was on screen and whose colour or contrast was not: the thing, most
+        // likely, in another state. Lowering its accuracy would not find it.
+        private static string? Refusal(FlowStep step, ImageSearchResult search)
+        {
+            TemplateMatchResult? refused = search.BestRefused;
+            if (refused == null || search.BestRefusedTemplateIndex is not int index)
+                return null;
+
+            string name = step.FlowStepTemplates.ElementAt(index).FlowTemplate.Name;
+
+            if (refused.RefusedBy == MatchRefusalEnum.CONTRAST)
+                return $"{name} at {Score(refused.Score)} refused by its contrast, {Score(refused.Contrast ?? 0f)} where {Score(ColourCheckLimits.CONTRAST_MIN)} to {Score(ColourCheckLimits.CONTRAST_MAX)} is allowed";
+
+            return $"{name} at {Score(refused.Score)} refused by its colour, {Whole(refused.Colour ?? 0f)} apart where {Whole(refused.ColourLimit ?? 0f)} is allowed";
         }
 
         private static string Score(float value)
         {
             return value.ToString("0.00", CultureInfo.InvariantCulture);
+        }
+
+        private static string Whole(float value)
+        {
+            return value.ToString("0", CultureInfo.InvariantCulture);
         }
 
         // Where a wait found its template on screen, which template, and at what scale.

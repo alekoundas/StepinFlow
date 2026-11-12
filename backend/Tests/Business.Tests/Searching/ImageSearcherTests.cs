@@ -42,6 +42,16 @@ namespace Business.Tests.Searching
             return new TemplateMatchOutcome { Matches = xs.Select(x => new TemplateMatchResult { X = x, Width = 10, Height = 10, Score = 0.9f, Scale = 1f }).ToList() };
         }
 
+        // The right shape with the wrong colour or contrast, and the best under the bar.
+        private static TemplateMatchOutcome Refused(float score, MatchRefusalEnum refusedBy, float nearMiss)
+        {
+            return new TemplateMatchOutcome
+            {
+                Refused = [new TemplateMatchResult { Width = 10, Height = 10, Score = score, Scale = 1f, RefusedBy = refusedBy }],
+                Rejected = [new TemplateMatchResult { Width = 10, Height = 10, Score = nearMiss, Scale = 1f }],
+            };
+        }
+
 
 
 
@@ -99,12 +109,12 @@ namespace Business.Tests.Searching
             SearchTemplate strict = Template(1, accuracy: 0.95f);
             SearchTemplate loose = Template(2, accuracy: 0.7f);
 
-            Search(Area(ScalesWithEnum.DPI), [strict, loose], settings: new SearchSettings { Mode = TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS });
+            Search(Area(ScalesWithEnum.DPI), [strict, loose], settings: new SearchSettings { Mode = TemplateMatchModeEnum.SHAPE_AND_COLOUR });
 
             _matcher.Requests.Select(x => (x.Mode, x.AccuracyThreshold)).ShouldBe(
             [
-                (TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS, 0.95f),
-                (TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS, 0.7f),
+                (TemplateMatchModeEnum.SHAPE_AND_COLOUR, 0.95f),
+                (TemplateMatchModeEnum.SHAPE_AND_COLOUR, 0.7f),
             ]);
         }
 
@@ -191,6 +201,34 @@ namespace Business.Tests.Searching
             result.Hits.ShouldBeEmpty();
             result.BestScore.ShouldBe(0.78f);
             result.BestTemplateIndex.ShouldBe(1);
+        }
+
+        // A refused one is over its bar, so it is not the closest score: it is kept on its own.
+        [Fact]
+        public void The_best_shape_its_colour_refused_and_its_template_are_kept_apart_from_the_closest_score()
+        {
+            _matcher
+                .Answer(1, Refused(0.88f, MatchRefusalEnum.CONTRAST, nearMiss: 0.4f))
+                .Answer(2, Refused(0.97f, MatchRefusalEnum.COLOUR, nearMiss: 0.6f));
+
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1), Template(2)]);
+
+            result.Hits.ShouldBeEmpty();
+            result.BestRefused!.Score.ShouldBe(0.97f);
+            result.BestRefused.RefusedBy.ShouldBe(MatchRefusalEnum.COLOUR);
+            result.BestRefusedTemplateIndex.ShouldBe(1);
+            result.BestScore.ShouldBe(0.6f);
+        }
+
+        [Fact]
+        public void Nothing_refused_leaves_no_refusal()
+        {
+            _matcher.NotFound(1, 0.4f);
+
+            ImageSearchResult result = Search(Area(ScalesWithEnum.DPI), [Template(1)]);
+
+            result.BestRefused.ShouldBeNull();
+            result.BestRefusedTemplateIndex.ShouldBeNull();
         }
 
         [Fact]

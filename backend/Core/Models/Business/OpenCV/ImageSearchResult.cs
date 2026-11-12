@@ -22,5 +22,12 @@ namespace Business.Searching
         /// <summary>Which template the first hit is, and the scale it matched at.</summary>
         public int? FirstHitTemplateIndex { get; set; }
         public float FirstHitScale { get; set; } = 1f;
+
+        /// <summary>
+        /// Shape and colour: the best candidate whose shape passed and whose colour or contrast did
+        /// not, across every template, and which template it was.
+        /// </summary>
+        public TemplateMatchResult? BestRefused { get; set; }
+        public int? BestRefusedTemplateIndex { get; set; }
     }
 }

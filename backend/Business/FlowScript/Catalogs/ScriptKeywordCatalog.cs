@@ -145,7 +145,7 @@ namespace Business.FlowScript.Catalogs
             new ScriptKeyword("is", TitleMatchModeEnum.EQUALS),
 
             // FlowStepTemplate condition.
-            new ScriptKeyword("shape and brightness", TemplateMatchModeEnum.SHAPE_AND_BRIGHTNESS),
+            new ScriptKeyword("shape and colour", TemplateMatchModeEnum.SHAPE_AND_COLOUR),
             new ScriptKeyword("shape", TemplateMatchModeEnum.SHAPE),
 
             // Cursor

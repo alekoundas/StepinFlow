@@ -25,6 +25,11 @@ DPI is never scaled; recapture it.
 that found it in another place on every look: an idle animation, a ticker. `WAIT_UNTIL_FOUND`
 takes the first match.
 
+**It is there in another state.** "refused by its colour" or "refused by its contrast" is a
+`SHAPE_AND_COLOUR` search that found the shape and saw it greyed, faded or recoloured. That is the
+step working. Lowering the accuracy changes nothing; if that state should count too, switch the step
+to `SHAPE`, or add a template of that state.
+
 ## An image search finds the wrong thing
 
 Accuracy is too low, so a roughly-similar region scores above the threshold. Raise it, and use
@@ -35,7 +40,8 @@ A very small or very plain template matches too many things. Capture more around
 of one flat colour matches everywhere.
 
 It finds the right thing in the wrong state - a disabled button instead of the live one. `SHAPE`
-ignores brightness; switch the step to `SHAPE_AND_BRIGHTNESS`.
+forgives colour and brightness; switch the step to `SHAPE_AND_COLOUR`. A state shown only by a small
+detail, such as a badge, is not told apart by colour: search for the badge as a template of its own.
 
 ## A click lands in the wrong place
 

@@ -10,20 +10,22 @@ interface Props {
   height: number;
   hits: ImageSearchTestMatchDto[];
   nearMiss: ImageSearchTestMatchDto | null;
+  refused: ImageSearchTestMatchDto[];
 }
 
 const ZOOMS = [1, 1.5, 2, 3, 4, 6, 8];
 const HIT_COLOUR = "var(--green-400)";
 const NEAR_MISS_COLOUR = "var(--orange-400)";
+const REFUSED_COLOUR = "var(--red-400)";
 
 const percent = (value: number, total: number) => (total > 0 ? `${(value / total) * 100}%` : "0%");
 
 /**
- * The screenshot the search was made on, with the selected template's hits and its closest place
- * under the bar. 1 is the whole area fitted to the width; a box clicked is zoomed to, and dragging
- * pans. Ctrl and the wheel zoom too.
+ * The screenshot the search was made on, with the selected template's hits, the shapes its colour
+ * refused and its closest place under the bar. 1 is the whole area fitted to the width; a box
+ * clicked is zoomed to, and dragging pans. Ctrl and the wheel zoom too.
  */
-export function FlowStepSearchImageTestViewerComponent({ screenshot, width, height, hits, nearMiss }: Props) {
+export function FlowStepSearchImageTestViewerComponent({ screenshot, width, height, hits, nearMiss, refused }: Props) {
   const viewport = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -117,19 +119,28 @@ export function FlowStepSearchImageTestViewerComponent({ screenshot, width, heig
           />
 
           {nearMiss && (
-            <Box match={nearMiss} width={width} height={height} colour={NEAR_MISS_COLOUR} isDashed onClick={() => focus(nearMiss)} />
+            <Box match={nearMiss} width={width} height={height} colour={NEAR_MISS_COLOUR} line="dashed" onClick={() => focus(nearMiss)} />
           )}
+          {refused.map((x, index) => (
+            <Box key={`refused-${index}`} match={x} width={width} height={height} colour={REFUSED_COLOUR} line="dotted" onClick={() => focus(x)} />
+          ))}
           {hits.map((x, index) => (
-            <Box key={index} match={x} width={width} height={height} colour={HIT_COLOUR} onClick={() => focus(x)} />
+            <Box key={index} match={x} width={width} height={height} colour={HIT_COLOUR} line="solid" onClick={() => focus(x)} />
           ))}
         </div>
       </div>
 
-      <div className="flex gap-4 text-xs text-color-secondary">
+      <div className="flex flex-wrap gap-4 text-xs text-color-secondary">
         <span className="flex align-items-center gap-2">
           <span style={{ width: 14, height: 10, border: `2px solid ${HIT_COLOUR}` }} />
           hit, with where it clicks
         </span>
+        {refused.length > 0 && (
+          <span className="flex align-items-center gap-2">
+            <span style={{ width: 14, height: 10, border: `2px dotted ${REFUSED_COLOUR}` }} />
+            the shape, refused for its colour or contrast
+          </span>
+        )}
         <span className="flex align-items-center gap-2">
           <span style={{ width: 14, height: 10, border: `2px dashed ${NEAR_MISS_COLOUR}` }} />
           closest place under the bar
@@ -144,36 +155,39 @@ interface BoxProps {
   width: number;
   height: number;
   colour: string;
-  isDashed?: boolean;
+  // Solid for a hit, dotted for a shape its colour refused, dashed for the closest under the bar.
+  line: "solid" | "dotted" | "dashed";
   onClick: () => void;
 }
 
-function Box({ match, width, height, colour, isDashed = false, onClick }: BoxProps) {
+function Box({ match, width, height, colour, line, onClick }: BoxProps) {
+  const refusal = match.refusedBy ? ` · ${match.refusedBy.toLowerCase()}` : "";
+
   return (
     <div
       className="absolute cursor-pointer"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
-      title={`${match.score.toFixed(2)}${match.scale !== 1 ? ` · scaled ${match.scale.toFixed(2)}x` : ""}`}
+      title={`${match.score.toFixed(2)}${refusal}${match.scale !== 1 ? ` · scaled ${match.scale.toFixed(2)}x` : ""}`}
       style={{
         left: percent(match.x, width),
         top: percent(match.y, height),
         width: percent(match.width, width),
         height: percent(match.height, height),
-        border: `2px ${isDashed ? "dashed" : "solid"} ${colour}`,
+        border: `2px ${line} ${colour}`,
         boxSizing: "border-box",
       }}
     >
       <span
-        className="absolute text-xs px-1 border-round-sm"
+        className="absolute text-xs px-1 border-round-sm white-space-nowrap"
         style={{ top: -20, left: -2, background: colour, color: "var(--gray-900)" }}
       >
-        {match.score.toFixed(2)}
+        {`${match.score.toFixed(2)}${refusal}`}
       </span>
 
       {/* Where the cursor lands once the click offset is applied. A box in the right place with a
           dot in the wrong one is its own bug. */}
-      {!isDashed && (
+      {line === "solid" && (
         <div
           className="absolute border-circle"
           style={{

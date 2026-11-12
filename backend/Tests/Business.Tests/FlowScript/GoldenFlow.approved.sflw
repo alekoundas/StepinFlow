@@ -493,49 +493,49 @@ Find Image      <[ Find Image no template ]>
 
 Find Image      <[ Find Image no template in an area ]>   in <[ App ]>
 
-Find Image      <[ Find Image no template brightness ]>   match shape and brightness
+Find Image      <[ Find Image no template colour ]>   match shape and colour
 
-Find Image      <[ Find Image no template brightness in an area ]>   match shape and brightness   in <[ App ]>
+Find Image      <[ Find Image no template colour in an area ]>   match shape and colour   in <[ App ]>
 
 Find Image      <[ Find Image one template ]>   template <[ template-all.png ]> accuracy 0.9
 
 Find Image      <[ Find Image one template in an area ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
 
-Find Image      <[ Find Image one template brightness ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness
+Find Image      <[ Find Image one template colour ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour
 
-Find Image      <[ Find Image one template brightness in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>
+Find Image      <[ Find Image one template colour in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>
 
 Find Image      <[ Find Image two templates ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1
 
 Find Image      <[ Find Image two templates in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>
 
-Find Image      <[ Find Image two templates brightness ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness
+Find Image      <[ Find Image two templates colour ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour
 
-Find Image      <[ Find Image two templates brightness in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>
+Find Image      <[ Find Image two templates colour in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>
 
 Find All Images <[ Find All Images no template ]>
 
 Find All Images <[ Find All Images no template in an area ]>   in <[ App ]>
 
-Find All Images <[ Find All Images no template brightness ]>   match shape and brightness
+Find All Images <[ Find All Images no template colour ]>   match shape and colour
 
-Find All Images <[ Find All Images no template brightness in an area ]>   match shape and brightness   in <[ App ]>
+Find All Images <[ Find All Images no template colour in an area ]>   match shape and colour   in <[ App ]>
 
 Find All Images <[ Find All Images one template ]>   template <[ template-all.png ]> accuracy 0.9
 
 Find All Images <[ Find All Images one template in an area ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>
 
-Find All Images <[ Find All Images one template brightness ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness
+Find All Images <[ Find All Images one template colour ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour
 
-Find All Images <[ Find All Images one template brightness in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>
+Find All Images <[ Find All Images one template colour in an area ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>
 
 Find All Images <[ Find All Images two templates ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1
 
 Find All Images <[ Find All Images two templates in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>
 
-Find All Images <[ Find All Images two templates brightness ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness
+Find All Images <[ Find All Images two templates colour ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour
 
-Find All Images <[ Find All Images two templates brightness in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>
+Find All Images <[ Find All Images two templates colour in an area ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>
 
 Wait For Image  <[ Wait For Image no template with a timeout ]>   timeout 10000ms
 
@@ -545,13 +545,13 @@ Wait For Image  <[ Wait For Image no template in an area with a timeout ]>   in 
 
 Wait For Image  <[ Wait For Image no template in an area with no timeout ]>   in <[ App ]>   no timeout
 
-Wait For Image  <[ Wait For Image no template brightness with a timeout ]>   match shape and brightness   timeout 10000ms
+Wait For Image  <[ Wait For Image no template colour with a timeout ]>   match shape and colour   timeout 10000ms
 
-Wait For Image  <[ Wait For Image no template brightness with no timeout ]>   match shape and brightness   no timeout
+Wait For Image  <[ Wait For Image no template colour with no timeout ]>   match shape and colour   no timeout
 
-Wait For Image  <[ Wait For Image no template brightness in an area with a timeout ]>   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait For Image  <[ Wait For Image no template colour in an area with a timeout ]>   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait For Image  <[ Wait For Image no template brightness in an area with no timeout ]>   match shape and brightness   in <[ App ]>   no timeout
+Wait For Image  <[ Wait For Image no template colour in an area with no timeout ]>   match shape and colour   in <[ App ]>   no timeout
 
 Wait For Image  <[ Wait For Image one template with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   timeout 10000ms
 
@@ -561,13 +561,13 @@ Wait For Image  <[ Wait For Image one template in an area with a timeout ]>   te
 
 Wait For Image  <[ Wait For Image one template in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
 
-Wait For Image  <[ Wait For Image one template brightness with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   timeout 10000ms
+Wait For Image  <[ Wait For Image one template colour with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   timeout 10000ms
 
-Wait For Image  <[ Wait For Image one template brightness with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   no timeout
+Wait For Image  <[ Wait For Image one template colour with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   no timeout
 
-Wait For Image  <[ Wait For Image one template brightness in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait For Image  <[ Wait For Image one template colour in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait For Image  <[ Wait For Image one template brightness in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   no timeout
+Wait For Image  <[ Wait For Image one template colour in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>   no timeout
 
 Wait For Image  <[ Wait For Image two templates with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   timeout 10000ms
 
@@ -577,13 +577,13 @@ Wait For Image  <[ Wait For Image two templates in an area with a timeout ]>   t
 
 Wait For Image  <[ Wait For Image two templates in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   no timeout
 
-Wait For Image  <[ Wait For Image two templates brightness with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   timeout 10000ms
+Wait For Image  <[ Wait For Image two templates colour with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   timeout 10000ms
 
-Wait For Image  <[ Wait For Image two templates brightness with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   no timeout
+Wait For Image  <[ Wait For Image two templates colour with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   no timeout
 
-Wait For Image  <[ Wait For Image two templates brightness in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait For Image  <[ Wait For Image two templates colour in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait For Image  <[ Wait For Image two templates brightness in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   no timeout
+Wait For Image  <[ Wait For Image two templates colour in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>   no timeout
 
 Wait For Still Image  <[ Wait For Still Image with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   timeout 10000ms
 
@@ -597,13 +597,13 @@ Wait Until No Image  <[ Wait Until No Image no template in an area with a timeou
 
 Wait Until No Image  <[ Wait Until No Image no template in an area with no timeout ]>   in <[ App ]>   no timeout
 
-Wait Until No Image  <[ Wait Until No Image no template brightness with a timeout ]>   match shape and brightness   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image no template colour with a timeout ]>   match shape and colour   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image no template brightness with no timeout ]>   match shape and brightness   no timeout
+Wait Until No Image  <[ Wait Until No Image no template colour with no timeout ]>   match shape and colour   no timeout
 
-Wait Until No Image  <[ Wait Until No Image no template brightness in an area with a timeout ]>   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image no template colour in an area with a timeout ]>   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image no template brightness in an area with no timeout ]>   match shape and brightness   in <[ App ]>   no timeout
+Wait Until No Image  <[ Wait Until No Image no template colour in an area with no timeout ]>   match shape and colour   in <[ App ]>   no timeout
 
 Wait Until No Image  <[ Wait Until No Image one template with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   timeout 10000ms
 
@@ -613,13 +613,13 @@ Wait Until No Image  <[ Wait Until No Image one template in an area with a timeo
 
 Wait Until No Image  <[ Wait Until No Image one template in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   in <[ App ]>   no timeout
 
-Wait Until No Image  <[ Wait Until No Image one template brightness with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image one template colour with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image one template brightness with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   no timeout
+Wait Until No Image  <[ Wait Until No Image one template colour with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   no timeout
 
-Wait Until No Image  <[ Wait Until No Image one template brightness in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image one template colour in an area with a timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image one template brightness in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and brightness   in <[ App ]>   no timeout
+Wait Until No Image  <[ Wait Until No Image one template colour in an area with no timeout ]>   template <[ template-all.png ]> accuracy 0.9   match shape and colour   in <[ App ]>   no timeout
 
 Wait Until No Image  <[ Wait Until No Image two templates with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   timeout 10000ms
 
@@ -629,15 +629,15 @@ Wait Until No Image  <[ Wait Until No Image two templates in an area with a time
 
 Wait Until No Image  <[ Wait Until No Image two templates in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   in <[ App ]>   no timeout
 
-Wait Until No Image  <[ Wait Until No Image two templates brightness with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image two templates colour with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image two templates brightness with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   no timeout
+Wait Until No Image  <[ Wait Until No Image two templates colour with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   no timeout
 
-Wait Until No Image  <[ Wait Until No Image two templates brightness in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   timeout 10000ms
+Wait Until No Image  <[ Wait Until No Image two templates colour in an area with a timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>   timeout 10000ms
 
-Wait Until No Image  <[ Wait Until No Image two templates brightness in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and brightness   in <[ App ]>   no timeout
+Wait Until No Image  <[ Wait Until No Image two templates colour in an area with no timeout ]>   template <[ template-captured.png ]> accuracy 0.75  template <[ template-dpi.png ]> accuracy 1   match shape and colour   in <[ App ]>   no timeout
 
-Find Image      <[ Find Image every template ]>   template <[ Company logo.png ]> accuracy 0.9  template <[ template-a-file-name-longer-than-the-column.png ]> accuracy 1  template <[ template-all.png ]> accuracy 0  template <[ template-captured.png ]> accuracy 0.1234  template <[ template-dpi.png ]> accuracy 0.97  template <[ template-no-picture.png ]> accuracy 0.8   match shape and brightness   in <[ Monitor device ]>
+Find Image      <[ Find Image every template ]>   template <[ Company logo.png ]> accuracy 0.9  template <[ template-a-file-name-longer-than-the-column.png ]> accuracy 1  template <[ template-all.png ]> accuracy 0  template <[ template-captured.png ]> accuracy 0.1234  template <[ template-dpi.png ]> accuracy 0.97  template <[ template-no-picture.png ]> accuracy 0.8   match shape and colour   in <[ Monitor device ]>
 
 Find Image      <[ Find Image a template twice ]>   template <[ template-all.png ]> accuracy 0.5  template <[ template-all.png ]> accuracy 0.6   in <[ App offset ]>
 

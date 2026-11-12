@@ -35,6 +35,8 @@ namespace Business.Searching
             int? bestTemplateIndex = null;
             int? firstHitTemplateIndex = null;
             float firstHitScale = 1f;
+            TemplateMatchResult? bestRefused = null;
+            int? bestRefusedTemplateIndex = null;
 
             // Take screenshot.
             RawImage haystack = _screenshotService.CaptureRaw(bounds);
@@ -58,6 +60,13 @@ namespace Business.Searching
                 {
                     bestScore = outcome.BestScore;
                     bestTemplateIndex = index;
+                }
+
+                // The thing, most likely, in another state: its shape passed and its colour did not.
+                if (outcome.Refused.Count > 0 && (bestRefused == null || outcome.Refused[0].Score > bestRefused.Score))
+                {
+                    bestRefused = outcome.Refused[0];
+                    bestRefusedTemplateIndex = index;
                 }
 
                 foreach (TemplateMatchResult match in outcome.Matches)
@@ -91,6 +100,8 @@ namespace Business.Searching
                 BestTemplateIndex = bestTemplateIndex,
                 FirstHitTemplateIndex = firstHitTemplateIndex,
                 FirstHitScale = firstHitScale,
+                BestRefused = bestRefused,
+                BestRefusedTemplateIndex = bestRefusedTemplateIndex,
             };
         }
 

@@ -8,6 +8,9 @@ namespace Core.Models.Business.OpenCV
         public IReadOnlyList<TemplateMatchResult> Matches { get; set; } = [];
         public IReadOnlyList<TemplateMatchResult> Rejected { get; set; } = [];
 
+        /// <summary>Shape and colour: candidates over the accuracy whose colour or contrast refused them.</summary>
+        public IReadOnlyList<TemplateMatchResult> Refused { get; set; } = [];
+
         public string? Error { get; set; }
         public float? BestScore
         {
