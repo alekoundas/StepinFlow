@@ -186,7 +186,7 @@ createRoot(document.getElementById("root")!).render(
       <PrimeReactProvider>
         <RouterProvider router={router} />
         <DialogRootComponent />
-        <ReactQueryDevtools initialIsOpen={false} /> {/* only shows in dev */}
+        {/* <ReactQueryDevtools initialIsOpen={false} /> only shows in dev */}
       </PrimeReactProvider>
     </QueryClientProvider>
     {/* </ThemeProvider>
