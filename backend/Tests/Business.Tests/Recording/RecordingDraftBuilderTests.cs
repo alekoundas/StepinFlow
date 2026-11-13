@@ -950,12 +950,13 @@ namespace Business.Tests.Recording
             string script = new Printer().Write(draft);
             FlowScriptSchema read = new Scanner().Read(script);
 
-            // A check followed straight by a search leaves its Success branch empty, which a script
-            // does not write and an import adds back (FlowStepDataService.MissingBranches).
-            int emptyBranches = draft.Steps.Count(x => x.FlowStepType == FlowStepTypeEnum.SUCCESS && !draft.Steps.Any(y => y.ParentFlowStep == x));
+            // A check followed straight by a search leaves its Success branch empty, and a read its
+            // Failure branch, which a script does not write and an import adds back
+            // (FlowStepDataService.MissingBranches).
+            int emptyBranches = draft.Steps.Count(x => (x.FlowStepType == FlowStepTypeEnum.SUCCESS || x.FlowStepType == FlowStepTypeEnum.FAILURE) && !draft.Steps.Any(y => y.ParentFlowStep == x));
 
             read.Diagnostics.ShouldBeEmpty(script);
-            emptyBranches.ShouldBe(2, script);     // Check Paid, followed by a check, and Check Saved, the last
+            emptyBranches.ShouldBe(3, script);     // Check Paid, followed by a check, Check Saved, the last, and Read Gold's Failure
             read.Steps.Count.ShouldBe(draft.Steps.Count - emptyBranches, script);
             read.Points.Count.ShouldBe(draft.Points.Count, script);
             read.Inputs.Count.ShouldBe(2, script);
