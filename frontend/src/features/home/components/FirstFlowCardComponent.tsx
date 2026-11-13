@@ -19,13 +19,21 @@ export default function FirstFlowCardComponent() {
     <HomeHeroComponent
       eyebrow="Welcome to StepinFlow"
       title="Start with your first flow"
-      description="Do it once while StepinFlow records, or import a flow someone already wrote."
+      description="Build it step by step, do it once while StepinFlow records, or import a flow someone already wrote."
     >
       <Button
         type="button"
-        label="Record a flow"
+        label="Build a flow"
+        icon="pi pi-pencil"
+        size="large"
+        onClick={() => navigate("/flows/new")}
+      />
+      <Button
+        type="button"
+        label="Record a flow (Beta)"
         icon="pi pi-video"
         size="large"
+        outlined
         onClick={record}
       />
       <Button

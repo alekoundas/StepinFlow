@@ -17,10 +17,12 @@ export default function FlowFormPage() {
 
   const handleSubmit = async (data: FlowDto) => {
     if (formMode === FormMode.ADD || formMode === FormMode.CLONE) {
-      await createFlowMutation.mutateAsync(data);
-    } else if (id) {
-      await updateFlowMutation.mutateAsync({ ...data, id: +id });
+      const createdId = await createFlowMutation.mutateAsync(data);
+      navigate(`/workflow/${createdId}`);
+      return;
     }
+
+    if (id) await updateFlowMutation.mutateAsync({ ...data, id: +id });
     navigate("/flows");
   };
 

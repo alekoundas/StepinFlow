@@ -19,6 +19,9 @@ namespace Business.Tests.Fakes
         /// <summary>The models it was told to let go, in order.</summary>
         public List<string> Unloaded { get; } = [];
 
+        /// <summary>How many times it was asked what it holds in memory.</summary>
+        public int LoadedAsked { get; private set; }
+
         public Task<IReadOnlyList<string>?> ListModelsAsync(string baseUrl, CancellationToken ct = default)
         {
             IReadOnlyList<string>? models = null;
@@ -42,6 +45,8 @@ namespace Business.Tests.Fakes
 
         public Task<IReadOnlyList<AiLoadedModelDto>?> ListLoadedModelsAsync(string baseUrl, CancellationToken ct = default)
         {
+            LoadedAsked++;
+
             IReadOnlyList<AiLoadedModelDto>? loaded = null;
             if (IsRunning)
                 loaded = Loaded;

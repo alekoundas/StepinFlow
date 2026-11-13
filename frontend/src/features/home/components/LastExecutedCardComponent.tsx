@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
-import { Skeleton } from "primereact/skeleton";
 
 import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
@@ -10,30 +9,11 @@ import HomeHeroComponent from "@/features/home/components/HomeHeroComponent";
 interface Props {
   flow: FlowExecutionSummaryDto | undefined;
   isExecuting: boolean;
-  isLoading: boolean;
 }
 
 /** Execute goes to the flow's execution page and stops there: starting it is that page's button. */
-export default function LastExecutedCardComponent({ flow, isExecuting, isLoading }: Props) {
+export default function LastExecutedCardComponent({ flow, isExecuting }: Props) {
   const navigate = useNavigate();
-
-  if (isLoading)
-    return (
-      <HomeHeroComponent
-        eyebrow={
-          <Skeleton
-            width="8rem"
-            height="1rem"
-          />
-        }
-        title={
-          <Skeleton
-            width="16rem"
-            height="2rem"
-          />
-        }
-      />
-    );
 
   if (!flow)
     return (

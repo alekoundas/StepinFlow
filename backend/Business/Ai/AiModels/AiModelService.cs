@@ -131,8 +131,11 @@ namespace Business.Ai.AiModels
                 status.CloudModel = await _providerService.GetModelAsync(ct);
 
             IReadOnlyList<string>? downloaded = await _ollamaService.ListModelsAsync(baseUrl, ct);
+            if (downloaded == null)
+                return status;
+
             IReadOnlyList<AiLoadedModelDto>? loaded = await _ollamaService.ListLoadedModelsAsync(baseUrl, ct);
-            if (downloaded == null || loaded == null)
+            if (loaded == null)
                 return status;
 
             status.State = AiLocalModelStateEnum.NOT_CHOSEN;

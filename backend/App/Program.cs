@@ -34,6 +34,7 @@ using Business.Recording.Screens;
 using Business.Recording.Session;
 using Business.Recording.Setup;
 using Business.Ai.Providers;
+using Business.Ai.Helpers;
 using Business.Ai.AiDocuments;
 using Business.Ai.AiModels;
 using Business.Ai.Vision;
@@ -172,13 +173,16 @@ namespace App
             builder.Services.AddHttpClient(nameof(OllamaService), client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(5);
-            });
+            }).ConfigurePrimaryHttpMessageHandler(OllamaConnectionHelper.CreateHandler);
 
             // Infinite for downloading 9 gigabytes.
             builder.Services.AddHttpClient(nameof(AiModelDownloadService), client =>
             {
                 client.Timeout = Timeout.InfiniteTimeSpan;
-            });
+            }).ConfigurePrimaryHttpMessageHandler(OllamaConnectionHelper.CreateHandler);
+
+            // What the model answers through. HttpClient's own 100 seconds, as when OllamaSharp made its own client.
+            builder.Services.AddHttpClient(nameof(AiClientFactory)).ConfigurePrimaryHttpMessageHandler(OllamaConnectionHelper.CreateHandler);
 
             // A text reader is eight megabytes or so.
             builder.Services.AddHttpClient(nameof(OcrReaderDownloadService), client =>

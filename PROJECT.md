@@ -2121,6 +2121,16 @@ every time (`OllamaService`), because a model chosen once can be deleted and Oll
 key it answers in the local model's place. A model can be pulled into Ollama from the settings page;
 Ollama itself the tester installs for now, and the app fetching and starting it is in `TODO.md`, AI.
 
+**Connecting to Ollama.** Every client that talks to Ollama, OllamaSharp's for the model's answers
+included, gets its connection from `OllamaConnectionHelper`: IPv4 addresses first, and 200 ms for a
+local one, which answers in well under a millisecond when anything listens. The default address is
+`localhost`, which resolves to `::1` before `127.0.0.1`. Ollama listens on `127.0.0.1` only, and
+Windows takes two seconds to give up on a refused connection. So each new connection used to take two
+seconds: at start, every two minutes as the HttpClient factory renewed its handler (82 of 782 calls in
+one log), and on every AI request, since OllamaSharp made a client of its own each time. With Ollama
+not installed each call took four, and the Local model card held the request pipe for eight seconds
+of every fifteen. macOS and Linux refuse a connection at once, so the wait was only ever Windows'.
+
 **A model needs tools and vision.** Ask answers by calling tools, and what a model is shown of an
 execution or a recording is screenshots. Thinking is not needed: every request turns it off
 (`OllamaContextChatClient`). `AiModelService` says why a downloaded model falls short
@@ -2132,8 +2142,9 @@ a test holds every entry to both. Qwen3-VL's plain tags are its thinking models,
 its instruct one.
 
 **Free memory.** Home's Local model card is always the local model, whatever cloud model answers.
-`AiModelService.GetLocalModelStatusAsync` asks `/api/tags` and `/api/ps` each time, and the card asks
-every 15 seconds, because Ollama says nothing when it starts, stops or lets a model go. Free memory
+`AiModelService.GetLocalModelStatusAsync` asks `/api/tags` and then `/api/ps` each time, stopping at the
+first that goes unanswered, and the card asks every 15 seconds, because Ollama says nothing when it
+starts, stops or lets a model go. Free memory
 is `POST /api/generate` with the model, `keep_alive: 0` and no prompt. Ollama agrees at once and, if
 the model is busy, unloads it when it goes idle, cutting nothing off, another app's request included.
 So the reply confirms nothing, and `useLocalModel` shows the button loading and checks `/api/ps` every
@@ -2641,12 +2652,16 @@ tools, Ctrl+= zoom and F11 full screen go with it. macOS keeps it, since Cmd+C a
 its Edit menu.
 
 **Home** (`features/home/`) leads with what to do next, then what is in the way of it. Each card reads
-what it shows for itself, so none waits for another.
+what it shows for itself, so none waits for another. Which cards there are depends on whether any flow
+exists, so Home shows placeholders until the executions list's summaries say. It used to guess there
+were flows: a new install showed Needs attention, then took it away once the summaries came back
+empty, and the cards it mounted on the guess put their requests ahead of the summaries on the request
+pipe, which answers one at a time.
 
 - The hero is the flow last executed, from the executions list's summaries, which leave out a flow
   the branch hid. Execute opens `/execution/:flowId` and stops there, since starting is that page's
-  button. While an execution is going it says View execution. With no flows at all it is Record a
-  flow and Import a flow instead, and Needs attention is left out.
+  button. While an execution is going it says View execution. With no flows at all it is Build a
+  flow (`/flows/new`), Record a flow (Beta) and Import a flow instead, and Needs attention is left out.
 - Needs attention lists the flows validation has something to say about, from `Flow.getHealth`, which
   carries each flow's name for it. The health query used to stay stale for up to five minutes after a
   step was saved, because a step's mutations invalidate `flowStep` and `flowValidation` and never
@@ -3091,19 +3106,19 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1595 tests, all passing, in eight projects under `backend/Tests/` - one
+1624 tests, all passing, in eight projects under `backend/Tests/` - one
 per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1208 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the history's batches and the last screenshots it keeps, deleting executions with their folders, the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place |
-| `DataAccess.Tests` | 51 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, every delete rule, and a delete's space handed back to the disk |
+| `Business.Tests` | 1224 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the history's batches and the last screenshots it keeps, deleting executions with their folders, the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place; and that Ollama is reached over IPv4 first, and given up on quickly when it is not there |
+| `DataAccess.Tests` | 55 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, every delete rule, and a delete's space handed back to the disk |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
 | `Platform.Windows.Tests` | 1 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
-| `Platform.Shared.Tests` | 61 | PaddleOCR with the real models on lines drawn straight, tilted and at 150%, each read word for word where it was drawn, a reader not downloaded, a reader's character list with an empty entry and an escape only YAML has refused, and the blank columns a word's edges go to; git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
+| `Platform.Shared.Tests` | 70 | PaddleOCR with the real models on lines drawn straight, tilted and at 150%, each read word for word where it was drawn, a reader not downloaded, a reader's character list with an empty entry and an escape only YAML has refused, and the blank columns a word's edges go to; git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 
 ```bash

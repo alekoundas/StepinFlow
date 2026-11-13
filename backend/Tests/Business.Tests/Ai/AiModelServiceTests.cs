@@ -12,7 +12,8 @@ namespace Business.Tests.Ai
     /// <summary>
     /// What the Home page says about the local model, and letting it go.
     /// Test:
-    /// 1) The state moves from Ollama answering, to a model chosen, downloaded, then in memory
+    /// 1) The state moves from Ollama answering, to a model chosen, downloaded, then in memory, and one
+    ///    call Ollama does not answer is enough to say so
     /// 2) A name with no tag means the same model as one with :latest
     /// 3) A cloud model is named beside the local model and changes nothing about it
     /// 4) Free memory unloads the local model, and has nothing to unload with none chosen
@@ -54,6 +55,19 @@ namespace Business.Tests.Ai
 
             status.State.ShouldBe(AiLocalModelStateEnum.NOT_ANSWERING);
             status.Model.ShouldBe(LOCAL_MODEL);
+        }
+
+        // Each call to an Ollama that is not there waits for the connection to be refused.
+        [Fact]
+        public async Task One_call_Ollama_does_not_answer_is_enough()
+        {
+            ChooseLocalModel();
+            _ollama.IsRunning = false;
+
+            AiLocalModelStatusDto status = await _service.GetLocalModelStatusAsync(Ct);
+
+            status.State.ShouldBe(AiLocalModelStateEnum.NOT_ANSWERING);
+            _ollama.LoadedAsked.ShouldBe(0);
         }
 
         [Fact]

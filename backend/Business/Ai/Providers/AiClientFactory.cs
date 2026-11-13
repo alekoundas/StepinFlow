@@ -22,10 +22,12 @@ namespace Business.Ai.Providers
     public sealed class AiClientFactory : IAiClientFactory
     {
         private readonly IAiProviderService _providerService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AiClientFactory(IAiProviderService providerService)
+        public AiClientFactory(IAiProviderService providerService, IHttpClientFactory httpClientFactory)
         {
             _providerService = providerService;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IChatClient?> CreateAsync(CancellationToken ct = default)
@@ -60,7 +62,11 @@ namespace Business.Ai.Providers
         private async Task<IChatClient> OllamaClientAsync(AiSettings settings, CancellationToken ct)
         {
             int contextLength = await _providerService.GetOllamaContextLengthAsync(ct);
-            OllamaApiClient ollama = new OllamaApiClient(new Uri(settings.OllamaUrl), settings.OllamaModel);
+
+            // From the factory, so it connects the way OllamaConnectionHelper does and keeps its connection.
+            HttpClient httpClient = _httpClientFactory.CreateClient(nameof(AiClientFactory));
+            httpClient.BaseAddress = new Uri(settings.OllamaUrl);
+            OllamaApiClient ollama = new OllamaApiClient(httpClient, settings.OllamaModel);
 
             return new OllamaContextChatClient(ollama, contextLength);
         }
