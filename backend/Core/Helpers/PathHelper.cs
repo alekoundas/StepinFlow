@@ -3,7 +3,7 @@
     public static class PathHelper
     {
         private static readonly string _appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        private static readonly string _appFolderName = "StepinFlow_v2";
+        private static readonly string _appFolderName = "StepinFlow";
 
 
         /// <summary> Get the root app folder path. Creates it if missing. </summary>

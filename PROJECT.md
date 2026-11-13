@@ -2781,11 +2781,12 @@ with the health and the repository's status the page already has.
 
 The workflow page is the mockup's editor boards (8 to 8e). Its header has the way back to Flows or
 Sub-flows, the flow's name and kind, whether it would execute - the validator's errors and
-warnings - and Export and Execute. Below, tabs on the left list the flow's parts and the right side
-edits the one picked; a splitter between them remembers its place.
+warnings - and Export and Execute. Below, the tabs take the whole width. Under them the left side
+lists the tab's parts and the right side edits the one picked; a splitter between them remembers its
+place.
 
 - **Flow:** the tree, and the step or flow form for the row picked. The flow's form keeps its
-  name, description, sizes and callers. **−** and **+** beside the tabs draw the tree from 70% to
+  name, description, sizes and callers. **−** and **+** above the tree draw it from 70% to
   130%, and the percentage puts it back. It is CSS `zoom` on the tree rather than a font size,
   because the rows' padding, icons and thumbnails are in rem and would stay put. Like the
   splitter's place, the size is the window's `localStorage` (`workflow-tree-zoom`), kept per
