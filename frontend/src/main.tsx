@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // optional
 
 // Global CSS PrimeReact
 import "primeicons/primeicons.css";
