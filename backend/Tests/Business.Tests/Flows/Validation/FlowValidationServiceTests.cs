@@ -109,6 +109,20 @@ namespace Business.Tests.Flows.Validation
             issue.Message.ShouldContain("Greek");
         }
 
+        // A read that only has to read something, as a recorded notification's does, compares with nothing.
+        [Theory]
+        [InlineData(ConditionTypeEnum.CONTAINS, true)]
+        [InlineData(ConditionTypeEnum.MATCHES_REGEX, true)]
+        [InlineData(ConditionTypeEnum.IS_NOT_EMPTY, false)]
+        [InlineData(ConditionTypeEnum.IS_EMPTY, false)]
+        public void A_text_search_needs_text_only_when_its_rule_compares_with_some(ConditionTypeEnum rule, bool isMissing)
+        {
+            FlowStep read = ReadText(string.Empty);
+            (read.ConditionType, read.ConditionText) = (rule, "  ");
+
+            CodesOn(read).Contains(FlowValidationCodeEnum.SEARCH_TEXT_MISSING).ShouldBe(isMissing);
+        }
+
         [Fact]
         public void A_text_search_whose_reader_is_downloaded_is_valid()
         {

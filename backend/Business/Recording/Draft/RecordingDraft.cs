@@ -237,18 +237,20 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
-        /// A read of the words inside the rectangle Review left, an area of its own in the main area.
-        /// It waits until it reads anything and carries on either way, so the step reporting it says
-        /// what was read, or why nothing was. Null when there is nothing to place the area by.
+        /// A read of the words inside the rectangle Review left, an area of its own in the main area,
+        /// waiting until it reads anything. What is done with what it read goes in its Success branch
+        /// (AddToSuccess); its Failure branch is empty, so a read that finds nothing carries on, and
+        /// what follows goes beside it. Named by its words, never by the value it saw while recording,
+        /// which changes. Null when there is nothing to place the area by.
         /// </summary>
         public FlowStep? AddRead(RecordedActionDto action, ReviewedActionDto review)
         {
-            string name = Name(NameFrom("Read", TextOf(action), "Read text"));
+            string name = Name(NameFrom("Read", WordsOf(TextOf(action)), "Read text"));
             FlowArea? area = TextArea(action, review, AreaNameOf(name));
             if (area == null)
                 return null;
 
-            return Add(new FlowStep
+            FlowStep read = new FlowStep
             {
                 FlowStepType = FlowStepTypeEnum.SEARCH_TEXT,
                 Name = name,
@@ -258,7 +260,19 @@ namespace Business.Recording.Draft
                 ResultExtractPattern = review.ReadTextPattern?.Trim() ?? string.Empty,
                 TimeoutMilliseconds = TimeoutFor(action.WaitedMilliseconds),
                 CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait",
-            });
+            };
+
+            Items.Add(new DraftItem { Kind = DraftItemKindEnum.READ, Step = read, ActionIndex = _actionIndex });
+            return read;
+        }
+
+        /// <summary>A step in a read's Success branch, after what is there already: done only with what it read.</summary>
+        public FlowStep AddToSuccess(FlowStep read, FlowStep step)
+        {
+            DraftItem item = Items.First(x => x.Kind == DraftItemKindEnum.READ && x.Step == read);
+            item.InSuccess.Add(step);
+
+            return step;
         }
 
         /// <summary>
@@ -277,7 +291,7 @@ namespace Business.Recording.Draft
         public FlowStep AddEvery(FlowStep findAll, IReadOnlyList<FlowStep> eachHit)
         {
             DraftItem item = new DraftItem { Kind = DraftItemKindEnum.EVERY, Step = findAll, ActionIndex = _actionIndex };
-            item.EachHit.AddRange(eachHit);
+            item.InSuccess.AddRange(eachHit);
             Items.Add(item);
 
             return findAll;
@@ -481,7 +495,7 @@ namespace Business.Recording.Draft
 
             // After what the search does, up to the next search, stage or repeat.
             int end = at + 1;
-            while (end < Items.Count && Items[end].Kind == DraftItemKindEnum.STEP)
+            while (end < Items.Count && (Items[end].Kind == DraftItemKindEnum.STEP || Items[end].Kind == DraftItemKindEnum.READ))
                 end++;
 
             int timeout = TimeoutFor(0);
@@ -616,6 +630,16 @@ namespace Business.Recording.Draft
         private static string AreaNameOf(string searchName)
         {
             return $"{searchName} area";
+        }
+
+        // The words that have letters and no digits: "Gold 1,234 +0.5%" is "Gold", and a price alone is none.
+        private static string WordsOf(string text)
+        {
+            IEnumerable<string> words = text
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+                .Where(x => x.Any(char.IsLetter) && !x.Any(char.IsDigit));
+
+            return string.Join(' ', words);
         }
 
         // The area a search by its words reads them in, when it was made for that search alone.

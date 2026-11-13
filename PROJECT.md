@@ -1178,13 +1178,16 @@ and Review asks, as before.
 - **A notification can read the screen where it was marked** and send what it read: "Read text
   from the screen" on its form, and a pattern for the part to keep. The draft writes a `Wait For
   Text` on an area of its own, the rectangle Review left around what was pressed, that waits until
-  it reads anything, its timeout a recorded search's, and the `Notify` after it `with result of`
-  it (`RecordingDraft.AddRead`). Neither branch holds anything, so the flow carries on either way
-  and the message says what was read or why nothing was. It is the one step marked instead of a
-  click whose place matters, so every right click's press is found as a check's is; the window
-  shows the area and what reads in it now, and says it is moved and resized in Review. A press
-  outside the main area has nowhere to read, and the notification goes without it. In a QA test the
-  read is a check that cannot fail the execution, so validation notes it as one.
+  it reads anything, its timeout a recorded search's, with the `Notify` in its Success branch `with
+  result of` it, since a Notify reports only on a step it sits under (`RecordingDraft.AddRead`,
+  `AddToSuccess`). Its Failure branch is empty, so a read that finds nothing sends nothing and
+  carries on, and what was done next sits beside it, as after a Find All Images. It is named by the
+  words read there with no digits in them, "Read Gold" for "Gold 1,234", or "Read text" for a price
+  alone: the value seen while recording changes, and the name heads every message. It is the one
+  step marked instead of a click whose place matters, so every right click's press is found as a
+  check's is; the window shows the area and what reads in it now, and says it is moved and resized
+  in Review. A press outside the main area has nowhere to read, and the notification goes without
+  it. In a QA test the read is a check that cannot fail the execution, so validation notes it as one.
 - **Asked at once.** The session pauses itself at the gesture's press, as it is drained - the release
   is still held back, since the hook holds back the button rather than the list - notes the window
   in front, and `RECORDING_PROGRESS` carries `Asking` until it is answered: in the progress, sent
@@ -1907,7 +1910,8 @@ Settings, about 8 MB each, by `Business/ScreenText/OcrReaderDownloadService` fro
 catalog's SHA-256 before it is kept; the release is filled by `publish-ocr-models.yml` from pinned
 Hugging Face revisions against the same hashes, and `npm run models` fetches the line finder and
 Latin. `scripts/download-models.mjs` checks every model file it fetches against the SHA-256 its
-release lists, and fetches again a file already there that does not match. A step's `OcrLanguage` names its reader - empty is Latin, on every machine - and one not
+release lists, and fetches again a file already there that does not match. A step's `OcrLanguage` names its reader - empty is Latin, on every machine, and the step's form
+shows Latin picked for it, the field required - and one not
 on this machine is an error, `OCR_READER_NOT_DOWNLOADED`, naming the reader to download, so the
 flow does not start. Validation asks `IOcrService.GetLanguages` only when the flow reads text. The Greek reader reads English too,
 though an English word inside a Greek sentence comes out in Greek letters.

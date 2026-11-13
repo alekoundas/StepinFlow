@@ -67,7 +67,8 @@ you were in gets the keyboard back.
   around where you right clicked and sends it with the message, or only the part a pattern keeps.
   The window shows the area it reads and what reads there now; you move and resize the area in
   Review. In the flow it is a Wait For Text on an area of its own, waiting until it reads anything,
-  then the Notify with its result, and the flow carries on whether or not anything was read.
+  with the Notify and its result in the read's Success branch. When nothing reads in time, nothing
+  is sent and the flow carries on. The read is named by the words there, not by the value it saw.
 
 **Add and keep recording** keeps the answer; **Decide in Review** keeps none, and Review asks
 instead. Either resumes the recording, and so do Resume and Stop, which leave it for Review. The

@@ -145,6 +145,14 @@ namespace Business.Recording.Generation
                     continue;
                 }
 
+                if (item.Kind == DraftItemKindEnum.READ)
+                {
+                    done.Add("read the text in an area");
+                    foreach (string withRead in item.InSuccess.Select(WhatIs).OfType<string>())
+                        done.Add($"{withRead} with it");
+                    continue;
+                }
+
                 string? what = WhatIs(item.Step);
                 if (what != null)
                     done.Add(what);

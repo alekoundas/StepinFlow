@@ -163,7 +163,7 @@ export function stepNote(fields: GestureFields): string {
       return "Types the input's value. One the flow does not have yet is added with no value, to be given before it executes.";
     case ReviewChoiceEnum.NOTIFY:
       if (fields.isReadingText)
-        return "Waits until the area reads anything, then posts the message with what it read, or why it read nothing, and the flow carries on either way. The flow's name is always sent with it.";
+        return "Waits until the area reads anything, then posts the message with what it read. If nothing reads in time, nothing is sent and the flow carries on. The flow's name is always sent with it.";
       return "Posts the message through the bot. The flow's name is always sent with it.";
     case ReviewChoiceEnum.WAIT:
       return "Every search already waits for what it looks for. This is for time the screen does not show, such as a game's timer running out.";

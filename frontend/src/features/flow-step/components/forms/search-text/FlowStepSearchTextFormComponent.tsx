@@ -13,6 +13,7 @@ import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/
 import FlowStepSearchTextFormFieldsComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextFormFieldsComponent";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import FlowStepSearchTextTestPanelComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextTestPanelComponent";
+import { DEFAULT_OCR_READER } from "@/features/settings/hooks/use-ocr-languages";
 
 interface Props {
   formMode: FormMode;
@@ -29,10 +30,11 @@ export default function FlowStepSearchTextFormComponent({
   onCancel,
   onEdit,
 }: Props) {
+  // A step from a recording, a file or a new one names no reader, and reads with Latin.
   const form = useForm<z.infer<typeof FlowStepSearchTextSchema>>({
     resolver: zodResolver(FlowStepSearchTextSchema),
     mode: "onChange",
-    defaultValues: { ...defaultValues } as never,
+    defaultValues: { ...defaultValues, ocrLanguage: defaultValues.ocrLanguage || DEFAULT_OCR_READER } as never,
   });
 
   const {

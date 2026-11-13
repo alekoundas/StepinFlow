@@ -97,14 +97,16 @@ namespace Business.Recording.Draft
                             Place(item.End, failure);
                         break;
 
-                    // Done once per hit, so what comes after it goes beside it, not in its branch.
+                    // Done once per hit, or only with what was read, so what comes after it goes
+                    // beside it, not in its branch. A read that finds nothing carries on.
                     case DraftItemKindEnum.EVERY:
+                    case DraftItemKindEnum.READ:
                         Place(item.Step, current);
 
-                        FlowStep each = Branch(item.Step, FlowStepTypeEnum.SUCCESS);
+                        FlowStep success = Branch(item.Step, FlowStepTypeEnum.SUCCESS);
                         Branch(item.Step, FlowStepTypeEnum.FAILURE);
-                        foreach (FlowStep step in item.EachHit)
-                            Place(step, each);
+                        foreach (FlowStep step in item.InSuccess)
+                            Place(step, success);
                         break;
 
                     default:

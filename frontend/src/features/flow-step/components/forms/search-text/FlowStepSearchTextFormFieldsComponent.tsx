@@ -100,8 +100,8 @@ export default function FlowStepSearchTextFormFieldsComponent({
         options={languageOptions}
         optionLabel="label"
         optionValue="value"
-        placeholderText="Latin"
-        defaultValue=""
+        placeholderText="Pick a text reader"
+        isRequired={true}
         isDisabled={isDisabled}
         hintText="Latin reads English and most European languages. Download Greek, Cyrillic, Chinese and others in Settings, Text recognition."
       />

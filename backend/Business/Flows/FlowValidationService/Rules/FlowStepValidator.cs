@@ -57,7 +57,7 @@ namespace Business.Flows.FlowValidationService.Rules
                         ValidateArea(result, step);
                         ValidateReader(result, step, installedReaders);
 
-                        if (string.IsNullOrWhiteSpace(step.ConditionText))
+                        if (NeedsValue(step.ConditionType) && string.IsNullOrWhiteSpace(step.ConditionText))
                             result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
                         break;
 
@@ -177,13 +177,18 @@ namespace Business.Flows.FlowValidationService.Rules
                 return;
             }
 
-            // Empty and not empty compare against nothing, and only between takes a second value.
-            bool needsValue = step.ConditionType != ConditionTypeEnum.IS_EMPTY && step.ConditionType != ConditionTypeEnum.IS_NOT_EMPTY;
-            if (needsValue && string.IsNullOrWhiteSpace(step.ConditionText))
+            // Only between takes a second value.
+            if (NeedsValue(step.ConditionType) && string.IsNullOrWhiteSpace(step.ConditionText))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_VALUE_MISSING, "There is nothing to check the result against.");
 
             if (step.ConditionType == ConditionTypeEnum.BETWEEN && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
                 result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
+        }
+
+        // Empty and not empty compare against nothing.
+        private static bool NeedsValue(ConditionTypeEnum? condition)
+        {
+            return condition != ConditionTypeEnum.IS_EMPTY && condition != ConditionTypeEnum.IS_NOT_EMPTY;
         }
 
         private static void ValidateCommand(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowArea> areasById)

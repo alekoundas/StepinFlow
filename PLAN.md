@@ -77,8 +77,10 @@ Left:
       right click on a value, Send a notification, tick Read text from the screen: the preview shows
       the area and what reads there, with and without a pattern; in Review the area moves and
       resizes; executed, Discord gets the message with what was read, and with nothing there the
-      flow carries on and says why. A right click outside the main area says there is nothing to
-      read.
+      flow carries on and sends nothing. A right click outside the main area says there is nothing
+      to read. Tried 2026-11-13 on tradingeconomics: the recorded flow did not start, its read an
+      error for having no text to compare and its Notify one for sitting beside the read; both
+      fixed, and the read's Language now shows Latin.
 - [ ] **The focus comes back.** Windows refuses a foreground change from a process that is not in
       front, so try it on a browser and on the game, and fall back on how `Focus Window` brings a
       window forward.

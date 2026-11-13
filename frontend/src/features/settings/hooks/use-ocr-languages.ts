@@ -6,6 +6,9 @@ export const ocrLanguageKeys = {
   all: ["lookup", "ocrLanguages"] as const,
 } as const;
 
+/** What a step that names no reader reads with, as the backend's OcrReaderCatalog.DEFAULT_READER. */
+export const DEFAULT_OCR_READER = "latin";
+
 export function useOcrLanguages() {
   return useQuery({
     queryKey: ocrLanguageKeys.all,

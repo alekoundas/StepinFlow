@@ -19,7 +19,7 @@ export const FlowStepSearchTextSchema = z
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
 
     flowAreaId: z.number().int().nullish(),
-    ocrLanguage: z.string(),
+    ocrLanguage: z.string().min(1, "Pick a text reader"),
 
     conditionText: z
       .string()

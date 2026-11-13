@@ -7,5 +7,6 @@ namespace Business.Recording.Draft.Models
         SEARCH,     // A wait for what was pressed, or a check: what follows goes in its Success branch
         STAGE,      // A stage marker, at the top of the flow
         EVERY,      // A Find All Images, with what is done at each hit
+        READ,       // A read of the screen, with what is done with what it read; what follows goes beside it
     }
 }

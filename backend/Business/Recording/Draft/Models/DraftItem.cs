@@ -11,7 +11,7 @@ namespace Business.Recording.Draft.Models
     {
         public DraftItemKindEnum Kind { get; init; }
 
-        /// <summary>The step itself: the search, the stage marker, the Find All Images, or the step.</summary>
+        /// <summary>The step itself: the search, the stage marker, the Find All Images, the read, or the step.</summary>
         public FlowStep Step { get; init; } = new FlowStep();
 
         /// <summary>The recorded action it came from, by its index. -1 for one no action made: a check a model proposed, a QA test's pass.</summary>
@@ -23,8 +23,11 @@ namespace Business.Recording.Draft.Models
         /// <summary>For a search: what its Failure branch does before it ends, in order.</summary>
         public List<FlowStep> BeforeEnd { get; } = [];
 
-        /// <summary>For a Find All Images: what is done at each hit, in order.</summary>
-        public List<FlowStep> EachHit { get; } = [];
+        /// <summary>
+        /// Its Success branch, in order: for a Find All Images what is done at each hit, for a read
+        /// what is done with what it read.
+        /// </summary>
+        public List<FlowStep> InSuccess { get; } = [];
 
         /// <summary>For a search: the page its press was on. Null when the screens were not read.</summary>
         public int? Page { get; init; }

@@ -1,4 +1,5 @@
 using System.Drawing;
+using Business.FlowScript;
 using Business.FlowScript.Models;
 using Business.FlowScript.Scanner;
 using Business.FlowScript.Text;
@@ -8,6 +9,8 @@ using Business.Tests.Fakes;
 using Core.Enums;
 using Core.Models.Database;
 using Core.Models.Dtos;
+using Core.Models.Dtos.FlowScript;
+using static Business.Tests.TestToken;
 
 namespace Business.Tests.Recording
 {
@@ -687,29 +690,75 @@ namespace Business.Tests.Recording
             ]);
         }
 
-        // Read where it was marked, inside the rectangle Review left, and carried on from either way.
+        // Read where it was marked, inside the rectangle Review left. A read that finds nothing
+        // carries on, and what was done next sits beside it.
         [Fact]
-        public void A_notification_that_reads_the_screen_reads_its_area_first_and_sends_the_result()
+        public void A_notification_that_reads_the_screen_is_sent_from_the_read_s_success_branch()
         {
             RecordedActionDto notify = Click(400, 300, "Gold 1,234", ReviewChoiceEnum.NOTIFY, waited: 2000, kind: RecordedActionKindEnum.SUBSTITUTE);
             ReviewedActionDto review = Reviewed(notify);
             (review.DiscordBotId, review.Message, review.IsReadingText, review.ReadTextPattern) = (7, "Gold now", true, "  \\d[\\d,]*  ");
             (review.ElementX, review.ElementY, review.ElementWidth, review.ElementHeight) = (250, 230, 120, 30);
+            Key(RecordedActionKindEnum.KEY_COMBINATION, "Enter");
 
             FlowScriptSchema schema = Build();
 
-            List<FlowStep> added = ChildrenOf(schema, null).Skip(1).ToList();
-            added.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_TEXT, FlowStepTypeEnum.NOTIFY]);
+            ChildrenOf(schema, null).Skip(1).Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_TEXT, FlowStepTypeEnum.KEYBOARD_INPUT]);
 
-            FlowStep read = added[0];
-            (read.Name, read.SearchMode, read.ConditionType, read.ResultExtractPattern).ShouldBe(("Read Gold 1,234", SearchModeEnum.WAIT_UNTIL_FOUND, ConditionTypeEnum.IS_NOT_EMPTY, "\\d[\\d,]*"));
+            FlowStep read = schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+            (read.Name, read.SearchMode, read.ConditionType, read.ResultExtractPattern).ShouldBe(("Read Gold", SearchModeEnum.WAIT_UNTIL_FOUND, ConditionTypeEnum.IS_NOT_EMPTY, "\\d[\\d,]*"));
             (read.TimeoutMilliseconds, read.CodeComment).ShouldBe((10_000, "recorded after a 2.0s wait"));
 
             FlowArea area = read.FlowArea!;
-            (area.Name, area.ParentFlowArea!.Name).ShouldBe(("Read Gold 1,234 area", "Browser"));
+            (area.Name, area.ParentFlowArea!.Name).ShouldBe(("Read Gold area", "Browser"));
             (area.LocationX, area.LocationY, area.Width, area.Height, area.AuthoredDpi).ShouldBe((250, 230, 120, 30, 120));
 
-            (added[1].Message, added[1].DiscordBotId, added[1].FlowStepReference).ShouldBe(("Gold now", (int?)7, (FlowStep?)read));
+            FlowStep sent = ChildrenOf(schema, BranchOf(schema, read, FlowStepTypeEnum.SUCCESS)).ShouldHaveSingleItem();
+            (sent.Message, sent.DiscordBotId, sent.FlowStepReference).ShouldBe(("Gold now", (int?)7, (FlowStep?)read));
+            ChildrenOf(schema, BranchOf(schema, read, FlowStepTypeEnum.FAILURE)).ShouldBeEmpty();
+        }
+
+        // The value seen while recording changes from one execution to the next, so it names nothing.
+        [Theory]
+        [InlineData("Gold 1,234 +0.5%", "Read Gold")]
+        [InlineData("88.621", "Read text")]
+        public void A_read_is_named_by_its_words_never_by_the_value_it_saw(string seen, string name)
+        {
+            RecordedActionDto notify = Click(400, 300, seen, ReviewChoiceEnum.NOTIFY, kind: RecordedActionKindEnum.SUBSTITUTE);
+            (Reviewed(notify).DiscordBotId, Reviewed(notify).IsReadingText) = (7, true);
+
+            FlowStep read = Build().Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+
+            (read.Name, read.FlowArea!.Name).ShouldBe((name, $"{name} area"));
+        }
+
+        // As Check saves it: an error refuses the flow at Start, so a recording's draft may have none.
+        [Fact]
+        public async Task A_draft_with_a_notification_that_reads_the_screen_imports_with_no_errors()
+        {
+            Click(300, 200, "Commodities");
+            RecordedActionDto price = Click(400, 370, "88.621", ReviewChoiceEnum.NOTIFY, kind: RecordedActionKindEnum.SUBSTITUTE);
+            (Reviewed(price).DiscordBotId, Reviewed(price).IsReadingText) = (7, true);
+            Key(RecordedActionKindEnum.KEY_COMBINATION, "Enter");
+
+            FlowScriptSchema draft = Build();
+            foreach (FlowStep notify in draft.Steps.Where(x => x.DiscordBotId != null))
+                draft.DiscordBots[notify] = new DiscordBotReference { Name = "Alerts" };
+
+            string script = new Printer().Write(draft);
+            Dictionary<string, byte[]> pictures = draft.Steps
+                .SelectMany(x => x.FlowStepTemplates)
+                .Select(x => x.FlowTemplate)
+                .ToDictionary(x => x.Name, x => x.TemplateImage ?? [1]);
+
+            using TestDatabase database = new TestDatabase();
+            FlowScriptImportResultDto imported = await new FlowScriptImporter(new Scanner(), TestDataService.For(database)).ImportTextAsync(script, pictures, Ct);
+
+            imported.IsSuccess.ShouldBeTrue(script);
+            imported.Validation.ShouldNotBeNull().Issues
+                .Where(x => x.Severity == ValidationSeverityEnum.ERROR)
+                .Select(x => $"{x.FlowStepName}: {x.Code} {x.Message}")
+                .ShouldBeEmpty(script);
         }
 
         // A press with no screenshot of its own, here one outside the window, has nowhere to read.
@@ -912,7 +961,7 @@ namespace Business.Tests.Recording
             read.Inputs.Count.ShouldBe(2, script);
             read.DiscordBots.Values.Select(x => x.Name).ShouldBe(["Alerts", "Alerts", "Alerts", "Alerts"], script);
             script.ShouldContain("through <[ Alerts ]>   with result of <[ Check Total 120 ]>");
-            script.ShouldContain("through <[ Alerts ]>   with result of <[ Read Gold 1,234 ]>");
+            script.ShouldContain("through <[ Alerts ]>   with result of <[ Read Gold ]>");
             new Printer().Write(read).ShouldBe(script);
         }
     }

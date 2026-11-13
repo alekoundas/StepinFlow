@@ -45,7 +45,8 @@ was deleted.
 
 **NO_TEMPLATES** — an image search has no template images.
 
-**SEARCH_TEXT_MISSING** — a waiting read-text mode has no text to look for.
+**SEARCH_TEXT_MISSING** — a text search's rule compares the text read with something, and there is
+nothing to compare it with. Is empty and is not empty need none.
 
 **OCR_READER_NOT_DOWNLOADED** — the text search reads with a reader this machine does not have.
 Every reader but Latin is downloaded per machine, so a flow from a repository can name one that is

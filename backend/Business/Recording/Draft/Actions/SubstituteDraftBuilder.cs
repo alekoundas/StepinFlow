@@ -51,19 +51,29 @@ namespace Business.Recording.Draft.Actions
                     });
                     break;
 
-                // With the read's result, or none: it reports on nothing it sits under.
+                // In the read's Success branch, with what it read; with nowhere to read, on its own
+                // and with no result, since it sits under nothing to report on.
                 case ReviewChoiceEnum.NOTIFY when review.DiscordBotId != null:
-                    FlowStep? read = null;
-                    if (review.IsReadingText)
-                        read = draft.AddRead(action, review);
-
-                    draft.Add(new FlowStep
+                    FlowStep notify = new FlowStep
                     {
                         FlowStepType = FlowStepTypeEnum.NOTIFY,
                         Message = review.Message?.Trim() ?? string.Empty,
                         DiscordBotId = review.DiscordBotId,
-                        FlowStepReference = read,
-                    });
+                    };
+
+                    FlowStep? read = null;
+                    if (review.IsReadingText)
+                        read = draft.AddRead(action, review);
+
+                    if (read == null)
+                    {
+                        draft.Add(notify);
+                    }
+                    else
+                    {
+                        notify.FlowStepReference = read;
+                        draft.AddToSuccess(read, notify);
+                    }
                     break;
 
                 case ReviewChoiceEnum.WAIT when review.WaitMilliseconds > 0:
