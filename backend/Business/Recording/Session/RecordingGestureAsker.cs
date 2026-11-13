@@ -10,9 +10,9 @@ namespace Business.Recording.Session
 {
     /// <summary>
     /// A gesture pauses the recording and asks what it is for: the question is kept until it is
-    /// answered, and a resume or a stop meanwhile leaves it for Review. While it asks, what a check
-    /// pressed is found - the CPU is the tester's while paused - and the stop's finding takes it as
-    /// it was found. The answer is kept by the press, for Review to start from, and the window that
+    /// answered, and a resume or a stop meanwhile leaves it for Review. While it asks, what the
+    /// gesture pressed is found - the CPU is the tester's while paused - and the stop's finding takes
+    /// it as it was found. The answer is kept by the press, for Review to start from, and the window that
     /// had the keyboard gets it back.
     /// </summary>
     public sealed class RecordingGestureAsker
@@ -70,11 +70,8 @@ namespace Business.Recording.Session
             TopLevelWindow inFront = _windowService.GetWindowInFront();
             _cache.Asking = new RecordingGestureAsk { PressIndex = pressIndex, Gesture = gesture, InFront = inFront.Handle };
 
-            // A step that is not a click is looked at for nothing.
-            if (gesture == RecordingGestureEnum.CHECK)
-                FindElement(pressIndex, press);
-            else
-                _cache.AddGestureElement(pressIndex, null);
+            // A step that is not a click is looked at too, for a notification that reads the words there.
+            FindElement(pressIndex, press);
 
             _pause();
         }
@@ -175,7 +172,7 @@ namespace Business.Recording.Session
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"[Recording] Could not find what a check pressed while asking about it: {ex.Message}");
+                    Console.Error.WriteLine($"[Recording] Could not find what a gesture pressed while asking about it: {ex.Message}");
                 }
 
                 if (recordingNumber != Volatile.Read(ref _recordingNumber))

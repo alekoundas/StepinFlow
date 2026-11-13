@@ -100,7 +100,7 @@ namespace Business.Recording.Draft
                         break;
 
                     case RecordedActionKindEnum.SUBSTITUTE:
-                        SubstituteDraftBuilder.Build(review, draft);
+                        SubstituteDraftBuilder.Build(action, review, draft);
                         break;
                 }
             }

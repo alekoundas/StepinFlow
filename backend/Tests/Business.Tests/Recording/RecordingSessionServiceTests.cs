@@ -399,17 +399,17 @@ namespace Business.Tests.Recording
             gesture.Element.ShouldNotBeNull().Text.ShouldBe("Checkout");
         }
 
-        // Looked at for nothing: where it was marked does not matter.
+        // A notification marked instead of a click may read the words where it was marked.
         [Fact]
-        public async Task A_step_that_is_not_a_click_asks_at_once_with_nothing_to_find()
+        public async Task A_step_that_is_not_a_click_asks_with_what_it_pressed_found_meanwhile()
         {
             await _session.StartAsync(NewFlow(withMainArea: true), OWN, Ct);
 
             Gesture(RecordingGestureEnum.SUBSTITUTE);
-            RecordingGestureAskDto asking = await AskedAsync(isFound: false);
+            RecordingGestureAskDto asking = await AskedAsync();
 
-            asking.IsElementFound.ShouldBeTrue();
-            _session.GetGesture().ShouldNotBeNull().Element.ShouldBeNull();
+            asking.Gesture.ShouldBe(RecordingGestureEnum.SUBSTITUTE);
+            _session.GetGesture().ShouldNotBeNull().Element.ShouldNotBeNull().Text.ShouldBe("Checkout");
         }
 
         [Fact]

@@ -237,6 +237,31 @@ namespace Business.Recording.Draft
         }
 
         /// <summary>
+        /// A read of the words inside the rectangle Review left, an area of its own in the main area.
+        /// It waits until it reads anything and carries on either way, so the step reporting it says
+        /// what was read, or why nothing was. Null when there is nothing to place the area by.
+        /// </summary>
+        public FlowStep? AddRead(RecordedActionDto action, ReviewedActionDto review)
+        {
+            string name = Name(NameFrom("Read", TextOf(action), "Read text"));
+            FlowArea? area = TextArea(action, review, AreaNameOf(name));
+            if (area == null)
+                return null;
+
+            return Add(new FlowStep
+            {
+                FlowStepType = FlowStepTypeEnum.SEARCH_TEXT,
+                Name = name,
+                SearchMode = SearchModeEnum.WAIT_UNTIL_FOUND,
+                FlowArea = area,
+                ConditionType = ConditionTypeEnum.IS_NOT_EMPTY,
+                ResultExtractPattern = review.ReadTextPattern?.Trim() ?? string.Empty,
+                TimeoutMilliseconds = TimeoutFor(action.WaitedMilliseconds),
+                CodeComment = $"recorded after a {Seconds(action.WaitedMilliseconds)} wait",
+            });
+        }
+
+        /// <summary>
         /// A step in a search's Failure branch, ahead of the End Execution the branch ends with, so
         /// it is done before the execution stops.
         /// </summary>

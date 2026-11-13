@@ -79,15 +79,22 @@ namespace Business.Tests.Recording
             _locator.Located.ShouldBeEmpty();
         }
 
+        // A step marked instead of a click too: a notification may read the words there.
         [Fact]
-        public async Task Only_clicks_and_drags_with_a_screenshot_are_looked_at()
+        public async Task Only_presses_with_a_screenshot_are_looked_at()
         {
             RecordedActionDto typing = new RecordedActionDto { Index = 1, Kind = RecordedActionKindEnum.TYPING };
             RecordedActionDto withoutScreenshot = new RecordedActionDto { Index = 2, Kind = RecordedActionKindEnum.CLICK, LocationX = 400, LocationY = 350 };
 
-            IReadOnlyList<ClickedElementDto> elements = await FindAsync(Click(0, 400, 350), typing, withoutScreenshot, Click(3, 500, 400, RecordedActionKindEnum.DRAG));
+            IReadOnlyList<ClickedElementDto> elements = await FindAsync(
+                Click(0, 400, 350),
+                typing,
+                withoutScreenshot,
+                Click(3, 500, 400, RecordedActionKindEnum.DRAG),
+                Click(4, 450, 380, RecordedActionKindEnum.CHECK),
+                Click(5, 450, 420, RecordedActionKindEnum.SUBSTITUTE));
 
-            elements.Select(x => x.ActionIndex).ShouldBe([0, 3]);
+            elements.Select(x => x.ActionIndex).ShouldBe([0, 3, 4, 5]);
         }
 
         // Hundreds of megabytes the app has no use for until the next recording.

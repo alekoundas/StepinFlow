@@ -755,7 +755,7 @@ recording by the time F9 comes, and anything else lets them through first, in or
 
 **What each click hit is found once the recording stops**, never during it, where it would take the
 CPU from the application being recorded (`Business/Recording/Elements/ClickedElementFinder`). For
-every click and drag inside the main area, `Business/Ai/Vision/ElementLocator` runs OmniParser's
+every click, drag and gesture inside the main area, `Business/Ai/Vision/ElementLocator` runs OmniParser's
 detection model over the 640 by 640 pixels of the press's screenshot around the click, at their own
 size: the whole screen at full size is six times the work and gigabytes of memory, and shrunk to fit
 the model it makes a small icon a third of its size. The model scores every 8, 16 and 32 pixel cell
@@ -1170,11 +1170,21 @@ and Review asks, as before.
   (`RecordingDraft.AddToFailure`), each `with result of` the check, so what it found, or why it
   failed, goes with the message and there is nothing to pick for it.
 - **Ctrl + right click marks a step that is not a click** where one would have been: a command, an
-  application opened, a notification through a bot (no result), an input's value typed, a wait of a
+  application opened, a notification through a bot, an input's value typed, a wait of a
   set time, or a stage begun there - a `Shell`, a `Launch`, a `Notify`, a `Type {{input}}`, a `Wait`,
   or no step, its name beginning the stage at the next search as any action's does
   (`SubstituteDraftBuilder`). Where it was marked does not matter, which is why it is the right
   button. An input the flow does not have yet is added with no value.
+- **A notification can read the screen where it was marked** and send what it read: "Read text
+  from the screen" on its form, and a pattern for the part to keep. The draft writes a `Wait For
+  Text` on an area of its own, the rectangle Review left around what was pressed, that waits until
+  it reads anything, its timeout a recorded search's, and the `Notify` after it `with result of`
+  it (`RecordingDraft.AddRead`). Neither branch holds anything, so the flow carries on either way
+  and the message says what was read or why nothing was. It is the one step marked instead of a
+  click whose place matters, so every right click's press is found as a check's is; the window
+  shows the area and what reads in it now, and says it is moved and resized in Review. A press
+  outside the main area has nowhere to read, and the notification goes without it. In a QA test the
+  read is a check that cannot fail the execution, so validation notes it as one.
 - **Asked at once.** The session pauses itself at the gesture's press, as it is drained - the release
   is still held back, since the hook holds back the button rather than the list - notes the window
   in front, and `RECORDING_PROGRESS` carries `Asking` until it is answered: in the progress, sent
@@ -1182,9 +1192,9 @@ and Review asks, as before.
   (`electron/ipc/handlers/recording-gesture-handler.ts`, `windows/recording-gesture/`): frameless, on
   top, left out of screenshots, and focusable where the bar is not, since its forms are typed into.
   The choices one under the other, then the form of the one picked with a way back; the forms are
-  the ones Review shows (`features/recording/gesture/`). For a check, `ClickedElementFinder.FindAtAsync`
-  finds what was pressed while the window is open - the CPU is the tester's while paused - and
-  `Recording.testGestureRule` tests the rule against the words read there with
+  the ones Review shows (`features/recording/gesture/`). For either gesture, `ClickedElementFinder.FindAtAsync`
+  finds what was pressed while the window is open - the CPU is the tester's while paused - and for a
+  check `Recording.testGestureRule` tests the rule against the words read there with
   `ConditionEvaluatorHelper`, the code an execution tests it with. The detector stays loaded for the
   next gesture, and the stop's finding takes each press found already as it was and lets the
   detector go.

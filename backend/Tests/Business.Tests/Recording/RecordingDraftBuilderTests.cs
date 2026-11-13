@@ -687,6 +687,44 @@ namespace Business.Tests.Recording
             ]);
         }
 
+        // Read where it was marked, inside the rectangle Review left, and carried on from either way.
+        [Fact]
+        public void A_notification_that_reads_the_screen_reads_its_area_first_and_sends_the_result()
+        {
+            RecordedActionDto notify = Click(400, 300, "Gold 1,234", ReviewChoiceEnum.NOTIFY, waited: 2000, kind: RecordedActionKindEnum.SUBSTITUTE);
+            ReviewedActionDto review = Reviewed(notify);
+            (review.DiscordBotId, review.Message, review.IsReadingText, review.ReadTextPattern) = (7, "Gold now", true, "  \\d[\\d,]*  ");
+            (review.ElementX, review.ElementY, review.ElementWidth, review.ElementHeight) = (250, 230, 120, 30);
+
+            FlowScriptSchema schema = Build();
+
+            List<FlowStep> added = ChildrenOf(schema, null).Skip(1).ToList();
+            added.Select(x => x.FlowStepType).ShouldBe([FlowStepTypeEnum.SEARCH_TEXT, FlowStepTypeEnum.NOTIFY]);
+
+            FlowStep read = added[0];
+            (read.Name, read.SearchMode, read.ConditionType, read.ResultExtractPattern).ShouldBe(("Read Gold 1,234", SearchModeEnum.WAIT_UNTIL_FOUND, ConditionTypeEnum.IS_NOT_EMPTY, "\\d[\\d,]*"));
+            (read.TimeoutMilliseconds, read.CodeComment).ShouldBe((10_000, "recorded after a 2.0s wait"));
+
+            FlowArea area = read.FlowArea!;
+            (area.Name, area.ParentFlowArea!.Name).ShouldBe(("Read Gold 1,234 area", "Browser"));
+            (area.LocationX, area.LocationY, area.Width, area.Height, area.AuthoredDpi).ShouldBe((250, 230, 120, 30, 120));
+
+            (added[1].Message, added[1].DiscordBotId, added[1].FlowStepReference).ShouldBe(("Gold now", (int?)7, (FlowStep?)read));
+        }
+
+        // A press with no screenshot of its own, here one outside the window, has nowhere to read.
+        [Fact]
+        public void A_notification_with_nothing_to_read_is_sent_without_the_text()
+        {
+            RecordedActionDto notify = Substitute(ReviewChoiceEnum.NOTIFY);
+            (Reviewed(notify).DiscordBotId, Reviewed(notify).IsReadingText) = (7, true);
+
+            FlowScriptSchema schema = Build();
+
+            schema.Steps.ShouldNotContain(x => x.FlowStepType == FlowStepTypeEnum.SEARCH_TEXT);
+            schema.Steps.Single(x => x.FlowStepType == FlowStepTypeEnum.NOTIFY).FlowStepReference.ShouldBeNull();
+        }
+
         [Fact]
         public void A_stage_begun_instead_of_a_click_is_no_step_and_begins_at_the_next_search()
         {
@@ -845,6 +883,8 @@ namespace Business.Tests.Recording
             (Reviewed(total).SuccessMessage, Reviewed(total).FailureMessage) = ("Over a hundred", "The total never came\nLook at the cart");
             RecordedActionDto told = Substitute(ReviewChoiceEnum.NOTIFY);
             (Reviewed(told).DiscordBotId, Reviewed(told).Message) = (7, "Exporting now");
+            RecordedActionDto gold = Click(400, 370, "Gold 1,234", ReviewChoiceEnum.NOTIFY, kind: RecordedActionKindEnum.SUBSTITUTE);
+            (Reviewed(gold).DiscordBotId, Reviewed(gold).Message, Reviewed(gold).IsReadingText, Reviewed(gold).ReadTextPattern) = (7, "Gold now", true, "\\d[\\d,]*");
             Reviewed(Substitute(ReviewChoiceEnum.WAIT)).WaitMilliseconds = 30_000;
             Reviewed(Substitute(ReviewChoiceEnum.BEGIN_STAGE)).StageName = "Check the total";
             Stage("Download the export");
@@ -870,8 +910,9 @@ namespace Business.Tests.Recording
             read.Steps.Count.ShouldBe(draft.Steps.Count - emptyBranches, script);
             read.Points.Count.ShouldBe(draft.Points.Count, script);
             read.Inputs.Count.ShouldBe(2, script);
-            read.DiscordBots.Values.Select(x => x.Name).ShouldBe(["Alerts", "Alerts", "Alerts"], script);
+            read.DiscordBots.Values.Select(x => x.Name).ShouldBe(["Alerts", "Alerts", "Alerts", "Alerts"], script);
             script.ShouldContain("through <[ Alerts ]>   with result of <[ Check Total 120 ]>");
+            script.ShouldContain("through <[ Alerts ]>   with result of <[ Read Gold 1,234 ]>");
             new Printer().Write(read).ShouldBe(script);
         }
     }

@@ -20,7 +20,7 @@ using Microsoft.Extensions.Logging;
 namespace Business.Repository
 {
     /// <summary>
-    /// The only thing that works in the repository's folder, %LOCALAPPDATA%\StepinFlow_v2\Repository.
+    /// The only thing that works in the repository's folder, %LOCALAPPDATA%\StepinFlow\Repository.
     /// It keeps the folder a copy of the database - every flow as its script and its template images,
     /// written when a save says it changed the flow and checked whole at startup - and reads and
     /// commits it through the git port.

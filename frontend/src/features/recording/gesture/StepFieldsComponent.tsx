@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
@@ -103,6 +104,30 @@ export default function StepFieldsComponent({ fields, onChange, onNewBot }: Prop
               className="w-full"
             />
           </FieldComponent>
+          <div className="flex align-items-center gap-2">
+            <Checkbox
+              inputId="gesture-step-read"
+              checked={fields.isReadingText}
+              onChange={(e) => onChange({ isReadingText: !!e.checked })}
+            />
+            <label htmlFor="gesture-step-read">Read text from the screen where you right clicked, and send it</label>
+          </div>
+          {fields.isReadingText && (
+            <FieldComponent
+              id="gesture-step-pattern"
+              label="Keep only the part matching (optional)"
+            >
+              <InputText
+                id="gesture-step-pattern"
+                value={fields.readTextPattern}
+                placeholder="\d[\d,.]*"
+                onChange={(e) => onChange({ readTextPattern: e.target.value })}
+                className="w-full"
+                style={MONOSPACE}
+              />
+              <small className="text-color-secondary">A regular expression. Left empty, it sends everything it reads.</small>
+            </FieldComponent>
+          )}
         </div>
       );
 

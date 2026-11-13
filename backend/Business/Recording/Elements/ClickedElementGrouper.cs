@@ -52,10 +52,13 @@ namespace Business.Recording.Elements
             Action<int, int> onProgress,
             CancellationToken ct = default)
         {
-            // A check is not a click, and keeps a template of its own: one shared with clicks could be
-            // folded into their Find All Images.
-            HashSet<int> checks = actions.Where(x => x.Kind == RecordedActionKindEnum.CHECK).Select(x => x.Index).ToHashSet();
-            List<ClickedElementDto> found = elements.Where(x => x.FoundBy == ElementFoundByEnum.MODEL && !checks.Contains(x.ActionIndex)).ToList();
+            // A gesture is not a click: a check keeps a template of its own, since one shared with
+            // clicks could be folded into their Find All Images, and a step marked instead of a click has none.
+            HashSet<int> gestures = actions
+                .Where(x => x.Kind == RecordedActionKindEnum.CHECK || x.Kind == RecordedActionKindEnum.SUBSTITUTE)
+                .Select(x => x.Index)
+                .ToHashSet();
+            List<ClickedElementDto> found = elements.Where(x => x.FoundBy == ElementFoundByEnum.MODEL && !gestures.Contains(x.ActionIndex)).ToList();
             List<Candidate> candidates = new List<Candidate>();
 
             onProgress(0, found.Count);

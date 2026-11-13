@@ -40,6 +40,12 @@ export interface ReviewedActionDto {
   /** For a notification marked instead of a click: what it says. */
   message?: string | null;
 
+  /** For a notification marked instead of a click: the words inside the rectangle are read first, and sent with it. */
+  isReadingText: boolean;
+
+  /** For a notification that reads the words: a pattern for the part of them it keeps. Empty keeps them all. */
+  readTextPattern?: string | null;
+
   /** For a wait marked instead of a click: how long. */
   waitMilliseconds: number;
 

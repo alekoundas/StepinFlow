@@ -11,14 +11,14 @@ using Core.Ports;
 namespace Business.Recording.Elements
 {
     /// <summary>
-    /// Per click and drag: the element under the press, found in the screenshot of the main area
+    /// Per click, drag and gesture: the element under the press, found in the screenshot of the main area
     /// from just before it, and the text on it, read by OCR. The rectangle is what the draft cuts
     /// a template from; the text is what names the step.
     ///
     /// A press outside the main area is not looked at: there is no screenshot of where it landed.
     /// Read text is screen data, so it reaches a cloud model only through the screen data gate.
     ///
-    /// A check's press is found while the recording is paused to ask about it, and the stop's
+    /// A gesture's press is found while the recording is paused to ask about it, and the stop's
     /// finding takes it as it was. One at a time, since the detector reads one image at once.
     /// </summary>
     public sealed class ClickedElementFinder : IClickedElementFinder, IDisposable
@@ -124,9 +124,13 @@ namespace Business.Recording.Elements
         // Private methods
         // ================================================================
 
+        // A step marked instead of a click too, for a notification that reads the words there.
         private static bool IsPress(RecordedActionDto action, Func<int, RecordedPress?> pressOf)
         {
-            bool isPointed = action.Kind == RecordedActionKindEnum.CLICK || action.Kind == RecordedActionKindEnum.DRAG || action.Kind == RecordedActionKindEnum.CHECK;
+            bool isPointed = action.Kind == RecordedActionKindEnum.CLICK
+                || action.Kind == RecordedActionKindEnum.DRAG
+                || action.Kind == RecordedActionKindEnum.CHECK
+                || action.Kind == RecordedActionKindEnum.SUBSTITUTE;
             return isPointed && action.ScreenshotIndex != null && pressOf(action.ScreenshotIndex.Value) != null;
         }
 

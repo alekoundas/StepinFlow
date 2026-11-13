@@ -24,6 +24,8 @@ export interface GestureFields {
   commandText: string;
   inputName: string;
   message: string;
+  isReadingText: boolean;
+  readTextPattern: string;
   waitMilliseconds: number;
   stageName: string;
 }
@@ -74,7 +76,7 @@ export const STEP_OPTIONS: StepOption[] = [
   {
     label: "Send a notification",
     value: ReviewChoiceEnum.NOTIFY,
-    description: "Posts to a Discord channel through one of your bots.",
+    description: "Posts to a Discord channel through one of your bots, with the text read where you right clicked if you like.",
     icon: "bell",
   },
   {
@@ -109,6 +111,11 @@ export function isCheckChoice(choice: ReviewChoiceEnum): boolean {
 
 export function isStepChoice(choice: ReviewChoiceEnum): boolean {
   return STEP_OPTIONS.some((x) => x.value === choice);
+}
+
+/** A notification that reads the words where it was marked first: the one step where the place matters. */
+export function isReadingChoice(fields: GestureFields): boolean {
+  return fields.choice === ReviewChoiceEnum.NOTIFY && fields.isReadingText;
 }
 
 /** Not empty, and empty, compare nothing. */
@@ -146,8 +153,8 @@ export function notifyLabels(choice: ReviewChoiceEnum): { success: string; failu
 }
 
 /** What a step marked instead of a click does, said under its form. */
-export function stepNote(choice: ReviewChoiceEnum): string {
-  switch (choice) {
+export function stepNote(fields: GestureFields): string {
+  switch (fields.choice) {
     case ReviewChoiceEnum.EXECUTE_COMMAND:
       return "Executes the command in cmd and waits for it to finish. Windows only, as every command is for now.";
     case ReviewChoiceEnum.LAUNCH_APP:
@@ -155,6 +162,8 @@ export function stepNote(choice: ReviewChoiceEnum): string {
     case ReviewChoiceEnum.TYPE_INPUT:
       return "Types the input's value. One the flow does not have yet is added with no value, to be given before it executes.";
     case ReviewChoiceEnum.NOTIFY:
+      if (fields.isReadingText)
+        return "Waits until the area reads anything, then posts the message with what it read, or why it read nothing, and the flow carries on either way. The flow's name is always sent with it.";
       return "Posts the message through the bot. The flow's name is always sent with it.";
     case ReviewChoiceEnum.WAIT:
       return "Every search already waits for what it looks for. This is for time the screen does not show, such as a game's timer running out.";
@@ -216,6 +225,8 @@ export function blankFields(choice: ReviewChoiceEnum): GestureFields {
     commandText: "",
     inputName: "",
     message: "",
+    isReadingText: false,
+    readTextPattern: "",
     waitMilliseconds: DEFAULT_WAIT_MILLISECONDS,
     stageName: "",
   };
@@ -227,8 +238,10 @@ export function toReviewedFields(fields: GestureFields): Omit<ReviewedActionDto,
   const isByWords = isCheck && fields.searchBy === SearchByEnum.TEXT;
   const isNotifying = isCheck && (fields.notifyOnSuccess || fields.notifyOnFailure);
   const isNotify = fields.choice === ReviewChoiceEnum.NOTIFY;
+  const isReading = isNotify && fields.isReadingText;
   const isCommand = fields.choice === ReviewChoiceEnum.EXECUTE_COMMAND || fields.choice === ReviewChoiceEnum.LAUNCH_APP;
   const stageName = fields.stageName.trim();
+  const pattern = fields.readTextPattern.trim();
 
   return {
     choice: fields.choice,
@@ -244,6 +257,8 @@ export function toReviewedFields(fields: GestureFields): Omit<ReviewedActionDto,
     inputName: fields.choice === ReviewChoiceEnum.TYPE_INPUT ? fields.inputName : null,
     commandText: isCommand ? fields.commandText : null,
     message: isNotify ? fields.message : null,
+    isReadingText: isReading,
+    readTextPattern: isReading && pattern.length > 0 ? pattern : null,
     waitMilliseconds: fields.choice === ReviewChoiceEnum.WAIT ? fields.waitMilliseconds : 0,
     stageName: stageName.length > 0 ? stageName : null,
   };
@@ -266,6 +281,8 @@ export function fromReviewed(reviewed: ReviewedActionDto, over: GestureFields): 
     commandText: reviewed.commandText ?? over.commandText,
     inputName: reviewed.inputName ?? over.inputName,
     message: reviewed.message ?? over.message,
+    isReadingText: reviewed.isReadingText,
+    readTextPattern: reviewed.readTextPattern ?? over.readTextPattern,
     waitMilliseconds: reviewed.waitMilliseconds > 0 ? reviewed.waitMilliseconds : over.waitMilliseconds,
     stageName: reviewed.stageName ?? over.stageName,
   };

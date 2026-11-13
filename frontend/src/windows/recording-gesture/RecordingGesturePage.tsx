@@ -26,6 +26,7 @@ import {
   blankFields,
   type GestureFields,
   isComplete,
+  isReadingChoice,
   STEP_OPTIONS,
   stepNote,
   toReviewedFields,
@@ -94,6 +95,7 @@ export default function RecordingGesturePage() {
   };
 
   const isByWords = isCheck && fields.searchBy === SearchByEnum.TEXT;
+  const isReading = !isCheck && screen === "form" && isReadingChoice(fields);
   const isTestable = isByWords && !!gesture?.isElementFound && !!readText;
   const rule = JSON.stringify([fields.conditionType, fields.searchText, fields.conditionTextEnd]);
   const passes = isTestable && tested?.rule === rule ? tested.passes : null;
@@ -227,7 +229,7 @@ export default function RecordingGesturePage() {
         </header>
 
         <div className="flex flex-column gap-3 px-4 pb-4">
-          {isCheck && screen !== "bot" && (
+          {((isCheck && screen !== "bot") || isReading) && (
             <PreviewComponent
               gesture={gesture}
               caption={captionOf(screen, fields)}
@@ -322,7 +324,14 @@ export default function RecordingGesturePage() {
                 onChange={change}
                 onNewBot={() => setScreen("bot")}
               />
-              <span className="text-xs text-color-secondary">{stepNote(fields.choice)}</span>
+              {isReading && (
+                <Message
+                  severity="info"
+                  className="w-full justify-content-start"
+                  text={readingNote(gesture, readText)}
+                />
+              )}
+              <span className="text-xs text-color-secondary">{stepNote(fields)}</span>
             </>
           )}
 
@@ -511,7 +520,8 @@ function headingOf(screen: Screen, isCheck: boolean, fields: GestureFields): { t
   if (screen === "choice")
     return {
       title: "Add a step here",
-      subtitle: "The recording is paused. Where you right clicked does not matter: the step goes after the last thing you did.",
+      subtitle:
+        "The recording is paused. The step goes after the last thing you did. Where you right clicked matters only to a notification that reads the text there.",
     };
 
   const option = STEP_OPTIONS.find((x) => x.value === fields.choice);
@@ -520,9 +530,19 @@ function headingOf(screen: Screen, isCheck: boolean, fields: GestureFields): { t
 
 function captionOf(screen: Screen, fields: GestureFields): string {
   if (screen === "choice") return "What you Ctrl + clicked";
-  if (fields.searchBy === SearchByEnum.TEXT) return "Where it reads";
+  if (fields.searchBy === SearchByEnum.TEXT || isReadingChoice(fields)) return "Where it reads";
 
   return "The template, cut from the screenshot before your click";
+}
+
+function readingNote(gesture: RecordingGestureDto | null | undefined, readText: string | null): string {
+  const later = "You can move and resize the area in Review, after you stop.";
+
+  if (!gesture?.isElementFound) return `It reads inside the area found around where you right clicked. ${later}`;
+  if (!gesture.element) return "You right clicked outside the window the flow works in, so there is nothing to read there.";
+  if (!readText) return `Nothing reads in the area right now. ${later}`;
+
+  return `It reads “${readText}” there now. ${later}`;
 }
 
 // The bot the tester used last, so most notifications never ask for one.

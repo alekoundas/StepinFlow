@@ -26,9 +26,9 @@ namespace Business.Tests.Recording
             _grouper = new ClickedElementGrouper(_openCv, _screenshots);
         }
 
-        private ClickedElementDto Element(int index, int x, int y, string text = "", ElementFoundByEnum foundBy = ElementFoundByEnum.MODEL, int dpi = 96)
+        private ClickedElementDto Element(int index, int x, int y, string text = "", ElementFoundByEnum foundBy = ElementFoundByEnum.MODEL, int dpi = 96, RecordedActionKindEnum kind = RecordedActionKindEnum.CLICK)
         {
-            _actions.Add(new RecordedActionDto { Index = index, Kind = RecordedActionKindEnum.CLICK, ScreenshotIndex = index });
+            _actions.Add(new RecordedActionDto { Index = index, Kind = kind, ScreenshotIndex = index });
             _presses[index] = new RecordedPress { Index = index, MainAreaBounds = new Rectangle(0, 0, 800, 600), Dpi = dpi, Screenshot = [1] };
 
             return new ClickedElementDto { ActionIndex = index, X = x, Y = y, Width = 40, Height = 20, Text = text, FoundBy = foundBy, Image = [2] };
@@ -65,6 +65,19 @@ namespace Business.Tests.Recording
 
             _openCv.Grouped.ShouldHaveSingleItem().Count.ShouldBe(2);
             groups.ShouldHaveSingleItem().ActionIndexes.ShouldBe([0, 2]);
+        }
+
+        // A check keeps a template of its own, and a step marked instead of a click has none.
+        [Fact]
+        public void A_gesture_is_never_grouped_with_the_clicks()
+        {
+            IReadOnlyList<ClickGroupDto> groups = Group(
+                Element(0, 100, 100),
+                Element(1, 100, 140, kind: RecordedActionKindEnum.CHECK),
+                Element(2, 100, 180, kind: RecordedActionKindEnum.SUBSTITUTE),
+                Element(3, 100, 220));
+
+            groups.ShouldHaveSingleItem().ActionIndexes.ShouldBe([0, 3]);
         }
 
         [Fact]

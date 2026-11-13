@@ -15,7 +15,14 @@ import ElementRectangleEditorComponent from "@/features/recording/review/Element
 import CheckNotifyFieldsComponent from "@/features/recording/gesture/CheckNotifyFieldsComponent";
 import CheckRuleFieldsComponent from "@/features/recording/gesture/CheckRuleFieldsComponent";
 import StepFieldsComponent from "@/features/recording/gesture/StepFieldsComponent";
-import { describeRule, isCheckChoice, isStepChoice, stepNote, toScriptName } from "@/features/recording/gesture/gesture";
+import {
+  describeRule,
+  isCheckChoice,
+  isReadingChoice,
+  isStepChoice,
+  stepNote,
+  toScriptName,
+} from "@/features/recording/gesture/gesture";
 import { useNewDiscordBotDialog } from "@/features/recording/gesture/use-new-discord-bot-dialog";
 import {
   type ActionReview,
@@ -68,6 +75,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
 
   const isCheck = action.kind === RecordedActionKindEnum.CHECK && isCheckChoice(review.choice);
   const isStep = action.kind === RecordedActionKindEnum.SUBSTITUTE && isStepChoice(review.choice);
+  const isReading = isStep && isReadingChoice(review);
 
   const { data: screen } = useQuery({
     queryKey: ["recording", "screen", recordingKey, action.index],
@@ -78,9 +86,11 @@ export default function ReviewActionDetailComponent({ result, action, review, on
   const isOwnScreen = screen?.actionIndex === action.index;
 
   let click: { x: number; y: number } | null = null;
-  if (screen && isOwnScreen && isPointed(action)) click = { x: action.locationX - screen.x, y: action.locationY - screen.y };
+  if (screen && isOwnScreen && (isPointed(action) || isReading))
+    click = { x: action.locationX - screen.x, y: action.locationY - screen.y };
 
   const isTemplate = isTemplateChoice(review.choice);
+  const isAreaEditable = (isTemplate || isReading) && isOwnScreen;
 
   return (
     <section
@@ -113,8 +123,8 @@ export default function ReviewActionDetailComponent({ result, action, review, on
             width={screen.width}
             height={screen.height}
             click={click}
-            element={isTemplate && isOwnScreen ? review.element : null}
-            isEditable={isTemplate && isOwnScreen}
+            element={isAreaEditable ? review.element : null}
+            isEditable={isAreaEditable}
             onChange={(next) => onChange({ ...review, element: next })}
           />
         ) : (
@@ -139,7 +149,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </span>
           <span className="flex align-items-center gap-2">
             <span style={{ width: 14, height: 10, border: "2px dashed #4F63E6" }} />
-            {isByWords(review)
+            {isByWords(review) || isReading
               ? "The area it reads the words in. Drag a corner to change it."
               : "The template it searches for. Drag a corner to change it."}
           </span>
@@ -351,6 +361,13 @@ function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: 
     if (group) facts.push({ name: "Same picture as", value: describeGroup(result, group.actionIndexes, group.isMoving) });
   }
 
+  if (action.kind === RecordedActionKindEnum.SUBSTITUTE && isReadingChoice(review)) {
+    let read = "Nothing yet";
+    if (!element) read = "Nothing: it was outside the window you picked";
+    else if (element.text.length > 0) read = `“${element.text}”`;
+    facts.push({ name: "Reads there now", value: read });
+  }
+
   if (action.kind === RecordedActionKindEnum.TYPING) {
     const text = action.text ?? "";
     // Hidden only while it stays a secret: any other choice writes it into the flow.
@@ -393,7 +410,9 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
     }
   }
 
-  if (isStepChoice(review.choice)) return stepNote(review.choice);
+  if (isReadingChoice(review) && !review.element)
+    return "Nothing to read: you right clicked outside the window you picked, so it becomes a notification without the text.";
+  if (isStepChoice(review.choice)) return stepNote(review);
 
   switch (review.choice) {
     case ReviewChoiceEnum.WAIT_AND_CLICK:

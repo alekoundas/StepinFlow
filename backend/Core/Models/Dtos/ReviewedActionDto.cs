@@ -41,6 +41,12 @@ namespace Core.Models.Dtos
         /// <summary>For a notification marked instead of a click: what it says.</summary>
         public string? Message { get; set; }
 
+        /// <summary>For a notification marked instead of a click: the words inside the rectangle are read first, and sent with it.</summary>
+        public bool IsReadingText { get; set; }
+
+        /// <summary>For a notification that reads the words: a pattern for the part of them it keeps. Empty keeps them all.</summary>
+        public string? ReadTextPattern { get; set; }
+
         /// <summary>For a wait marked instead of a click: how long.</summary>
         public int WaitMilliseconds { get; set; }
 

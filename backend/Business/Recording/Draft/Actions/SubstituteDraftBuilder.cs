@@ -8,13 +8,13 @@ namespace Business.Recording.Draft.Actions
     /// <summary>
     /// A step that is not a click, marked while recording where one would have been: a command, an
     /// application opened, an input's value typed, a notification or a wait. Where it was marked
-    /// does not matter to any of them. One Review left with nothing to execute, open, type, send
-    /// through or wait for is no step. A stage begun there is none either: its name begins the stage
-    /// at the next search, as any action's does.
+    /// matters only to a notification that reads the words there first and sends them. One Review
+    /// left with nothing to execute, open, type, send through or wait for is no step. A stage begun
+    /// there is none either: its name begins the stage at the next search, as any action's does.
     /// </summary>
     public static class SubstituteDraftBuilder
     {
-        public static void Build(ReviewedActionDto review, RecordingDraft draft)
+        public static void Build(RecordedActionDto action, ReviewedActionDto review, RecordingDraft draft)
         {
             string command = review.CommandText?.Trim() ?? string.Empty;
             string inputName = review.InputName?.Trim() ?? string.Empty;
@@ -51,13 +51,18 @@ namespace Business.Recording.Draft.Actions
                     });
                     break;
 
-                // No result: it reports on nothing it sits under.
+                // With the read's result, or none: it reports on nothing it sits under.
                 case ReviewChoiceEnum.NOTIFY when review.DiscordBotId != null:
+                    FlowStep? read = null;
+                    if (review.IsReadingText)
+                        read = draft.AddRead(action, review);
+
                     draft.Add(new FlowStep
                     {
                         FlowStepType = FlowStepTypeEnum.NOTIFY,
                         Message = review.Message?.Trim() ?? string.Empty,
                         DiscordBotId = review.DiscordBotId,
+                        FlowStepReference = read,
                     });
                     break;
 

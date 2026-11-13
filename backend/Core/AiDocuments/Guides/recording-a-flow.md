@@ -62,7 +62,12 @@ you were in gets the keyboard back.
   tell Discord when it succeeds, when it fails, or both, each with a message of its own, through
   one of your bots or a new one made there; what the check found, or why it failed, goes with it.
 - **A step** is a command, an application opened, a notification through a bot, an input's value
-  typed, a wait of a set time, or a stage begun and named there.
+  typed, a wait of a set time, or a stage begun and named there. Where you right clicked does not
+  matter, except to a notification with "Read text from the screen" ticked: it reads the text
+  around where you right clicked and sends it with the message, or only the part a pattern keeps.
+  The window shows the area it reads and what reads there now; you move and resize the area in
+  Review. In the flow it is a Wait For Text on an area of its own, waiting until it reads anything,
+  then the Notify with its result, and the flow carries on whether or not anything was read.
 
 **Add and keep recording** keeps the answer; **Decide in Review** keeps none, and Review asks
 instead. Either resumes the recording, and so do Resume and Stop, which leave it for Review. The

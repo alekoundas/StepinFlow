@@ -304,7 +304,10 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
   if (review.choice === ReviewChoiceEnum.LAUNCH_APP) return command ? `opens ${command}` : "no program yet, so no step";
   if (review.choice === ReviewChoiceEnum.TYPE_INPUT)
     return review.inputName ? `types {{${review.inputName}}}` : "no input yet, so no step";
-  if (review.choice === ReviewChoiceEnum.NOTIFY) return review.discordBotId !== null ? "tells Discord" : "no bot yet, so no step";
+  if (review.choice === ReviewChoiceEnum.NOTIFY) {
+    if (review.discordBotId === null) return "no bot yet, so no step";
+    return review.isReadingText ? "tells Discord what it reads" : "tells Discord";
+  }
   if (review.choice === ReviewChoiceEnum.WAIT) return `waits ${toSeconds(review.waitMilliseconds)}`;
   if (review.choice === ReviewChoiceEnum.BEGIN_STAGE) {
     const name = review.stageName.trim();

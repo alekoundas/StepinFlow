@@ -114,6 +114,8 @@ namespace Business.Recording.Session
                     return "A command";
                 case ReviewChoiceEnum.LAUNCH_APP:
                     return "An application opened";
+                case ReviewChoiceEnum.NOTIFY when answer.IsReadingText:
+                    return "A notification of the text read there";
                 case ReviewChoiceEnum.NOTIFY:
                     return "A notification";
                 case ReviewChoiceEnum.TYPE_INPUT:
