@@ -124,6 +124,12 @@ A template image belongs to the flow, and steps link to it. **Add template** cap
 reuses one the flow already has, picked by its picture. A pasted step links to the pictures of the
 step it copies rather than copying them.
 
+To capture something only shown while the cursor is over it - a hover colour, a tooltip, a menu
+item - open Add template, point at it, and press **F3** rather than clicking "Capture now (F3)":
+the screen is captured with the cursor where it rests, then you draw the box as usual. F3 works
+whichever window has the keyboard, until the first press or until the dialog closes. That window
+gets the F3 as well, so a browser may open its find bar.
+
 The picture, its click point and where it was captured are shared: editing them through one step,
 or from the editor's Templates tab, changes them for every step that links to it, and the form asks
 first when other steps use it. **Edit a copy for this step** gives one step a picture of its own.

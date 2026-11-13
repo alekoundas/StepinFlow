@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 
+import {
+  BroadcastTypeEnum,
+  type IpcBroadcastMessage,
+  KeyCodeEnum,
+  type RecordedInput,
+  RecordedInputTypeEnum,
+} from "../../../../../../../electron/shared/types";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { ChoiceCardComponent } from "@/shared/components/ChoiceCardComponent";
 import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
+import { backendApiService } from "@/shared/services/backend-api-service";
 import {
   stepsSearchingFor,
   useFlowStepUses,
@@ -49,6 +57,37 @@ export function FlowTemplateAddDialogComponent({
     onClose?.();
     onCapture();
   };
+
+  const captureByKey = useEffectEvent(() => capture());
+
+  // F3 through the global hook, whichever window has the keyboard, so the cursor stays on a hover
+  // or a tooltip. Stopped before the capture, since the overlay cannot listen while this does.
+  useEffect(() => {
+    if (isReusing) return;
+
+    let isListening = true;
+    let unsubscribe: (() => void) | null = null;
+
+    const stop = () => {
+      if (!isListening) return;
+      isListening = false;
+
+      unsubscribe?.();
+      backendApiService.System.inputRecordHotkeyStop().catch(() => {});
+    };
+
+    unsubscribe = backendApiService.OnBroadcast((event: IpcBroadcastMessage<RecordedInput>) => {
+      if (event.type !== BroadcastTypeEnum.HOTKEY_CAPTURE_EVENT) return;
+      if (event.payload.type !== RecordedInputTypeEnum.KEY_DOWN || event.payload.keyCode !== KeyCodeEnum.F3) return;
+
+      stop();
+      captureByKey();
+    });
+
+    backendApiService.System.inputRecordHotkeyStart().catch(() => {});
+
+    return stop;
+  }, [isReusing]);
 
   const reuse = () => {
     if (!picked) return;
@@ -116,8 +155,8 @@ export function FlowTemplateAddDialogComponent({
 
           <ChoiceCardComponent
             icon="crosshairs"
-            title="Capture now"
-            description="Draw a box around it on the screen. It becomes a new template of this flow."
+            title="Capture now (F3)"
+            description="Draw a box around it on the screen. It becomes a new template of this flow. To keep a hover or a tooltip in the picture, point at it and press F3 instead of clicking here."
             onSelect={capture}
           />
 

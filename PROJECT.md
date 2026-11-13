@@ -2966,6 +2966,17 @@ takes its own, so the template matches what a search will see. Electron keeps th
 is open and, on confirm, sends the selection back with the ones it lies on; `System.cropScreenshots`
 cuts it out, across monitors when it spans two.
 
+**F3 captures a template from where the cursor rests.** The screenshot is taken as the overlay
+opens, so a click on Add template's "Capture now (F3)" leaves the cursor on the dialog and loses
+whatever the application shows on hover. While the dialog's choices show, the global hook is in
+hotkey mode (`System.inputRecordHotkeyStart`), whichever window has the keyboard - one clicked
+into first to open a menu included - and the first F3 `KEY_DOWN` stops it and captures, as the
+click does (`FlowTemplateAddDialogComponent`). Closing the dialog, Reuse a template, or the
+capture itself stops it too, and it is stopped before the overlay starts, since the hook listens
+in one mode at a time. F3 is not held back, so the window with the keyboard gets it as well: a
+browser's find bar can open and show in the picture. The screenshot is a screen copy
+(`CopyFromScreen`), which leaves the cursor out.
+
 **Point capture** (for `FlowPoint`) is deliberately not a window. The always-running global hook is
 put into point-capture mode and resolves on the first `BUTTON_DOWN` — not `BUTTON_UP`, because the
 press that armed the capture happened before recording started, so its release is the only stale
