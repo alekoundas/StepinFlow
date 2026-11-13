@@ -2927,7 +2927,10 @@ few passes that did:
 - **Activity:** steps a minute over the whole execution - a second, or ten minutes, whatever keeps
   it to 120 bars - marked where something was found and where it ended.
 - **The tree:** how often each step executed, how often a check found, how often a branch was
-  taken.
+  taken. Every branch is open but the ones you close, and the step being executed stays in view:
+  the branch it is in opens and the panel scrolls it to the middle, though not while the pointer is
+  over the panel. The tree is given `onToggle` for this: without it PrimeReact reads `expandedKeys`
+  on its first render only, which usually came before the flow had loaded.
 - **The list:** newest first. Live while the top is in view, "14 new · back to latest" once
   scrolled down. All, Found and Failed, and Find a step by name or number.
 - **The step:** where it executed, what it found against what it needed, its screenshot or why

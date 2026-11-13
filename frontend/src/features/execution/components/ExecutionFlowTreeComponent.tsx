@@ -76,23 +76,26 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
   const currentRowRef = useRef<HTMLDivElement>(null);
   const isPointerOverRef = useRef(false);
 
-  // Not while the pointer is over the panel: the rows would move out from under it.
-  const follow = useEffectEvent(() => {
-    if (currentFlowStepId === undefined || isPointerOverRef.current) return;
+  // The step being executed opens the branch it is in. Not while the pointer is over the panel,
+  // where the rows would move out from under it.
+  const openTo = useEffectEvent((flowStepId: number | undefined) => {
+    if (flowStepId === undefined || isPointerOverRef.current) return;
 
-    const closed = ancestorsOf(tree, currentFlowStepId).filter((key) => collapsedKeys.has(key));
-    if (closed.length > 0) {
-      // Scrolled to on the next pass, once its row is drawn.
+    const closed = ancestorsOf(tree, flowStepId).filter((key) => collapsedKeys.has(key));
+    if (closed.length > 0)
       setCollapsedKeys((prev) => new Set([...prev].filter((key) => !closed.includes(key))));
-      return;
-    }
-
-    centerIfOutOfView(currentRowRef.current, scrollerRef.current);
   });
 
   useEffect(() => {
-    follow();
-  }, [currentFlowStepId, collapsedKeys, treeNodes]);
+    return useExecutionStore.subscribe((state, prev) => {
+      if (state.currentFlowStepId !== prev.currentFlowStepId) openTo(state.currentFlowStepId);
+    });
+  }, []);
+
+  // And the panel scrolls to it, once its row is drawn.
+  useEffect(() => {
+    if (!isPointerOverRef.current) centerIfOutOfView(currentRowRef.current, scrollerRef.current);
+  }, [currentFlowStepId, expandedKeys]);
 
   const ringColor = runState === RunStateEnum.PAUSED ? HANDLED_COLOR : FOUND_COLOR;
 
