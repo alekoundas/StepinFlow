@@ -8,6 +8,8 @@ import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeCompone
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { useFlowStepUses, useFlowTemplates } from "@/features/workflow/hooks/use-flow-parts";
 import { WorkflowTabsComponent } from "@/features/workflow/components/WorkflowTabsComponent";
+import { WorkflowTreeExpansionComponent } from "@/features/workflow/components/WorkflowTreeExpansionComponent";
+import { WorkflowTreeZoomComponent } from "@/features/workflow/components/WorkflowTreeZoomComponent";
 import { WorkflowContentComponent } from "@/features/workflow/components/WorkflowContentComponent";
 import { CopiedStepBarComponent } from "@/features/workflow/components/CopiedStepBarComponent";
 import { WorkflowTemplateGridComponent } from "@/features/workflow/components/WorkflowTemplateGridComponent";
@@ -32,8 +34,9 @@ interface Props {
 }
 
 /**
- * The editor below its header: the tabs and what each lists on the left, the picked one's form on
- * the right. The Issues tab opens a step in the Flow tab's form. The Script tab takes the whole width.
+ * The editor below its header: the tabs across the whole width, and under them what the tab lists on
+ * the left and the picked one's form on the right. The Issues tab opens a step in the Flow tab's form.
+ * The Script tab takes the whole width.
  *
  * The Flow tab is hidden rather than unmounted while another is open, so the tree keeps the
  * branches that were open and a half-edited step keeps its edits.
@@ -66,166 +69,162 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
     setActiveTab(tab);
   };
 
-  const tabs = (
-    <WorkflowTabsComponent
-      areaCount={flow?.flowAreas.length}
-      locationCount={flow?.flowPoints.length}
-      inputCount={flow?.flowInputs.length}
-      templateCount={templates?.length}
-      issueCount={issues.length > 0 ? issues.length : undefined}
-      issueColor={flowHealthOf(issues).color}
-    />
-  );
-
   return (
-    <div className="flex-1 min-h-0">
-      <Splitter
-        stateKey="workflow-editor-splitter" // remembers the user's choice in localStorage
-        stateStorage="local"
-        layout="horizontal"
-        gutterSize={6}
-        className={classNames("h-full border-none border-noround", { hidden: isScript })}
-      >
-        <SplitterPanel
-          size={58}
-          minSize={25}
-          className="flex flex-column min-w-0"
-          style={{ overflow: "hidden" }}
+    <div className="flex flex-column flex-1 min-h-0">
+      <WorkflowTabsComponent
+        areaCount={flow?.flowAreas.length}
+        locationCount={flow?.flowPoints.length}
+        inputCount={flow?.flowInputs.length}
+        templateCount={templates?.length}
+        issueCount={issues.length > 0 ? issues.length : undefined}
+        issueColor={flowHealthOf(issues).color}
+      />
+
+      <div className="flex-1 min-h-0">
+        <Splitter
+          stateKey="workflow-editor-splitter" // remembers the user's choice in localStorage
+          stateStorage="local"
+          layout="horizontal"
+          gutterSize={6}
+          className={classNames("h-full border-none border-noround", { hidden: isScript })}
         >
-          {tabs}
-
-          {/* Never flex and hidden together: PrimeFlex's flex comes later and wins. */}
-          <div className={classNames("flex-column flex-1 min-h-0", isFlow ? "flex" : "hidden")}>
-            <CopiedStepBarComponent />
-            <ScrollPanel
-              className="flex-1 px-2"
-              style={{ minHeight: 0 }}
-            >
-              {/* zoom rather than a font size: the rows' padding, icons and thumbnails are in rem
-                  and would not follow. */}
-              <div style={{ zoom: treeZoom / 100 }}>
-                <DataTreeComponent flowId={flowId} />
-              </div>
-            </ScrollPanel>
-          </div>
-
-          {!isFlow && flow && (
-            <ScrollPanel
-              className="flex-1"
-              style={{ minHeight: 0 }}
-            >
-              {activeTab === "areas" && (
-                <FlowAreaListComponent
-                  areas={flow.flowAreas}
-                  uses={uses}
-                  selected={area}
-                  onSelect={setArea}
-                />
-              )}
-              {activeTab === "locations" && (
-                <FlowPointListComponent
-                  points={flow.flowPoints}
-                  areas={flow.flowAreas}
-                  uses={uses}
-                  selected={location}
-                  onSelect={setLocation}
-                />
-              )}
-              {activeTab === "inputs" && (
-                <FlowInputListComponent
-                  inputs={flow.flowInputs}
-                  uses={uses}
-                  selected={input}
-                  onSelect={setInput}
-                />
-              )}
-              {activeTab === "templates" && (
-                <WorkflowTemplateGridComponent
-                  templates={templates}
-                  selected={templateId}
-                  onSelect={setTemplateId}
-                />
-              )}
-              {activeTab === "issues" && (
-                <WorkflowIssueListComponent
-                  flowId={flowId}
-                  flow={flow}
-                  issues={issues}
-                  onOpenPart={openPart}
-                />
-              )}
-            </ScrollPanel>
-          )}
-        </SplitterPanel>
-
-        <SplitterPanel
-          size={42}
-          minSize={20}
-          className="flex flex-column min-w-0"
-          style={{ overflow: "hidden" }}
-        >
-          <ScrollPanel
-            className={classNames("flex-1", { hidden: !showsStepForm })}
-            style={{ minHeight: 0 }}
+          <SplitterPanel
+            size={58}
+            minSize={25}
+            className="flex flex-column min-w-0"
+            style={{ overflow: "hidden" }}
           >
-            <div className="p-4">
-              <WorkflowContentComponent />
+            {/* Never flex and hidden together: PrimeFlex's flex comes later and wins. */}
+            <div className={classNames("flex-column flex-1 min-h-0", isFlow ? "flex" : "hidden")}>
+              <div className="flex align-items-center justify-content-end gap-2 px-3 pt-2">
+                <WorkflowTreeExpansionComponent />
+                <WorkflowTreeZoomComponent />
+              </div>
+              <CopiedStepBarComponent />
+              <ScrollPanel
+                className="flex-1 px-2"
+                style={{ minHeight: 0 }}
+              >
+                {/* zoom rather than a font size: the rows' padding, icons and thumbnails are in rem
+                    and would not follow. */}
+                <div style={{ zoom: treeZoom / 100 }}>
+                  <DataTreeComponent flowId={flowId} />
+                </div>
+              </ScrollPanel>
             </div>
-          </ScrollPanel>
 
-          {!showsStepForm && flow && (
-            <ScrollPanel
-              className="flex-1"
-              style={{ minHeight: 0 }}
-            >
-              <div className="p-4">
+            {!isFlow && flow && (
+              <ScrollPanel
+                className="flex-1"
+                style={{ minHeight: 0 }}
+              >
                 {activeTab === "areas" && (
-                  <FlowAreaPanelComponent
-                    flow={flow}
+                  <FlowAreaListComponent
+                    areas={flow.flowAreas}
                     uses={uses}
                     selected={area}
                     onSelect={setArea}
                   />
                 )}
                 {activeTab === "locations" && (
-                  <FlowPointPanelComponent
-                    flow={flow}
+                  <FlowPointListComponent
+                    points={flow.flowPoints}
+                    areas={flow.flowAreas}
                     uses={uses}
                     selected={location}
                     onSelect={setLocation}
                   />
                 )}
                 {activeTab === "inputs" && (
-                  <FlowInputPanelComponent
-                    flow={flow}
+                  <FlowInputListComponent
+                    inputs={flow.flowInputs}
                     uses={uses}
                     selected={input}
                     onSelect={setInput}
                   />
                 )}
                 {activeTab === "templates" && (
-                  <WorkflowTemplatePanelComponent
-                    template={templates?.find((x) => x.id === templateId)}
-                    uses={uses}
+                  <WorkflowTemplateGridComponent
+                    templates={templates}
+                    selected={templateId}
+                    onSelect={setTemplateId}
                   />
                 )}
+                {activeTab === "issues" && (
+                  <WorkflowIssueListComponent
+                    flowId={flowId}
+                    flow={flow}
+                    issues={issues}
+                    onOpenPart={openPart}
+                  />
+                )}
+              </ScrollPanel>
+            )}
+          </SplitterPanel>
+
+          <SplitterPanel
+            size={42}
+            minSize={20}
+            className="flex flex-column min-w-0"
+            style={{ overflow: "hidden" }}
+          >
+            <ScrollPanel
+              className={classNames("flex-1", { hidden: !showsStepForm })}
+              style={{ minHeight: 0 }}
+            >
+              <div className="p-4">
+                <WorkflowContentComponent />
               </div>
             </ScrollPanel>
-          )}
-        </SplitterPanel>
-      </Splitter>
 
-      {isScript && (
-        <div className="flex flex-column h-full">
-          {tabs}
-          <ScrollPanel
-            className="flex-1"
-            style={{ minHeight: 0 }}
-          >
+            {!showsStepForm && flow && (
+              <ScrollPanel
+                className="flex-1"
+                style={{ minHeight: 0 }}
+              >
+                <div className="p-4">
+                  {activeTab === "areas" && (
+                    <FlowAreaPanelComponent
+                      flow={flow}
+                      uses={uses}
+                      selected={area}
+                      onSelect={setArea}
+                    />
+                  )}
+                  {activeTab === "locations" && (
+                    <FlowPointPanelComponent
+                      flow={flow}
+                      uses={uses}
+                      selected={location}
+                      onSelect={setLocation}
+                    />
+                  )}
+                  {activeTab === "inputs" && (
+                    <FlowInputPanelComponent
+                      flow={flow}
+                      uses={uses}
+                      selected={input}
+                      onSelect={setInput}
+                    />
+                  )}
+                  {activeTab === "templates" && (
+                    <WorkflowTemplatePanelComponent
+                      template={templates?.find((x) => x.id === templateId)}
+                      uses={uses}
+                    />
+                  )}
+                </div>
+              </ScrollPanel>
+            )}
+          </SplitterPanel>
+        </Splitter>
+
+        {isScript && (
+          <ScrollPanel className="h-full">
             <WorkflowScriptComponent flowId={flowId} />
           </ScrollPanel>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

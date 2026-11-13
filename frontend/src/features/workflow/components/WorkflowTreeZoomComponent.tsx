@@ -2,7 +2,7 @@ import { Button } from "primereact/button";
 
 import { TREE_ZOOM, useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
-/** − 100% + beside the tabs: draws the tree smaller or larger. The percentage puts it back. */
+/** − 100% + above the tree: draws it smaller or larger. The percentage puts it back. */
 export function WorkflowTreeZoomComponent() {
   const treeZoom = useWorkflowStore((x) => x.treeZoom);
   const setTreeZoom = useWorkflowStore((x) => x.setTreeZoom);

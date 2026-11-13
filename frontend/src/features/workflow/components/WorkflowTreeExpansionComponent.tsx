@@ -2,7 +2,7 @@ import { Button } from "primereact/button";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
-/** Expand all and Collapse all beside the tabs. The tree does the work: it holds which rows are open. */
+/** Expand all and Collapse all above the tree. The tree does the work: it holds which rows are open. */
 export function WorkflowTreeExpansionComponent() {
   const setTreeExpansion = useWorkflowStore((x) => x.setTreeExpansion);
 
