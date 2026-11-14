@@ -333,6 +333,14 @@ compiles Electron to the same place, so every window finds its preload and its p
 exe is carried as an electron-builder `extraResources` entry, and only `dist/electron` and
 `dist/frontend` go in the archive.
 
+**The Visual C++ runtime ships beside `App.exe`.** `onnxruntime.dll` and `libusearch_c.dll` need it,
+and a bare Windows (Windows Sandbox, a fresh install) lacks it. Without it the app's
+`onnxruntime.dll` cannot load, Windows' own older ONNX Runtime in `System32` loads in its place, and
+every model fails with *The type initializer for 'Microsoft.ML.OnnxRuntime.NativeMethods' threw an
+exception* (inside it: API version 31 asked, 17 there). `scripts/copy-vc-runtime.mjs`, the last
+part of `build:backend`, copies it from the redist folder of the newest Visual Studio, found with
+`vswhere`, which the Windows runner has too. With no MSVC build tools installed the build stops.
+
 **A release is the Release workflow** (`.github/workflows/release.yml`), a Run button on a Windows
 runner. It is asked for patch, minor or major and works out the next number from the newest
 `vX.Y.Z` tag. There are no betas: while the major is 0, every release is an early one. The tag is

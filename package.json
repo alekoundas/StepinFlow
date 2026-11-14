@@ -15,7 +15,7 @@
     "dev:electron": "npm run build:electron && wait-on http://localhost:5173 && electron dist/electron/main.js",
     "build": "npm run clean && npm run build:frontend && npm run build:backend && npm run build:electron",
     "build:frontend": "npm run build --prefix frontend",
-    "build:backend": "dotnet publish backend/App/App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/backend",
+    "build:backend": "dotnet publish backend/App/App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/backend && node scripts/copy-vc-runtime.mjs",
     "build:electron": "tsc -p electron/electron-config.json && shx mkdir -p dist/electron/protobuf && shx cp electron/protobuf/protobuf.proto dist/electron/protobuf/",
     "package": "npm run build && electron-builder --publish never",
     "test": "npm run test:backend && npm run typecheck",
