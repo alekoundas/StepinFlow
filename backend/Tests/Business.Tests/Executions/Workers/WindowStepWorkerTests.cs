@@ -60,15 +60,45 @@ namespace Business.Tests.Executions.Workers
             result.Message.ShouldBe("Browser - focused");
         }
 
+        // The title bar and borders are thicker at a higher scaling, so the same whole window would
+        // leave a smaller inside on another PC.
         [Fact]
-        public async Task A_window_is_resized_to_its_size()
+        public async Task An_application_window_is_resized_inside_its_title_bar_and_borders()
         {
             FlowStep resize = Step(FlowStepTypeEnum.WINDOW_RESIZE, Browser);
             (resize.WindowWidth, resize.WindowHeight) = (1280, 720);
 
+            ExecutionStep result = await Window(resize);
+
+            _windows.Actions.ShouldBe(["resize 1280x720 inside"]);
+            result.Message.ShouldBe("Browser - 1280 x 720 inside");
+        }
+
+        [Fact]
+        public async Task A_window_whose_area_keeps_its_frame_is_resized_whole()
+        {
+            FlowArea withFrame = new FlowArea { Id = 7, Name = "Editor", Type = FlowAreaTypeEnum.APPLICATION, ProcessName = "notepad", IgnoreWindowBorders = false };
+            FlowStep resize = Step(FlowStepTypeEnum.WINDOW_RESIZE, withFrame);
+            (resize.WindowWidth, resize.WindowHeight) = (1366, 768);
+
+            ExecutionStep result = await Window(resize);
+
+            _windows.Actions.ShouldBe(["resize 1366x768"]);
+            result.Message.ShouldBe("Editor - 1366 x 768");
+        }
+
+        // Its page reflows rather than growing with the window.
+        [Fact]
+        public async Task A_tab_s_browser_window_is_resized_whole()
+        {
+            _windows.Windows.Add(new WindowHandle(1));
+            _tabs.With(new WindowHandle(1), 0, "shop.example.com/cart");
+            FlowStep resize = Step(FlowStepTypeEnum.WINDOW_RESIZE, Cart);
+            (resize.WindowWidth, resize.WindowHeight) = (1600, 900);
+
             await Window(resize);
 
-            _windows.Actions.ShouldBe(["resize 1280x720"]);
+            _windows.Actions.ShouldBe(["resize 1600x900"]);
         }
 
         [Fact]

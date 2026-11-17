@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using Business.AreaPoint;
+using Core.Helpers;
 using Core.Ports;
 using Core.Enums;
 using Core.Enums.Business;
@@ -119,10 +120,15 @@ namespace Business.Executions.Workers
             if (step.WindowWidth < 1 || step.WindowHeight < 1)
                 return ExecutionStep.Failure(Detail(area, "no size to resize to"));
 
-            if (!_windowService.ResizeWindow(window, step.WindowWidth, step.WindowHeight))
+            bool isInside = WindowResizeHelper.SetsInside(area);
+            if (!_windowService.ResizeWindow(window, step.WindowWidth, step.WindowHeight, isInside))
                 return ExecutionStep.Failure(Detail(area, "the window would not resize"));
 
-            return ExecutionStep.Success(message: Detail(area, $"{step.WindowWidth} x {step.WindowHeight}"));
+            string size = $"{step.WindowWidth} x {step.WindowHeight}";
+            if (isInside)
+                size += " inside";
+
+            return ExecutionStep.Success(message: Detail(area, size));
         }
 
         private async Task<ExecutionStep> RelocateAsync(FlowStep step, FlowArea area, WindowHandle window, CancellationToken ct)

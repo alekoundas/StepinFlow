@@ -186,7 +186,7 @@ namespace Business.Tests.Recording
 
             (await _session.StartAsync(flowId, OWN, Ct)).IsSuccess.ShouldBeTrue();
 
-            _windows.Actions.ShouldBe(["resize 1280x720"]);
+            _windows.Actions.ShouldBe(["resize 1280x720 inside"]);
         }
 
         [Fact]
@@ -199,7 +199,7 @@ namespace Business.Tests.Recording
 
             ResultDto<bool> started = await _session.StartAsync(flowId, OWN, Ct);
 
-            started.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window stayed 1920 x 1080 rather than 1280 x 720.");
+            started.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window's inside stayed 1920 x 1080 rather than 1280 x 720.");
             _session.IsRecording.ShouldBeFalse();
         }
 

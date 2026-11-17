@@ -219,7 +219,7 @@ namespace Platform.Windows.Windowing
             return GetForegroundWindow() == hWnd;
         }
 
-        public bool ResizeWindow(WindowHandle handle, int width, int height)
+        public bool ResizeWindow(WindowHandle handle, int width, int height, bool ignoreWindowBorders)
         {
             IntPtr hWnd = handle.Value;
 
@@ -229,7 +229,20 @@ namespace Platform.Windows.Windowing
             if (IsIconic(hWnd))
                 ShowWindow(hWnd, SW_RESTORE);
 
-            return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            if (!ignoreWindowBorders)
+                return SetWindowSize(hWnd, width, height);
+
+            Size frame = FrameOf(hWnd);
+            if (!SetWindowSize(hWnd, width + frame.Width, height + frame.Height))
+                return false;
+
+            // A menu that wraps onto another line, or a move onto a monitor with another scaling,
+            // changes the title bar and borders as the window changes size.
+            Size after = FrameOf(hWnd);
+            if (after == frame)
+                return true;
+
+            return SetWindowSize(hWnd, width + after.Width, height + after.Height);
         }
 
         public bool MoveWindow(WindowHandle handle, int x, int y)
@@ -336,6 +349,24 @@ namespace Platform.Windows.Windowing
         // ================================================================
         // Private methods
         // ================================================================
+
+        private static bool SetWindowSize(IntPtr hWnd, int width, int height)
+        {
+            return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+
+        // The title bar and borders: how much bigger the whole window is than its inside.
+        private static Size FrameOf(IntPtr hWnd)
+        {
+            RECT windowRect = new RECT();
+            RECT clientRect = new RECT();
+            if (!GetWindowRect(hWnd, ref windowRect) || !GetClientRect(hWnd, ref clientRect))
+                return Size.Empty;
+
+            return new Size(
+                (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left),
+                (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top));
+        }
 
         private static TopLevelWindow Describe(IntPtr hWnd)
         {

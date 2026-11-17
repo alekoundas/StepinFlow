@@ -442,7 +442,7 @@ namespace Business.Recording.Session
             if (!area.IsResolved)
                 return null;
 
-            string? refused = RecordingWindowSize.Apply(_windowService, area.Window, resize.WindowWidth, resize.WindowHeight);
+            string? refused = RecordingWindowSize.Apply(_windowService, area.Window, mainArea, resize.WindowWidth, resize.WindowHeight);
             if (refused != null)
                 return $"{refused} \"{resize.Name}\" sets it, and the recording is made at that size. Restore the window if it is maximised or full screen, then start again.";
 

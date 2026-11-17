@@ -108,6 +108,12 @@ the history.
       presses Ctrl+W, which is Cmd+W on macOS. `ProcessService.Kill` is .NET's and works on all
       three, but its list of programs holding others' windows - Explorer, `ApplicationFrameHost` - is
       Windows'.
+- [ ] **`Resize Window`'s inside on macOS and Linux.** Since 2026-11-17 a resize of an application
+      whose area leaves out the title bar and borders sets the inside: `WindowService.ResizeWindow`
+      adds on the difference between `GetWindowRect` and `GetClientRect`, both Windows. Under X11 the
+      window manager draws the frame outside the client window, so resizing the client window is
+      already the inside and `_NET_FRAME_EXTENTS` says the frame; on macOS Accessibility's size is
+      the whole window, title bar included, so the title bar's height has to come off.
 - [ ] **A check failure and a harness failure are not the same thing, and the report will need to
       say which.** `SEARCH_IMAGE`, `SEARCH_TEXT` and `CHECK_VALUE` failing means the product under
       test is broken. `SYSTEM_COMMAND` and `WINDOW_FOCUS` / `WINDOW_RESIZE` / `WINDOW_RELOCATE` /

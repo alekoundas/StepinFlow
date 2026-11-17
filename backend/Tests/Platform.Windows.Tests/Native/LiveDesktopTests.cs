@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms;
 using Core.Models.Business;
 using Platform.Windows.Input;
 using Platform.Windows.Native;
@@ -40,6 +41,42 @@ namespace Platform.Windows.Tests.Native
             Rectangle client = _windows.GetWindowBounds(front.Handle, ignoreWindowBorders: true);
             whole.IsEmpty.ShouldBeFalse();
             whole.Contains(client).ShouldBeTrue();
+        }
+
+        // A window of the test's own, never shown, so nothing on the desktop moves.
+        [Fact]
+        public void A_window_is_resized_inside_its_title_bar_and_borders_or_whole()
+        {
+            Size inside = Size.Empty;
+            Size whole = Size.Empty;
+            Exception? failed = null;
+
+            Thread thread = new Thread(() =>
+            {
+                try
+                {
+                    using Form form = new Form { Text = "Resize - StepinFlow test" };
+                    WindowHandle window = new WindowHandle(form.Handle);
+
+                    _windows.ResizeWindow(window, 640, 360, ignoreWindowBorders: true);
+                    inside = _windows.GetWindowBounds(window, ignoreWindowBorders: true).Size;
+
+                    _windows.ResizeWindow(window, 800, 600, ignoreWindowBorders: false);
+                    whole = _windows.GetWindowBounds(window, ignoreWindowBorders: false).Size;
+                }
+                catch (Exception ex)
+                {
+                    failed = ex;
+                }
+            });
+
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            failed.ShouldBeNull();
+            inside.ShouldBe(new Size(640, 360));
+            whole.ShouldBe(new Size(800, 600));
         }
 
         [Fact]

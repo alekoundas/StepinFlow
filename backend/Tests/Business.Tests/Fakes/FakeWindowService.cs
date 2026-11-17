@@ -75,9 +75,12 @@ namespace Business.Tests.Fakes
             return Obeys;
         }
 
-        public bool ResizeWindow(WindowHandle handle, int width, int height)
+        public bool ResizeWindow(WindowHandle handle, int width, int height, bool ignoreWindowBorders)
         {
-            Actions.Add($"resize {width}x{height}");
+            if (ignoreWindowBorders)
+                Actions.Add($"resize {width}x{height} inside");
+            else
+                Actions.Add($"resize {width}x{height}");
 
             if (Obeys && !KeepsItsSize)
                 Bounds = new Rectangle(Bounds.X, Bounds.Y, width, height);

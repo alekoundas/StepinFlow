@@ -152,7 +152,7 @@ namespace Business.Tests.Recording
 
             ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
 
-            _windows.Actions.ShouldBe(["resize 1280x720"]);
+            _windows.Actions.ShouldBe(["resize 1280x720 inside"]);
 
             Flow flow = Load(created.Data);
             FlowStep resize = flow.FlowSteps.Single(x => x.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE);
@@ -175,9 +175,27 @@ namespace Business.Tests.Recording
 
             ResultDto<int> created = await _setup.CreateFlowAsync(setup, Ct);
 
-            created.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window stayed 1920 x 1080 rather than 1280 x 720.");
+            created.ErrorMessage.ShouldNotBeNull().ShouldStartWith("The window's inside stayed 1920 x 1080 rather than 1280 x 720.");
             using AppDbContext db = _database.CreateDbContext();
             db.Flows.ShouldBeEmpty();
+        }
+
+        // A browser's page reflows rather than growing with its window.
+        [Fact]
+        public async Task A_website_s_browser_window_is_set_to_its_size_whole()
+        {
+            _resolver.AreasByName["shop.example.com/cart"] = AreaResolution.Ok(new Rectangle(0, 80, 800, 520), CHROME_WINDOW);
+
+            RecordingSetupDto setup = Setup();
+            setup.AreaType = FlowAreaTypeEnum.BROWSER_TAB;
+            setup.TabAddress = "shop.example.com/cart";
+            setup.AddsResizeStep = true;
+            setup.WindowWidth = 1440;
+            setup.WindowHeight = 900;
+
+            (await _setup.CreateFlowAsync(setup, Ct)).IsSuccess.ShouldBeTrue();
+
+            _windows.Actions.ShouldBe(["resize 1440x900"]);
         }
 
         [Fact]

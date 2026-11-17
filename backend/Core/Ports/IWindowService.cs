@@ -44,7 +44,11 @@ namespace Core.Ports
 
         bool FocusWindow(WindowHandle handle);
 
-        bool ResizeWindow(WindowHandle handle, int width, int height);
+        /// <summary>
+        /// Sets the size <see cref="GetWindowBounds"/> measures with the same flag: ignoring the
+        /// borders, the inside, with the title bar and borders added on at the thickness they have now.
+        /// </summary>
+        bool ResizeWindow(WindowHandle handle, int width, int height, bool ignoreWindowBorders);
 
         bool MoveWindow(WindowHandle handle, int x, int y);
 

@@ -28,8 +28,11 @@ A browser tab area works too: its window is the browser window holding the tab, 
 brought to the front of it first, the front tabs tried before each tab in turn.
 
 The area has to be a window or a tab. A monitor or a region inside a window has nothing to
-focus, resize, move or close, and the step is refused with `AREA_NOT_A_WINDOW`. The step acts on the
-whole window, title bar and borders included, whatever the area says about its frame.
+focus, resize, move or close, and the step is refused with `AREA_NOT_A_WINDOW`.
+
+`Resize Window` sets the size its area measures. For an application that is the inside, without
+the title bar and borders, unless the area's line ends with `with frame`; for a browser tab it is
+the whole browser window. Moving and closing always act on the whole window.
 
 ```
 Focus Window    <[ Bring the browser up ]>   <[ Browser ]>
@@ -44,8 +47,10 @@ Close Window    <[ Close window, forced ]>   <[ Editor ]>   timeout 10000ms   th
 
 Fix the window to a known size at the start of a flow, and everything inside it lands in a
 reproducible place. Areas defined as offsets inside that window then resolve identically on any
-machine, and templates captured at that size need no scaling on a screen with the same Windows
-scaling - on one without, they scale by what their area's contents scale with.
+machine, and template images captured at that size need no scaling. That holds at any Windows
+scaling because an application's inside is what is set: the title bar and borders are thicker at a
+higher scaling, so the same whole window would leave a smaller inside - 1771 x 956 leaves 1755 x 917
+at 100% and 1735 x 853 at 300%.
 
 A flow that starts with a resize is far more reliable than one that hopes the window is where it
 was yesterday.

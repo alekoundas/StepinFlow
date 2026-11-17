@@ -94,7 +94,7 @@ namespace Business.Recording.Setup
                 if (!area.IsResolved)
                     return ResultDto<int>.Failure($"{area.Error} {OpenIt(mainArea)}, or untick the resize step.");
 
-                string? refused = RecordingWindowSize.Apply(_windowService, area.Window, dto.WindowWidth, dto.WindowHeight);
+                string? refused = RecordingWindowSize.Apply(_windowService, area.Window, mainArea, dto.WindowWidth, dto.WindowHeight);
                 if (refused != null)
                     return ResultDto<int>.Failure($"{refused} Restore it if it is maximised or full screen, or untick the resize step.");
 

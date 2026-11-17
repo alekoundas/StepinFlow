@@ -21,7 +21,7 @@ export interface RecordingSetupDto {
   /** Whether the flow starts by launching the application. */
   addsLaunchStep: boolean;
 
-  /** Whether the flow then sets its window to windowWidth by windowHeight, title bar and borders included. */
+  /** Whether the flow then sets its window to windowWidth by windowHeight: an application's inside unless its area keeps the title bar and borders, a browser's whole window. */
   addsResizeStep: boolean;
   windowWidth: number;
   windowHeight: number;

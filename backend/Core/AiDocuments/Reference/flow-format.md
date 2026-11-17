@@ -584,7 +584,9 @@ in it and the steps that place it all follow when its title changes. Several win
 the same area. It has to be a window or a browser tab: a monitor or a region has nothing to focus,
 resize, move or close, which is `AREA_NOT_A_WINDOW`. A tab's window is the browser window holding it,
 with the tab brought to the front of it first. A step saved with no area is written `<[  ]>` in its
-place, which the validator reports.
+place, which the validator reports. `size` on `Resize Window` is what its area measures: an
+application's inside, without the title bar and borders unless the window's line ends `with frame`,
+and a tab's whole browser window.
 
 ```
 Focus Window    <[ Bring the browser up ]>   <[ Browser ]>

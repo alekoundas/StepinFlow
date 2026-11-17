@@ -94,8 +94,8 @@ Loop            <[ Work through the notifications ]>   forever
  # game again only if it closed.
  Launch          <[ Start Firestone ]>   opens <[ Firestone ]>
   Success:
-   # Back to the size the templates were cut at, 1753 x 909 inside, so they match at their own size.
-   Resize Window   <[ Resize window to 1771x956 ]>   <[ Firestone ]>   size 1771 956
+   # Back to the inside the templates were cut at, so they match at their own size.
+   Resize Window   <[ Resize window to 1753x909 ]>   <[ Firestone ]>   size 1753 909
     # Only a window at that size is looked through: one that would not resize is tried again on
     # the next pass.
     Success:

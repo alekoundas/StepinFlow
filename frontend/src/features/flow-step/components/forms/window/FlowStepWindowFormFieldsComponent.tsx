@@ -124,7 +124,7 @@ export default function FlowStepWindowFormFieldsComponent({
           <LabelComponent
             size="sm"
             color="secondary"
-            text="The whole window, title bar and borders included. Fixing the size is what makes templates and click points match on someone else's machine."
+            text="An application's inside, without its title bar and borders unless its area keeps them, and a browser's whole window. Fixing the size is what makes template images and click points match on someone else's machine."
           />
         </>
       )}

@@ -15,6 +15,7 @@ const MONO: CSSProperties = { fontFamily: "ui-monospace, Consolas, monospace" };
 
 interface Measured {
   processName: string;
+  isInside: boolean;
   windows: WindowMatchDto[];
 }
 
@@ -22,8 +23,8 @@ interface Measured {
  * The size the flow sets its window to, as a step after the launch: typed, or copied from one of
  * the app's open windows. Record now sets it there and then, so the recording is at that size.
  *
- * The whole window, title bar and borders included, because that is what Resize Window sets: the
- * inside measured here would shrink the window a little on every execution.
+ * Measured as Resize Window sets it: an application's inside, unless its area keeps the title bar
+ * and borders, and a browser's whole window.
  */
 export default function RecordingWindowSizeComponent() {
   const { control, setValue, getValues } = useFormContext<RecordingSetupForm>();
@@ -31,6 +32,7 @@ export default function RecordingWindowSizeComponent() {
   const processName = useWatch({ control, name: "processName" });
   const titlePattern = useWatch({ control, name: "titlePattern" });
   const areaType = useWatch({ control, name: "areaType" });
+  const ignoreWindowBorders = useWatch({ control, name: "ignoreWindowBorders" });
 
   // Kept with the app it was measured for, so picking another one hides a list that is not its.
   const [measured, setMeasured] = useState<Measured | null>(null);
@@ -38,6 +40,7 @@ export default function RecordingWindowSizeComponent() {
   const [error, setError] = useState<string | null>(null);
 
   const isWebsite = areaType === FlowAreaTypeEnum.BROWSER_TAB;
+  const isInside = !isWebsite && ignoreWindowBorders;
   const canMeasure = processName.length > 0 || (!isWebsite && titlePattern.length > 0);
 
   // A browser's title is its front tab's, so its windows are found by the browser alone.
@@ -50,10 +53,10 @@ export default function RecordingWindowSizeComponent() {
         processName,
         titlePattern: isWebsite ? "" : titlePattern,
         titleMatchMode: getValues("titleMatchMode"),
-        ignoreWindowBorders: false,
+        ignoreWindowBorders: isInside,
       });
 
-      setMeasured({ processName, windows: result.matches });
+      setMeasured({ processName, isInside, windows: result.matches });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -69,7 +72,10 @@ export default function RecordingWindowSizeComponent() {
   let hint = "Lists its open windows with their sizes, to copy one.";
   if (!canMeasure) hint = isWebsite ? "Pick the browser first." : "Pick the application first.";
 
-  const shown = measured !== null && measured.processName === processName ? measured.windows : null;
+  const shown =
+    measured !== null && measured.processName === processName && measured.isInside === isInside
+      ? measured.windows
+      : null;
 
   return (
     <div className="flex flex-column gap-3">
@@ -96,7 +102,7 @@ export default function RecordingWindowSizeComponent() {
                 label="Height"
                 min={0}
                 isRequired={true}
-                hintText="Title bar and borders included."
+                hintText={isInside ? "Inside the title bar and borders." : "Title bar and borders included."}
               />
             </div>
           </div>

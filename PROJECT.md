@@ -657,9 +657,9 @@ so the name is reserved, with up to two steps the tester asks for, in this order
   Steam game's link - so the window has to be open. A website's is its browser, which Launch opens
   at the address when no tab has it.
 - **A resize** (`Resize Window <[ Resize window to WxH ]> <[ main ]> size W H`), to a size typed or copied from one of the app's
-  open windows by "Measure its windows" - the whole window, as `GetWindowRect` measures it and
-  `SetWindowPos` sets it, since the inside the area's Test reports would shrink the window a little on
-  every execution. The setup sets the window to it there and then, and the session again at Start
+  open windows by "Measure its windows" - measured the way Resize Window sets it: an application's
+  inside when its area leaves out the title bar and borders, otherwise the whole window, and a
+  browser's whole window. The setup sets the window to it there and then, and the session again at Start
   (`RecordingWindowSize`), since the tester may have changed it while arranging their windows: the
   template images and points are then taken at the size every execution sets. A window that says yes
   and keeps its size - maximised, full screen, fixed - is measured afterwards and refused, saying the
@@ -1678,6 +1678,19 @@ worker finds the window the way the area does, but whole: a minimised window has
 measure and can still be focused. An `APPLICATION` area is a window and so, since 2026-11-01, is a
 `BROWSER_TAB` - a monitor or a region is `AREA_NOT_A_WINDOW` - and an old `process <[ … ]>` line is
 refused with a message saying how it is written now.
+
+**Resize Window sets what its area measures**, since 2026-11-17 (`WindowResizeHelper.SetsInside`):
+an `APPLICATION` area that leaves out the title bar and borders gets its inside set, the title bar
+and borders added on at the thickness the window has then and measured again once, since a menu that
+wraps can change them with the size. A `with frame` window and a tab's browser window are set whole,
+a browser's page reflowing rather than growing with its window. Setting the whole window tied the
+inside to Windows' scaling, which draws the title bar and borders thicker: Firestone's 1771 x 956
+left 1753 x 909 at 125%, where its template images were captured, 1755 x 917 at 100% and
+1735 x 853 at 300%, where Firestone drew everything 6% smaller and its weakest template image fell
+under its accuracy. The `ResizeWindowInside` migration moves each saved resize of such an area to the
+inside most of its area's template images were captured at, when that is within a title bar and
+borders of the window it set, otherwise to the window less the title bar and borders at 100%
+(16 x 39), and a name that said the size says the new one.
 
 **A browser tab area is found by its address**, since 2026-11-01: `FlowArea.TabAddress`, `tab <[
 address ]>` straight after the browser's process, and the area is the tab's page. It names its
@@ -3143,18 +3156,18 @@ list wherever it reaches, and a folder glob reaches further than anyone remember
 
 ## 15. Tests
 
-1624 tests, all passing, in eight projects under `backend/Tests/` - one
-per production project, plus `Architecture.Tests` - and four more that need a live desktop, left out
+1642 tests, all passing, in eight projects under `backend/Tests/` - one
+per production project, plus `Architecture.Tests` - and six more that need a live desktop, left out
 unless asked for.
 
 | project | tests | what it holds |
 | --- | --- | --- |
 | `Core.Tests` | 222 | the pure helpers - regular expressions, conditions, variables, names, the tree rules, window matching, command lines - the key names and the recording gestures |
-| `Business.Tests` | 1224 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the history's batches and the last screenshots it keeps, deleting executions with their folders, the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place; and that Ollama is reached over IPv4 first, and given up on quickly when it is not there |
-| `DataAccess.Tests` | 55 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, every delete rule, and a delete's space handed back to the disk |
+| `Business.Tests` | 1237 | the walker, the engine end to end - what it broadcasts, the `Execution` row, how it ends, one execution at a time, the debugger - the history's batches and the last screenshots it keeps, deleting executions with their folders, the workers, the recorder and what changed on the screen between its screenshots, with OCR's misreadings, what Windows said each press landed on, a gesture asked about while paused with what it pressed found meanwhile and its answer kept for Review, a check's rule and the notifications it sends, what the local model is shown and when it is not, the notes a model is given of it, the request a cloud model waits on the tester for with its screen text marked, the draft named as Windows named each press and nested by page, clicks on one picture folded into one Find All Images, the outline a model reads and its words put on the draft field by field, the tester's stages and their notifications, and the checks it proposes - only for words seen after their click, told from the draft's, and dropped with what they held kept - a real recording of Swag Labs asked of the local model when `-p:Model=true` brings it in, the example flows picked by meaning, the flow script, the searcher, the resolver, validation, the flow-editing rules, the repository's writing and its commits, discard, restore, branch switches, connecting, pushing and pulling; and that nothing AI is on without the local model, and when a cloud one answers in its place; and that Ollama is reached over IPv4 first, and given up on quickly when it is not there |
+| `DataAccess.Tests` | 60 | migrations, the model matching them, the AI settings carried to their new keys and back, timestamps, template thumbnails, every delete rule, and a delete's space handed back to the disk |
 | `Architecture.Tests` | 11 | the layering in §2 as failing tests |
 | `Transport.Tests` | 40 | Start refusing a flow, or a sub-flow it calls, that has errors; the Move and Drag Test; what each step uses; the steps a Move or a Check Value is offered; cutting a template from the screenshots the overlay showed; the header's search over flows and steps |
-| `Platform.Windows.Tests` | 1 + 5 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
+| `Platform.Windows.Tests` | 1 + 6 | every P/Invoke in the assembly bound to its library and never called, so a misspelt entry point fails by name; and, traited `Desktop`, real monitors, the window in front, the window list, the cursor, a hidden window of the test's own resized inside its title bar and borders and whole, and UI Automation asked about a window of the test's own - a button, a ticked check box, a password field and a disabled button in a group |
 | `Platform.Shared.Tests` | 70 | PaddleOCR with the real models on lines drawn straight, tilted and at 150%, each read word for word where it was drawn, a reader not downloaded, a reader's character list with an empty entry and an escape only YAML has refused, and the blank columns a word's edges go to; git through the real libgit2, in a folder of its own: changes, commits of only what was picked, a flow's history, what a commit changed, a `.gitignore` that lets back only some files, branches made, checked out and compared, a push one repository fetches and is reset to, through a bare repository standing in for the server; and OpenCV: grouping clicked elements, a template with erased pixels beside a flat patch, on drawn screenshots, the thumbnail of a template, and the match-mode table in §8 on real PNGs in `Assets/` |
 | `App.Tests` | 1 | the AutoMapper profile: what a form's DTO may not set on an entity |
 

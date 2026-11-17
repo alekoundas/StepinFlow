@@ -29,8 +29,9 @@ The same area is what a window step names, so one description of a window serves
 inside it and every step that focuses, resizes or moves it.
 
 **Client area** is an option. With it on, the area covers the window's content and excludes the
-title bar and borders, so a window with a different border style does not shift everything inside.
-It is on unless the window's line in the script ends with `with frame`.
+title bar and borders, so a window with a different border style does not shift everything inside,
+and a `Resize Window` of it sets that content's size. It is on unless the window's line in the
+script ends with `with frame`.
 
 The **Application** field lists one row per app, with its open windows' titles under it, because
 the area matches the app, not one of its windows.

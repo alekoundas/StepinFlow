@@ -22,7 +22,7 @@ namespace Core.Models.Dtos
         /// <summary>Whether the flow starts by launching the application.</summary>
         public bool AddsLaunchStep { get; set; }
 
-        /// <summary>Whether the flow then sets its window to <see cref="WindowWidth"/> by <see cref="WindowHeight"/>, title bar and borders included.</summary>
+        /// <summary>Whether the flow then sets its window to <see cref="WindowWidth"/> by <see cref="WindowHeight"/>: an application's inside unless its area keeps the title bar and borders, a browser's whole window.</summary>
         public bool AddsResizeStep { get; set; }
         public int WindowWidth { get; set; }
         public int WindowHeight { get; set; }

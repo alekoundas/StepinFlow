@@ -6,7 +6,7 @@ import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 
 const noScriptBrackets = (text: string) => !text.includes("<[") && !text.includes("]>");
 
-// What a window is resized to, title bar and borders included.
+// The most a resize sets a window, or its inside, to.
 const MAXIMUM_WINDOW_EDGE = 16384;
 
 // The window a recording works in, which becomes the flow's main area: an application's window,
