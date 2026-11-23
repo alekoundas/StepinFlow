@@ -377,7 +377,7 @@ update, and on Linux only an AppImage updates itself.
 Each has the logo as SVG, a simpler SVG for small sizes, a PNG, and an `.ico` that uses the simpler
 drawing at 24 px and under. macOS and Linux would point `mac.icon` and `linux.icon` at the same
 folder. The startup screen and the favicon use `frontend/public/logo.svg`, the README uses
-`docs/images/logo.png`, and the rail draws the small one in the theme's colour.
+`assets/logo/all-indigo/logo.svg`, and the rail draws the small one in the theme's colour.
 
 Per-RID publishing is not avoidable here even in principle — the native dependencies (OpenCV,
 libuiohook) ship different binaries per platform, so there is no single artifact that runs on both.

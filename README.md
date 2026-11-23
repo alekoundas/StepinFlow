@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" width="120" height="120" alt="StepinFlow">
+<img src="assets/logo/all-indigo/logo.svg" width="120" height="120" alt="StepinFlow">
 
 # StepinFlow
 
@@ -11,12 +11,7 @@ unattended and reports which checks passed — with no selectors, no DOM and no 
 
 </div>
 
-<!-- SCREENSHOT 2 — THE HERO. The most important image in this file.
-     The workflow page: step tree on one side, the form for the selected step on the other.
-     Pick a flow with 8-15 steps including a branch, so the tree shows real structure.
-     Full window, ~1600px wide. Save as docs/images/workflow.png -->
-
-![The flow builder](docs/images/workflow.png)
+![The flow builder](assets/screenshots/workflow.png)
 
 ---
 
@@ -97,12 +92,7 @@ answer that here:
   screenshots leading up to it, each named after the step that took it
 - **Discord notifications** from a Notify step, rate-limited so a retry loop cannot flood a channel
 
-<!-- SCREENSHOT 3 — the debugger, mid-execution or paused on a breakpoint.
-     Show the toolbar (Continue / Step into / Step over active), a breakpoint dot in the tree,
-     and the list with a few finished steps. This is the feature nothing else here has.
-     Save as docs/images/debugger.png -->
-
-![Executing a flow](docs/images/debugger.png)
+![Executing a flow](assets/screenshots/debugger.png)
 
 ### Ask
 
@@ -311,7 +301,6 @@ publishing it.
 | [flow-format.md](backend/Core/AiDocuments/Reference/flow-format.md) | The `.sflw` flow script grammar, with the AI documents a model is given |
 | [SampleFlow.approved.sflw](backend/Tests/Business.Tests/FlowScript/SampleFlow.approved.sflw) | A flow script using most of the grammar, checked by a test |
 | [PLAN.md](PLAN.md) | What is left to build, in order |
-| [mockup/](mockup/) | The screens the UI is being built towards: a copy of the design canvas, and [every screen in one picture](mockup/mockup.png) |
 | [assets/logo/](assets/logo/) | The logo in its colour schemes |
 | [TODO.md](TODO.md) | Everything deferred |
 

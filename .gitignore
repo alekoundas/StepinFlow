@@ -1,6 +1,3 @@
-# Electron - Dev build
-electron/build
-
 # Node modules
 node_modules/
 
@@ -26,10 +23,6 @@ backend/appsettings.Development.json
 # The models - the text embedder, the element detector and the built-in OCR, about 380 MB, fetched
 # from their releases by npm run models
 backend/Core/AiModels/
-
-# Probes
-probes/**/bin/
-probes/**/obj/
 
 # Test output: results and coverage reports are produced per run, never committed.
 TestResults/
