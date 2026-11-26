@@ -1,6 +1,4 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -146,7 +144,6 @@ namespace App
             builder.Services.AddSingleton<IGitRepositoryService>(x => ActivatorUtilities.CreateInstance<GitRepositoryService>(x, PathHelper.GetRepositoryPath()));
             builder.Services.AddSingleton<IFlowRestoreService, FlowRestoreService>();
             builder.Services.AddSingleton<IBranchSwitchService, BranchSwitchService>();
-            builder.Services.AddHostedService<HostedGitRepositoryService>(); // <- Background service!
 
             builder.Services.AddExecutionEngine();
 
@@ -198,8 +195,7 @@ namespace App
                 client.Timeout = TimeSpan.FromSeconds(15);
             });
             builder.Services.AddSingleton<IDiscordNotifier, DiscordNotifier>();
-            builder.Services.AddSingleton<DiscordSendQueue>();
-            builder.Services.AddSingleton<IDiscordSendQueue>(x => x.GetRequiredService<DiscordSendQueue>());
+            builder.Services.AddSingleton<IDiscordSendQueue, DiscordSendQueue>();
 
 
             // IPC
@@ -207,10 +203,6 @@ namespace App
             builder.Services.AddSingleton<IpcBroadcastPipe>();
             builder.Services.AddSingleton<IpcDispatcher>();
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
-            builder.Services.AddHostedService<HostedRequestPipeListener>();// <- Background service!
-            builder.Services.AddHostedService<HostedBroadcastPipeListener>();// <- Background service!
-            builder.Services.AddHostedService<HostedExecutionEngine>(); // After the pipes, so it stops before them.
-            builder.Services.AddHostedService<HostedParentProcessWatcher>();
 
             // IPC handlers.
             builder.Services.AddTransient<CreateFlowHandler>();
@@ -366,10 +358,6 @@ namespace App
             builder.Services.AddTransient<ClearAiDownloadStateHandler>();
 
 
-            // SharpHook 
-            builder.Services.AddHostedService<HostedSharpHookService>(); // <- Background service!
-            builder.Services.AddHostedService<HostedAiDocumentIndexService>(); // <- Background service!
-
             // AutoMapper
             builder.Services.AddAutoMapper(config => config.AddProfile<AutoMapperProfile>());
 
@@ -379,22 +367,17 @@ namespace App
             //builder.Services.AddTransient(typeof(IStringLocalizer), typeof(JsonLocalizer));
 
 
+            // On launch: the database first, then the rest side by side.
+            builder.Services.AddHostedService<HostedStartupService>();         // The database, before anything else starts.
+            builder.Services.AddHostedService<HostedRequestPipeListener>();    // Requests from Electron.
+            builder.Services.AddHostedService<HostedBroadcastPipeListener>();  // Events to Electron.
+            builder.Services.AddHostedService<HostedGitRepositoryService>();   // The repository folder, kept a copy of the flows.
+            builder.Services.AddHostedService<HostedAiDocumentIndexService>(); // The help docs, embedded once.
+            builder.Services.AddHostedService<HostedSharpHookService>();       // The global input hook: hotkeys and recording.
+            builder.Services.AddHostedService(x => ActivatorUtilities.CreateInstance<HostedShutdownService>(x, Console.OpenStandardInput())); // Stops when Electron closes stdin, the engine first.
+
+
             IHost app = builder.Build();
-
-
-            // Run migrations and seed data.
-            using IServiceScope scope = app.Services.CreateScope();
-            IDbContextFactory<AppDbContext> dbContectFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-            await using AppDbContext dbContext = await dbContectFactory.CreateDbContextAsync();
-            dbContext.Database.Migrate();
-            dbContext.Database.UseWriteAheadLog();
-
-            if (!dbContext.Database.UseIncrementalVacuum())
-                scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup").LogWarning("The database could not switch on incremental vacuum, so deleting keeps the file at its size.");
-
-            TimeProvider timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
-            await dbContext.AbandonUnfinishedExecutionsAsync(timeProvider);
-
             await app.RunAsync();
         }
     }
@@ -424,44 +407,18 @@ namespace App
     }
 
 
-    // Stop an execution still going when the app closes, and wait while it writes its history -
-    // the database and the broadcast pipe are still there until this returns.
-    internal sealed class HostedExecutionEngine : IHostedService
-    {
-        private readonly IExecutionEngine _executionEngine;
-
-        public HostedExecutionEngine(IExecutionEngine executionEngine)
-        {
-            _executionEngine = executionEngine;
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            if (_executionEngine.IsRunning)
-                _executionEngine.Stop();
-
-            await _executionEngine.Completion.WaitAsync(cancellationToken);
-        }
-    }
-
-
-    // Start global input recording hook.
+    // Sharphook global input recording hook.
     internal sealed class HostedSharpHookService : BackgroundService
     {
         private readonly IInputRecordService _inputRecordService;
         public HostedSharpHookService(IInputRecordService inputRecordService) => _inputRecordService = inputRecordService;
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            return _inputRecordService.StartGlobalHookAsync();
+            return _inputRecordService.StartGlobalHookAsync(cancellationToken);
         }
     }
 
-    // Embed the docs at startup.
+    // Embed the docs once.
     internal sealed class HostedAiDocumentIndexService : BackgroundService
     {
         private readonly IAiDocumentIndexService _aiDocumentIndexService;
@@ -494,33 +451,8 @@ namespace App
         }
     }
 
-    // Leave with the app that started this one, however it went: a debugger's Stop and a crash
-    // never say goodbye. Only when started with --parent-pid, so a backend run on its own stays up.
-    internal sealed class HostedParentProcessWatcher : BackgroundService
-    {
-        private readonly IProcessService _processService;
-        private readonly IHostApplicationLifetime _lifetime;
-        private readonly string? _parentProcessId;
-
-        public HostedParentProcessWatcher(IProcessService processService, IHostApplicationLifetime lifetime, IConfiguration configuration)
-        {
-            _processService = processService;
-            _lifetime = lifetime;
-            _parentProcessId = configuration["parent-pid"];
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
-        {
-            if (!int.TryParse(_parentProcessId, NumberStyles.None, CultureInfo.InvariantCulture, out int parentProcessId))
-                return;
-
-            await _processService.WaitForExitAsync(parentProcessId, cancellationToken);
-            _lifetime.StopApplication();
-        }
-    }
-
-    // Keep the repository's folder a copy of the flows. Off the startup thread: making the
-    // repository and writing every flow is file work the host should not wait for.
+    // Git repository.
+    // On new thread: making the repository and writing every flow is file work the host should not wait for.
     internal sealed class HostedGitRepositoryService : BackgroundService
     {
         private readonly IGitRepositoryService _gitRepositoryService;
@@ -533,6 +465,118 @@ namespace App
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
             return Task.Run(() => _gitRepositoryService.StartBackgroundService(cancellationToken), cancellationToken);
+        }
+    }
+
+
+
+
+    // Database
+    // the host waits for every StartingAsync before it starts any hosted service.
+    internal sealed class HostedStartupService : IHostedLifecycleService
+    {
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+        private readonly TimeProvider _timeProvider;
+        private readonly ILogger<HostedStartupService> _logger;
+
+        public HostedStartupService(IDbContextFactory<AppDbContext> dbContextFactory, TimeProvider timeProvider, ILogger<HostedStartupService> logger)
+        {
+            _dbContextFactory = dbContextFactory;
+            _timeProvider = timeProvider;
+            _logger = logger;
+        }
+
+        public async Task StartingAsync(CancellationToken cancellationToken)
+        {
+            // Run migrations and seed data.
+            await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+            dbContext.Database.Migrate();
+            dbContext.Database.UseWriteAheadLog();
+
+            if (!dbContext.Database.UseIncrementalVacuum())
+                _logger.LogWarning("The database could not switch on incremental vacuum, so deleting keeps the file at its size.");
+
+            await dbContext.AbandonUnfinishedExecutionsAsync(_timeProvider);
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StoppingAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+
+
+
+
+    // Shutdown gracefully everything when the stdin closes.
+    internal sealed class HostedShutdownService : BackgroundService, IHostedLifecycleService
+    {
+        private readonly IHostApplicationLifetime _lifetime;
+        private readonly IExecutionEngine _executionEngine;
+        private readonly Stream _stdin;
+
+        public HostedShutdownService(IHostApplicationLifetime lifetime, IExecutionEngine executionEngine, Stream stdin)
+        {
+            _lifetime = lifetime;
+            _executionEngine = executionEngine;
+            _stdin = stdin;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            // Keep reading stdin until it closes (ex. Electron closes it)
+            await _stdin.CopyToAsync(Stream.Null, CancellationToken.None).WaitAsync(cancellationToken);
+
+            // Gently stop the WHOLE .NET!
+            // 1) StoppingAsync below stops the execution still going.
+            // 2) Stops hosted services one at a time, last registered goes first.
+            // 3) Disposes the services in Main().
+            _lifetime.StopApplication();
+        }
+
+        // Before any hosted service stops, so the execution writes its history while the pipes and the database are still there.
+        public async Task StoppingAsync(CancellationToken cancellationToken)
+        {
+            if (_executionEngine.IsRunning)
+                _executionEngine.Stop();
+
+            await _executionEngine.Completion.WaitAsync(cancellationToken);
+        }
+
+        public Task StartingAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
     }
 }

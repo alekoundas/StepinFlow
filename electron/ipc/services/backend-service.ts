@@ -3,9 +3,8 @@ import { spawn, type ChildProcess } from "child_process";
 import path from "path";
 import log from "electron-log";
 import net from "net";
-import { BackendStateEnum } from "../../shared/types.js";
 import { IS_DEVELOPING, OUT_DIR } from "../../app-paths.js";
-import { getBackendStatus, setBackendStopped } from "./backend-status-service.js";
+import { isBackendGone, setBackendStopped } from "./backend-status-service.js";
 
 const PIPE_NAMES = {
   request: "\\\\.\\pipe\\stepinflow-request",
@@ -21,6 +20,9 @@ const ATTEMPTS_PER_LOG_LINE = 100;
 // The end of what the backend wrote to stderr, which is where an exception that ends it goes.
 const MAX_STOP_REASON_LENGTH = 8000;
 
+// How long it may take to stop an execution and write its history before it is killed.
+const STOP_TIMEOUT_MS = 10_000;
+
 /**
  * How the backend is reached. A release always starts its own App.exe. While developing, it is
  * the one already running in Visual Studio, unless Electron was started with --spawn-backend, which
@@ -35,15 +37,12 @@ export function BackendService() {
   // Starts the .NET process
   // ========================================================================
   const spawnDotNetProcess = (): ChildProcess => {
-    // The backend leaves when this process does, however this one ends.
-    const parent = ["--parent-pid", String(process.pid)];
-
     let backendPath = path.join(process.resourcesPath, "backend/App.exe");
-    let args = parent;
+    let args: string[] = [];
 
     if (IS_DEVELOPING) {
       backendPath = "dotnet";
-      args = ["run", "--project", path.join(OUT_DIR, "../../backend/App/App.csproj"), "--", ...parent];
+      args = ["run", "--project", path.join(OUT_DIR, "../../backend/App/App.csproj")];
     }
 
     // Streamed rather than buffered: a buffer has a ceiling, and passing it kills the backend.
@@ -74,6 +73,24 @@ export function BackendService() {
 
     return backendProcess;
   };
+
+  // ========================================================================
+  // Stops the .NET process
+  // ========================================================================
+  const stopDotNetProcess = async (backendProcess: ChildProcess): Promise<void> => {
+    log.info("[ELECTRON] Backend process asked to stop");
+
+    const left = new Promise<boolean>((resolve) => backendProcess.once("exit", () => resolve(true)));
+    const timedOut = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), STOP_TIMEOUT_MS));
+
+    // Closing its stdin is how it is asked.
+    backendProcess.stdin?.destroy();
+    if (await Promise.race([left, timedOut])) return;
+
+    log.error(`[ELECTRON] Backend process did not stop within ${STOP_TIMEOUT_MS} ms and was killed`);
+    backendProcess.kill("SIGKILL");
+  };
+
   // ========================================================================
   // Request pipe  (Electron -> .NET -> Electron, correlated)
   // ========================================================================
@@ -108,7 +125,7 @@ export function BackendService() {
       onConnected,
     );
 
-  return { spawnDotNetProcess, connectToRequestPipe, connectToBroadcastPipe };
+  return { spawnDotNetProcess, stopDotNetProcess, connectToRequestPipe, connectToBroadcastPipe };
 }
 
 // ========================================================================
@@ -124,11 +141,7 @@ async function connectWithRetry(
 ): Promise<net.Socket> {
   // With no limit it tries for as long as the backend might still come up: the pipes wait for the
   // migrations, however long those take, and a backend in Visual Studio can be started at any time.
-  for (
-    let attempt = 1;
-    attempt <= maxAttempts && getBackendStatus().state !== BackendStateEnum.STOPPED;
-    attempt++
-  ) {
+  for (let attempt = 1; attempt <= maxAttempts && !isBackendGone(); attempt++) {
     try {
       const socket = await attemptConnect(pipeName);
       console.log(`[ELECTRON][${label}] Connected on attempt ${attempt}`);
@@ -187,8 +200,10 @@ function setupReconnect(
     log.error(`[ELECTRON][${label}] Pipe error:`, err),
   );
   client.on("close", () => {
-    log.log(`[ELECTRON][${label}] Pipe closed — reconnecting…`);
     setClient(null);
+    if (isBackendGone()) return;
+
+    log.log(`[ELECTRON][${label}] Pipe closed — reconnecting…`);
     connectWithRetry(
       pipeName,
       label,

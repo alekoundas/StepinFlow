@@ -7,11 +7,6 @@ namespace Business.Tests.Fakes
     {
         public Dictionary<int, string> ExecutablePaths { get; } = new Dictionary<int, string>();
 
-        public bool KillByName(string processName)
-        {
-            return true;
-        }
-
         // Each process ended by its id, whether it would end, and what ending it does - close its
         // window, say.
         public List<int> Killed { get; } = new List<int>();
@@ -47,11 +42,6 @@ namespace Business.Tests.Fakes
             Launched.Add($"{program} | {arguments}");
             OnLaunch?.Invoke();
             return null;
-        }
-
-        public Task WaitForExitAsync(int processId, CancellationToken ct)
-        {
-            return Task.CompletedTask;
         }
     }
 }

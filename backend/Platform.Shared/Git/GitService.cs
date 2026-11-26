@@ -53,6 +53,7 @@ namespace Platform.Shared.Git
         {
             using Repository repository = new Repository(folderPath);
 
+            // Indicates whether the Head points to a reference which doesn't exist.
             if (repository.Info.IsHeadUnborn)
                 return 0;
 

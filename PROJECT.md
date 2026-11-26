@@ -450,19 +450,20 @@ the bridge; the React renderer never talks to .NET directly.
 
 A release's Electron starts its own `App.exe`. While developing, Electron connects to the backend
 already running in Visual Studio, or starts it with `dotnet run` when given `--spawn-backend`
-(`npm run dev:spawn`). A backend Electron starts is given `--parent-pid` and stops once that process
-is gone, which a debugger's Stop and a crash would otherwise leave running; its output is streamed
-into Electron's log rather than buffered, since a buffer that fills kills the process. F5 in VS Code,
-with StepinFlow picked in Run and Debug, builds Electron, starts Vite as a background task, attaches
-to the renderer, and stops Vite when the session ends.
+(`npm run dev:spawn`). What a backend Electron starts writes is streamed into Electron's log rather
+than buffered, since a buffer that fills kills the process. F5 in VS Code, with StepinFlow picked in
+Run and Debug, builds Electron, starts Vite as a background task, attaches to the renderer, and stops
+Vite when the session ends.
 
 **Starting up.** The main window opens at once on `#121212`, Chromium's canvas under the theme's
 `color-scheme`, and `index.html` paints `#startup-screen`, which needs no bundle, theme or backend.
 The overlay, the image editor and the recording bar load the same page and keep it hidden.
 `BackendGateComponent`, around `AppLayout`, holds every page back until the request pipe connects.
-`Program.Main` opens the pipes only after the migrations, so that also means the database is ready.
+The database is migrated in `HostedStartupService.StartingAsync`, which the host finishes before it
+starts any hosted service, the pipes included, so a connection also means the database is ready.
 The repository and the docs index are not waited for, since they build in the background.
-`backend-status-service.ts` in Electron's main process holds `STARTING`, `READY` or `STOPPED`.
+`backend-status-service.ts` in Electron's main process holds `STARTING`, `READY`, `STOPPING` or
+`STOPPED`.
 
 Both pipes keep trying to connect until the backend stops, because a migration can take minutes.
 They used to give up after about 30 seconds, and nothing else reconnected the broadcast pipe, so a
@@ -481,6 +482,32 @@ backend would share the database and the pipe names. The lock lives in Electron'
 the dev build keeps apart from a release's (`%APPDATA%\Electron` and `%APPDATA%\stepinflow` on
 Windows), so the dev build and the installed app can still be open together. Try again is unaffected:
 `app.relaunch()` starts the new copy only once the old one has exited.
+
+**Closing.** Electron holds the window's close, and its own quit, until the backend it started has
+left (`main.ts`). The window says Closing… meanwhile: `STOPPING`, which `BackendGateComponent` draws
+over everything, an open dialog included. It asks by closing the backend's stdin, which
+`HostedShutdownService` turns into `StopApplication`. In every stop, whatever asked for it, the same
+service's `StoppingAsync` then stops an execution still going, before any hosted service stops, and
+waits while it lets go of what it held and writes its history and its screenshots. A backend still
+there after 10 seconds is killed. The one in Visual Studio is not Electron's to stop, so the window closes at once; its
+stdin is a console's, which stays open. A backend started with no stdin at all, as a script or a CI
+step starts one, leaves as soon as it starts.
+
+It is not a request on the request pipe, which answers one at a time: a stop would wait behind a
+delete or a push, and the execution it is there to save would be killed after the 10 seconds.
+
+The host has 30 seconds for the whole stop: every `StoppingAsync`, then the services one at a time,
+the last registered first, then the container disposes what it made, stopping at the first dispose
+that throws. So each service has to end when its token is cancelled. Until 2026-11-25 the input hook
+went on, and the engine, which then stopped after it, found its time used up. Until 2026-11-26 the
+Discord queue was registered twice, so it was disposed twice and threw on the second, at every
+close. Neither showed, because Electron killed the backend as it quit and Windows ends a killed
+process on the spot.
+
+When Electron crashes, Windows ends the backend with it: Node ties what it starts to itself, and
+`dotnet run` does the same to its own child. An execution that was going is marked abandoned at the
+next start. macOS and Linux tie nothing together, so there the stdin that closes with Electron is
+what makes the backend leave. Not tried there.
 
 **Only three protobuf messages exist.** The envelope is protobuf, the body is JSON bytes:
 
@@ -529,17 +556,20 @@ for once the progress says it is there - Google's long-running operations, Azure
 status URL. The result is a request rather than one more broadcast because it can be megabytes,
 which every window would be sent, and a window that missed it would never get it.
 
-Hosted services started in `Program.cs`: the request pipe listener, the broadcast pipe listener, and
-the SharpHook global hook, which runs for the whole process lifetime. It is an `EventLoopGlobalHook`:
-its handlers run on one thread of their own, one at a time and in the order the inputs came, so the
+The hosted services are registered together in `Program.cs`, in the order they start:
+`HostedStartupService`, the request and broadcast pipe listeners, the repository, the docs index, the
+SharpHook global hook and `HostedShutdownService`. Only the database is waited for; the rest start
+side by side. The hook runs for the whole process lifetime. It is an `EventLoopGlobalHook`: its
+handlers run on one thread of their own, one at a time and in the order the inputs came, so the
 hook itself is never held up and a recording keeps their order.
 
 ---
 
 ## 5. Data model
 
-SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on startup with
-`dbContext.Database.Migrate()`. Contexts come from `AddPooledDbContextFactory`.
+SQLite at `PathHelper.GetDatabaseDataPath()/StepinFlowSQLite.db`, migrated on startup by
+`HostedStartupService` with `dbContext.Database.Migrate()`. Contexts come from
+`AddPooledDbContextFactory`.
 
 It is in write-ahead-log mode (`UseWriteAheadLog`, asked on every start, kept by the file): a save
 goes on the end of `-wal` rather than through a journal made, synced and deleted each time, and a
@@ -2638,9 +2668,9 @@ rows it kept them for are then named after their files. While it goes, the scree
 from memory (`IExecutionHistoryService.GetKeptScreenshot`). Until 2026-11-12 it kept its first 20:
 a 17-hour Firestone execution kept steps 3 to 25, its first three seconds, and nothing of the 495,000
 steps after. Writing every screenshot and deleting the oldest would have kept the right ones at a
-megabyte a second of disk writes, so they wait in memory instead. An execution the app closes on
-before it ends writes none; before, it wrote them and never recorded the folder, which came to the
-same.
+megabyte a second of disk writes, so they wait in memory instead. Closing the app stops an execution
+first (§4, Closing), so it writes them. One the app had no chance to stop, in a crash or when its
+process is killed, writes none.
 
 **Deleting** is by hand: an execution, every execution of a flow but one still going (both from the
 Executions page), or a flow with all of its executions (`ExecutionDeleteService`). The steps go in

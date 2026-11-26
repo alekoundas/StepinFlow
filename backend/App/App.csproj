@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Business\Business.csproj" />
     <ProjectReference Include="..\Platform.Shared\Platform.Shared.csproj" />
     <ProjectReference Include="..\Platform.Windows\Platform.Windows.csproj" />

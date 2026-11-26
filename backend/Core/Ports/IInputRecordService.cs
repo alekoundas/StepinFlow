@@ -27,8 +27,8 @@ namespace Core.Ports
         public void StartListeningForKeys();
         public void StopListeningForKeys();
 
-        public Task StartGlobalHookAsync();
-        public Task StopGlobalHookAsync();
+        /// <summary>Started once, as the app starts. Goes on until it is cancelled.</summary>
+        public Task StartGlobalHookAsync(CancellationToken ct);
 
         public Task<bool> StartRecordingAllAsync();
         public Task<bool> StopRecordingAllAsync();

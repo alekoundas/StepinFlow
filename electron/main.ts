@@ -11,16 +11,20 @@ import { registerBackendRequestHandler } from "./ipc/handlers/backend-request-ha
 import { registerBroadcastHandler } from "./ipc/handlers/backend-broadcast-handler.js";
 
 import { BackendService, shouldSpawnBackend } from "./ipc/services/backend-service.js";
-import { setBackendQuitting } from "./ipc/services/backend-status-service.js";
+import { getBackendStatus, setBackendStopping } from "./ipc/services/backend-status-service.js";
 import { registerOverlayCaptureHandler } from "./ipc/handlers/overlay-capture-handler.js";
 import { registerRecordingBarHandler } from "./ipc/handlers/recording-bar-handler.js";
 import { registerRecordingGestureHandler } from "./ipc/handlers/recording-gesture-handler.js";
 import { registerFilesHandler } from "./ipc/handlers/files-handler.js";
 import { registerAutoUpdaterHandler } from "./ipc/handlers/auto-updater-handler.js";
 import { startAutoUpdaterChecks } from "./ipc/services/auto-updater-service.js";
+import { BackendStateEnum } from "./shared/types.js";
 import { IS_DEVELOPING, loadPage, PRELOAD_PATH } from "./app-paths.js";
 
 let mainWindow: BrowserWindow | null = null;
+
+// The one this process started, until it has left. Null when the backend is the one in Visual Studio.
+let backendProcess: ChildProcess | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -40,6 +44,14 @@ function createWindow() {
   loadPage(mainWindow);
   if (IS_DEVELOPING) mainWindow.webContents.openDevTools();
 
+  // The window stays, saying so, while the backend stops. macOS closes it and keeps the app open.
+  mainWindow.on("close", (event) => {
+    if (!backendProcess || process.platform === "darwin") return;
+
+    event.preventDefault();
+    app.quit();
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -54,6 +66,26 @@ function showMainWindow() {
 
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.focus();
+}
+
+function startBackend(): void {
+  const started = BackendService().spawnDotNetProcess();
+  const forget = () => {
+    backendProcess = null;
+  };
+
+  backendProcess = started;
+  started.once("exit", forget);
+  started.once("error", forget);
+}
+
+// It stops an execution still going and writes its history before it leaves.
+async function stopBackendAndQuit(started: ChildProcess): Promise<void> {
+  setBackendStopping();
+  await BackendService().stopDotNetProcess(started);
+
+  backendProcess = null;
+  app.quit();
 }
 
 async function startApp() {
@@ -78,8 +110,7 @@ async function startApp() {
 
   createWindow();
 
-  let backendProcess: ChildProcess | null = null;
-  if (shouldSpawnBackend()) backendProcess = BackendService().spawnDotNetProcess();
+  if (shouldSpawnBackend()) startBackend();
 
   // ======== Register IPC handlers ==========
   // One failure here used to leave every later handler unregistered while the window was
@@ -96,11 +127,6 @@ async function startApp() {
     console.error("[Main]: Failed to register IPC handlers:", err);
   }
 
-  app.on("before-quit", () => {
-    setBackendQuitting();
-    backendProcess?.kill();
-  });
-
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -115,6 +141,14 @@ if (!app.requestSingleInstanceLock()) {
   app.on("second-instance", showMainWindow);
   app.whenReady().then(startApp);
 }
+
+// Held until the backend has left, and then asked for again.
+app.on("before-quit", (event) => {
+  if (!backendProcess) return;
+
+  event.preventDefault();
+  if (getBackendStatus().state !== BackendStateEnum.STOPPING) void stopBackendAndQuit(backendProcess);
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

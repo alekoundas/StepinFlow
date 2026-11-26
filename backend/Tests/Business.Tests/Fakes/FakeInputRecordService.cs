@@ -63,12 +63,7 @@ namespace Business.Tests.Fakes
             HeldBack = gestures;
         }
 
-        public Task StartGlobalHookAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task StopGlobalHookAsync()
+        public Task StartGlobalHookAsync(CancellationToken ct)
         {
             throw new NotImplementedException();
         }

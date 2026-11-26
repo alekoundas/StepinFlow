@@ -7,6 +7,21 @@ the history.
 
 ## Execution
 
+- [ ] **Not tried by hand: opening and closing the app.** Built 2026-11-25, moved into
+      `HostedStartupService` and `HostedShutdownService` 2026-11-26 (PROJECT.md §4, Starting up and
+      Closing), checked by the tests, the type checks, and the close and quit handlers copied into a
+      small Electron app with a stand-in backend. From the installed app, or `npm run dev:spawn`:
+      - opening it: the pages show as before, and `main.log` has no error from the backend;
+      - X with nothing executing: Closing… shows for a moment at most, and `App.exe` is gone with the
+        window. X a second time while it shows changes nothing;
+      - X while Firestone executes, with a Hold Key down: the key is let go, and after opening the app
+        again the execution is Stopped, not Abandoned, with its last steps and its screenshots;
+      - X while paused on a breakpoint, and with a dialog open: Closing… covers the dialog;
+      - X within a second of opening it, before the pages show;
+      - Restart to update: the new version installs and opens;
+      - the backend in Visual Studio: X closes the window at once and the backend stays up;
+      - `main.log` says "Backend process asked to stop" and "exited with code 0", never "did not stop
+        within".
 - [ ] **Not tried by hand: inputs and secrets.** Built 2026-11-12 (PLAN.md phase 8), checked by the
       tests, the type check and the lint. Record a sign-in into a password field: the flow shows
       "This secret has no value yet" on the input, the Issues tab opens its row, the value field is

@@ -30,9 +30,42 @@ export default function BackendGateComponent({ children }: { children: ReactNode
   }, [status.state]);
 
   if (status.state === BackendStateEnum.STARTING) return null;
+  if (status.state === BackendStateEnum.STOPPING) return <BackendStoppingComponent />;
   if (status.state === BackendStateEnum.STOPPED) return <BackendStoppedComponent status={status} />;
 
   return children;
+}
+
+/** Over everything, a dialog left open included: the app is closing and nothing on it answers. */
+function BackendStoppingComponent() {
+  return (
+    <div
+      role="status"
+      className="fixed top-0 left-0 w-screen h-screen flex flex-column align-items-center justify-content-center gap-3"
+      style={{ zIndex: 9999, background: "var(--surface-ground)", color: "var(--text-color)" }}
+    >
+      <div className="flex align-items-center gap-2 text-xl font-semibold">
+        <img
+          src="./logo.svg"
+          width="32"
+          height="32"
+          alt=""
+        />
+        StepinFlow
+      </div>
+      <i
+        className="pi pi-spin pi-spinner text-xl"
+        style={{ color: "var(--primary-color)" }}
+        aria-hidden="true"
+      />
+      <span
+        className="text-sm"
+        style={{ color: "var(--text-color-secondary)" }}
+      >
+        Closing…
+      </span>
+    </div>
+  );
 }
 
 function BackendStoppedComponent({ status }: { status: BackendStatus }) {

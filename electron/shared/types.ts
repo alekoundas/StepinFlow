@@ -28,6 +28,8 @@ export interface ResultDto<T = unknown> {
 export const BackendStateEnum = {
   STARTING: "STARTING",
   READY: "READY",
+  // Asked to, because the app is closing.
+  STOPPING: "STOPPING",
   STOPPED: "STOPPED",
 } as const;
 export type BackendStateEnum =

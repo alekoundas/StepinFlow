@@ -102,26 +102,21 @@ namespace Platform.Shared.Input
         // Global methods
         // ================================================================
 
-        /// <summary>
-        /// Starts the global hook asynchronously and runs it until stopped or disposed.
-        /// </summary>
-        /// <remarks>This method initiates a long-running operation that continues until explicitly stopped.
-        /// Can be called only once, preferably during app startup.</remarks>
-        public async Task StartGlobalHookAsync()
+        /// <summary>Started once, as the app starts. Goes on until it is cancelled.</summary>
+        public async Task StartGlobalHookAsync(CancellationToken ct)
         {
+            await using CancellationTokenRegistration stopping = ct.Register(_hook.Stop);
             await _hook.RunAsync();
-        }
-
-        public async Task StopGlobalHookAsync()
-        {
-            _hook.Stop();
         }
 
 
         // ================================================================
         // Public methods
         // ================================================================
-        public Task<bool> StartRecordingAllAsync() => Task.FromResult(StartRecording(ModeAll));
+        public Task<bool> StartRecordingAllAsync()
+        {
+            return Task.FromResult(StartRecording(ModeAll));
+        }
 
         public Task<bool> StopRecordingAllAsync()
         {

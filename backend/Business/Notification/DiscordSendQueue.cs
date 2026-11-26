@@ -27,6 +27,7 @@ namespace Business.Notification
         private readonly ConcurrentDictionary<int, DateTime> _lastSentByBot = new ConcurrentDictionary<int, DateTime>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly Task _pump;
+        private bool _disposed;
 
         private readonly IDiscordNotifier _notifier;
         private readonly TimeProvider _timeProvider;
@@ -54,6 +55,10 @@ namespace Business.Notification
 
         public async ValueTask DisposeAsync()
         {
+            if (_disposed)
+                return;
+
+            _disposed = true;
             _channel.Writer.TryComplete();
             await _cts.CancelAsync();
 

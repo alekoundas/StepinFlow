@@ -13,37 +13,6 @@ namespace Platform.Windows.SystemActions
         // Each owns the windows of programs other than itself: File Explorer's, and the store apps'.
         private static readonly string[] SharedHosts = ["explorer", "ApplicationFrameHost"];
 
-        public bool KillByName(string processName)
-        {
-            if (string.IsNullOrWhiteSpace(processName))
-                return true;
-
-            // GetProcessesByName wants the name without the extension, and what is stored is
-            // whatever the window picker read off the process - "chrome.exe" as often as "chrome".
-            string name = Path.GetFileNameWithoutExtension(processName);
-            bool allGone = true;
-
-            foreach (Process process in Process.GetProcessesByName(name))
-            {
-                try
-                {
-                    process.Kill(entireProcessTree: true);
-                }
-                catch (Exception)
-                {
-                    // Already gone, or running as administrator while this is not. Neither is worth
-                    // abandoning the rest of the list for.
-                    allGone = false;
-                }
-                finally
-                {
-                    process.Dispose();
-                }
-            }
-
-            return allGone;
-        }
-
         public bool Kill(int processId)
         {
             try
@@ -89,23 +58,6 @@ namespace Platform.Windows.SystemActions
             {
                 return ex.Message;
             }
-        }
-
-        public async Task WaitForExitAsync(int processId, CancellationToken ct)
-        {
-            Process process;
-            try
-            {
-                process = Process.GetProcessById(processId);
-            }
-            catch (ArgumentException)
-            {
-                // Not running, so it has already exited.
-                return;
-            }
-
-            using (process)
-                await process.WaitForExitAsync(ct);
         }
 
         public string? GetExecutablePath(int processId)
