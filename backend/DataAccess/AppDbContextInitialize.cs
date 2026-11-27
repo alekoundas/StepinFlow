@@ -1,25 +1,45 @@
-﻿using System.Data.Common;
-using System.Globalization;
-
-using Core.Enums;
+﻿using Core.Enums;
 using Core.Helpers;
 using DataAccess.Interceptors;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data.Common;
+using System.Globalization;
 
 namespace DataAccess
 {
+
+    /// <summary>
+    /// Sets the database file settings and handles first launch.
+    /// Also manages vaccuming of the db file to srink in size.
+    /// 
+    /// Page size    = 4kb.
+    /// Vacuum mode  = INCREMENTAL.
+    /// Journal mode = WAL.
+    /// </summary>
     public static class AppDbContextInitialize
     {
-        private const long AUTO_VACUUM_INCREMENTAL = 2;
 
-        public static IServiceCollection AddCustomDbContextFactory(this IServiceCollection services)
+        // Auto-Vacuum Modes!
+        // 0 = NONE(Default)   Free pages stay inside the file for reuse.
+        // 1 = Full            Automatically moves free pages to the end of the file and truncates the file on every transaction commit.
+        // 2 = INCREMENTAL     Tracks free pages so they can be removed. Run PRAGMA incremental_vacuum to shrink the file.
+        private const long VACUUM_MODE = 2;
+        private const int CHECKPOINT_ATTEMPTS = 300; // How long EmptyWALAsync keeps trying: 300 times, 100 ms apart, about 30s.
+
+        private static readonly TimeSpan CHECKPOINT_RETRY = TimeSpan.FromMilliseconds(100);
+
+
+        // ================================================================
+        // Public methods
+        // ================================================================
+
+        /// <summary> Create the Database file on the disk if needed and set DbContextFactory along with the interceptors. </summary>
+        public static void AddCustomDbContextFactory(IServiceCollection services)
         {
 
-            string dataPath = PathHelper.GetDatabaseDataPath();
-            string dataSource = Path.Combine(dataPath, "StepinFlowSQLite.db");
+            string dataSource = PathHelper.GetDatabaseFilePath();
 
             // Create the database file if it doesn’t exist.
             if (!File.Exists(dataSource))
@@ -35,44 +55,36 @@ namespace DataAccess
                 // Intercept INSERT/UPDATE commands and fill the CreatedOn/UpdatedOn of the BaseDbModel.
                 options.AddInterceptors(serviceProvider.GetRequiredService<TimestampInterceptor>());
 
-                // A template's thumbnail is made whenever its picture is saved.
+                // A template thumbnail is made whenever its picture is saved.
                 options.AddInterceptors(serviceProvider.GetRequiredService<TemplateThumbnailInterceptor>());
             });
-
-            return services;
         }
 
         /// <summary>
-        /// A save goes on the end of a log beside the file rather than through a journal made, synced
-        /// and deleted every time, and reading never waits for a save. The file keeps the mode, so
-        /// only the first call changes anything. The database is then three files - the .db, its
-        /// -wal and its -shm - and a copy taken while the app is open needs all three.
+        /// Switches the SQLite database to Write-Ahead Logging mode (WAL), which makes concurrent reads and writes significantly faster.
+        /// Instead of modifying the main database file directly and locking out readers, SQLite appends changes to a separate -wal file 
+        /// and later merges them back into the main database during a "checkpoint."
         /// </summary>
-        public static void UseWriteAheadLog(this DatabaseFacade database)
+        public static void SetWALMode(AppDbContext dbContext)
         {
-            database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+            dbContext.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
         }
 
-        /// <summary>
-        /// Lets a delete hand its space back to the disk, through ReclaimFreeSpaceAsync, rather than
-        /// leave the file at the largest it ever was. Switching it on rewrites the file once - a few
-        /// seconds a gigabyte - and the file keeps the mode, so later calls change nothing. False when
-        /// the switch failed, out of disk space say, which costs the space and nothing else.
-        /// </summary>
-        public static bool UseIncrementalVacuum(this DatabaseFacade database)
+        /// <summary> Sets vacuum mode to INCREMENTAL for the first launch. </summary>
+        public static bool SetVacuumMode(AppDbContext dbContext)
         {
-            if (ReadPragma(database, "auto_vacuum") == AUTO_VACUUM_INCREMENTAL)
+            // Check if mode is alrady set.
+            if (ReadPragma(dbContext, "auto_vacuum") == VACUUM_MODE)
                 return true;
 
-            // One connection throughout: the mode asked for belongs to the connection that asked,
-            // until a VACUUM on that same connection writes it into the file.
-            database.OpenConnection();
+            // Set the vacuum mode.
+            dbContext.Database.OpenConnection();
 
             try
             {
-                database.ExecuteSqlRaw("PRAGMA auto_vacuum = INCREMENTAL;");
-                database.ExecuteSqlRaw("VACUUM;");
-                database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE);"); // The rewrite went through the log, which is now the size of the file.
+                dbContext.Database.ExecuteSqlRaw("PRAGMA auto_vacuum = INCREMENTAL;");
+                dbContext.Database.ExecuteSqlRaw("VACUUM;");
+                dbContext.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE);"); // The rewrite went through the log, which is now the size of the file.
             }
             catch (SqliteException)
             {
@@ -80,18 +92,15 @@ namespace DataAccess
             }
             finally
             {
-                database.CloseConnection();
+                dbContext.Database.CloseConnection();
             }
 
-            return ReadPragma(database, "auto_vacuum") == AUTO_VACUUM_INCREMENTAL;
+            bool isSuccess = ReadPragma(dbContext, "auto_vacuum") == VACUUM_MODE;
+            return isSuccess;
         }
 
-        /// <summary>
-        /// Hands the pages deletes freed back to the disk, then empties the log beside the file. Only
-        /// what sits past a hole is moved, so it costs what was deleted, not what is kept. Never
-        /// inside a transaction.
-        /// </summary>
-        public static async Task ReclaimFreeSpaceAsync(this AppDbContext dbContext, CancellationToken ct = default)
+        /// <summary> Moves free pages to the end of the Database file truncates them. </summary>
+        public static async Task ReclaimFreePagesAsync(AppDbContext dbContext, int pages, CancellationToken ct = default)
         {
             DbConnection connection = dbContext.Database.GetDbConnection();
             await dbContext.Database.OpenConnectionAsync(ct);
@@ -99,19 +108,13 @@ namespace DataAccess
             try
             {
                 // It frees a page a row, and only while it is read.
-                await using (DbCommand vacuum = connection.CreateCommand())
+                await using DbCommand vacuum = connection.CreateCommand();
+                vacuum.CommandText = $"PRAGMA incremental_vacuum({pages.ToString(CultureInfo.InvariantCulture)});";
+
+                await using DbDataReader reader = await vacuum.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
                 {
-                    vacuum.CommandText = "PRAGMA incremental_vacuum;";
-
-                    await using DbDataReader reader = await vacuum.ExecuteReaderAsync(ct);
-                    while (await reader.ReadAsync(ct))
-                    {
-                    }
                 }
-
-                await using DbCommand checkpoint = connection.CreateCommand();
-                checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
-                await checkpoint.ExecuteNonQueryAsync(ct);
             }
             finally
             {
@@ -120,11 +123,51 @@ namespace DataAccess
         }
 
         /// <summary>
-        /// An execution still RUNNING as the app starts was going when the app went away. It is marked
-        /// abandoned, and its steps are counted from what its history kept, since its walk never got
-        /// to write how many it executed.
+        /// Empties the -wal file into it the Database file. 
+        /// Uses checkpoint with TRUNCATE mode and locks writes.
+        /// Keeps retrying untill no writes going on and every reader done with the -wal.
         /// </summary>
-        public static async Task AbandonUnfinishedExecutionsAsync(this AppDbContext dbContext, TimeProvider timeProvider)
+        public static async Task<bool> EmptyWALAsync(AppDbContext dbContext, CancellationToken ct = default)
+        {
+            int attempts = 1;
+            while (!await TryEmptyWALAsync(dbContext, ct))
+            {
+                if (attempts == CHECKPOINT_ATTEMPTS)
+                    return false;
+
+                attempts++;
+                await Task.Delay(CHECKPOINT_RETRY, ct);
+            }
+
+            return true;
+        }
+
+        /// <summary>The bytes of a page in the database file.</summary>
+        public static Task<long> PageSizeAsync(AppDbContext dbContext, CancellationToken ct = default)
+        {
+            return ReadPragmaAsync(dbContext, "page_size", ct);
+        }
+
+        /// <summary>Count of the pages in the database file.</summary>
+        public static Task<long> PageCountAsync(AppDbContext dbContext, CancellationToken ct = default)
+        {
+            return ReadPragmaAsync(dbContext, "page_count", ct);
+        }
+
+        /// <summary>Count the empty pages.</summary>
+        public static Task<long> FreePageCountAsync(AppDbContext dbContext, CancellationToken ct = default)
+        {
+            return ReadPragmaAsync(dbContext, "freelist_count", ct);
+        }
+
+        /// <summary>Checks vacum mode (SetVacuumMode could not switch it on).</summary>
+        public static async Task<bool> IsIncrementalVacuumEnabledAsync(AppDbContext dbContext, CancellationToken ct = default)
+        {
+            return await ReadPragmaAsync(dbContext, "auto_vacuum", ct) == VACUUM_MODE;
+        }
+
+        /// <summary> An execution still in RUNNING mode as the app starts is marked as ABANDONED. </summary>
+        public static async Task AbandonUnfinishedExecutionsAsync(AppDbContext dbContext, TimeProvider timeProvider)
         {
             await dbContext.Executions
                 .Where(x => x.Status == ExecutionStatusEnum.RUNNING)
@@ -134,10 +177,32 @@ namespace DataAccess
                     .SetProperty(execution => execution.StepCount, execution => execution.ExecutionSteps.Count()));
         }
 
-        private static long ReadPragma(DatabaseFacade database, string name)
+
+        // ================================================================
+        // Private methods
+        // ================================================================
+        private static async Task<long> ReadPragmaAsync(AppDbContext dbContext, string name, CancellationToken ct)
         {
-            DbConnection connection = database.GetDbConnection();
-            database.OpenConnection();
+            DbConnection connection = dbContext.Database.GetDbConnection();
+            await dbContext.Database.OpenConnectionAsync(ct);
+
+            try
+            {
+                await using DbCommand command = connection.CreateCommand();
+                command.CommandText = $"PRAGMA {name};";
+
+                return Convert.ToInt64(await command.ExecuteScalarAsync(ct), CultureInfo.InvariantCulture);
+            }
+            finally
+            {
+                await dbContext.Database.CloseConnectionAsync();
+            }
+        }
+
+        private static long ReadPragma(AppDbContext dbContext, string name)
+        {
+            DbConnection connection = dbContext.Database.GetDbConnection();
+            dbContext.Database.OpenConnection();
 
             try
             {
@@ -148,36 +213,28 @@ namespace DataAccess
             }
             finally
             {
-                database.CloseConnection();
+                dbContext.Database.CloseConnection();
             }
         }
 
+        // A checkpoint that cannot finish is not an error: busy = 1.
+        private static async Task<bool> TryEmptyWALAsync(AppDbContext dbContext, CancellationToken ct)
+        {
+            DbConnection connection = dbContext.Database.GetDbConnection();
+            await dbContext.Database.OpenConnectionAsync(ct);
 
+            try
+            {
+                await using DbCommand checkpoint = connection.CreateCommand();
+                checkpoint.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
 
-
-        //public void Seed()
-        //{
-        //    try
-        //    {
-        //        using var scope = _serviceProvider.CreateScope();
-        //        //var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-
-        //        //await TrySeedAdminRolesAndClaimsAsync(roleManager);
-        //        //await TrySeedTrainerRolesAndClaimsAsync(roleManager);
-        //        //await TrySeedSimpleUserRolesAndClaimsAsync(roleManager);
-
-        //        //await TrySeedAdminUserAsync(userManager, roleManager);
-        //        //await TrySeedTrainerUserAsync(userManager, roleManager);
-        //        //await TrySeedSimpleUserUserAsync(userManager, roleManager);
-
-        //        return;
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "An error occurred while seeding the database.");
-        //        throw;
-        //    }
-        //}
+                await using DbDataReader row = await checkpoint.ExecuteReaderAsync(ct);
+                return await row.ReadAsync(ct) && row.GetInt64(0) == 0;
+            }
+            finally
+            {
+                await dbContext.Database.CloseConnectionAsync();
+            }
+        }
     }
 }
