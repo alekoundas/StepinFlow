@@ -25,7 +25,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             List<ExecutionStepDto> steps = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.ExecutionId == range.ExecutionId && x.Sequence >= range.FirstSequence && x.Sequence <= range.LastSequence)
+                .Where(x => x.ExecutionId == range.ExecutionId && !x.Execution.IsDeleted && x.Sequence >= range.FirstSequence && x.Sequence <= range.LastSequence)
                 .OrderBy(x => x.Sequence)
                 .Select(ExecutionStepProjection.Row)
                 .ToListAsync(ct);

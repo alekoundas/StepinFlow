@@ -63,6 +63,10 @@ namespace Transport.Ipc.Handlers
         {
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
+            // Its steps stay until the cleanup on Home.
+            if (!await dbContext.Flows.AnyAsync(x => x.Id == flowId && !x.IsDeleted, ct))
+                return "That flow is not there any more.";
+
             HashSet<int> validated = new HashSet<int>();
             Queue<int> pending = new Queue<int>();
             pending.Enqueue(flowId);

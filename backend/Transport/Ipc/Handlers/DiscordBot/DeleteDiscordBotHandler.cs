@@ -29,6 +29,7 @@ namespace Transport.Ipc.Handlers
             List<string> users = await dbContext.FlowSteps
                 .AsNoTracking()
                 .Where(x => x.DiscordBotId == id)
+                .Where(x => dbContext.Flows.Any(flow => flow.Id == x.RootId && !flow.IsDeleted))
                 .Select(x => x.Flow!.Name + " - " + x.Name)
                 .Distinct()
                 .OrderBy(x => x)
@@ -36,6 +37,11 @@ namespace Transport.Ipc.Handlers
 
             if (users.Count > 0)
                 return ResultDto<bool>.Failure(Refusal(users));
+
+            // A deleted flow's steps would hold on to the bot until the cleanup takes them.
+            await dbContext.FlowSteps
+                .Where(x => x.DiscordBotId == id && dbContext.Flows.Any(flow => flow.Id == x.RootId && flow.IsDeleted))
+                .ExecuteUpdateAsync(x => x.SetProperty(step => step.DiscordBotId, (int?)null), ct);
 
             int count = await dbContext.DiscordBots
                 .Where(x => x.Id == id)

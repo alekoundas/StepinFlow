@@ -33,7 +33,7 @@ namespace Transport.Ipc.Handlers
 
             ScreenshotLocation? location = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.Id == executionStepId)
+                .Where(x => x.Id == executionStepId && !x.Execution.IsDeleted)
                 .Select(x => new ScreenshotLocation(x.Execution.ScreenshotFolderName, x.ScreenshotFileName))
                 .FirstOrDefaultAsync(ct);
 

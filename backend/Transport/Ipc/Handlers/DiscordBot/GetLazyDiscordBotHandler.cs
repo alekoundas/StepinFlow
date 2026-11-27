@@ -31,7 +31,7 @@ namespace Transport.Ipc.Handlers
                     RateLimitSeconds = x.RateLimitSeconds,
                     CreatedOn = x.CreatedOn,
                     UpdatedOn = x.UpdatedOn,
-                    FlowStepsCount = x.FlowSteps.Count(),
+                    FlowStepsCount = x.FlowSteps.Count(step => dbContext.Flows.Any(flow => flow.Id == step.RootId && !flow.IsDeleted)),
                 })
                 .ToListAsync(ct);
 

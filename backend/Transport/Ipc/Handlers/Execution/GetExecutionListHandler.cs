@@ -26,7 +26,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             List<ExecutionDto> executions = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.FlowId == flowId)
+                .Where(x => x.FlowId == flowId && !x.IsDeleted)
                 .OrderByDescending(x => x.Id)
                 .Take(_maxRuns)
                 .Select(x => new ExecutionDto

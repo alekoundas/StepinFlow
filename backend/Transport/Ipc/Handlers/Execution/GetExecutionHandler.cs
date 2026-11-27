@@ -23,7 +23,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             ExecutionDto? execution = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new ExecutionDto
                 {
                     Id = x.Id,

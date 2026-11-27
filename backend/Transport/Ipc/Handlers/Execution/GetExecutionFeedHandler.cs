@@ -29,7 +29,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             IQueryable<Core.Models.Database.Execution> executions = dbContext.Executions
                 .AsNoTracking()
-                .Where(x => !x.Flow.IsHidden);
+                .Where(x => !x.IsDeleted && !x.Flow.IsHidden);
 
             if (dto.FlowId != null)
                 executions = executions.Where(x => x.FlowId == dto.FlowId);

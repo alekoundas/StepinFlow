@@ -40,6 +40,7 @@ namespace Transport.Ipc.Handlers.Execution
 
             var runs = await dbContext.Executions
                 .AsNoTracking()
+                .Where(x => !x.IsDeleted)
                 .OrderByDescending(x => x.Id)
                 .Take(_maxRuns)
                 .Select(x => new { x.FlowId, x.Status, x.CreatedOn })
