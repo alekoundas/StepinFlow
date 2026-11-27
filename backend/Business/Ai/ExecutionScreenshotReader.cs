@@ -66,7 +66,7 @@ namespace Business.Ai
 
             ExecutionFolder? folder = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == executionId)
+                .Where(x => x.Id == executionId && !x.IsDeleted)
                 .Select(x => new ExecutionFolder(x.ScreenshotFolderName, x.ErrorFlowStepId))
                 .FirstOrDefaultAsync(ct);
 

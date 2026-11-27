@@ -243,7 +243,7 @@ namespace Business.Ai.Tools
 
             return await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => flowId == 0 || x.FlowId == flowId)
+                .Where(x => !x.IsDeleted && (flowId == 0 || x.FlowId == flowId))
                 .OrderByDescending(x => x.Id)
                 .Take(_maxRows)
                 .Select(x => new RunSummary(
@@ -266,13 +266,13 @@ namespace Business.Ai.Tools
             // be read before the steps can say what kind of failure they were.
             int? errorFlowStepId = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == executionId)
+                .Where(x => x.Id == executionId && !x.IsDeleted)
                 .Select(x => x.ErrorFlowStepId)
                 .FirstOrDefaultAsync();
 
             List<RunStep> steps = await dbContext.ExecutionSteps
                 .AsNoTracking()
-                .Where(x => x.ExecutionId == executionId)
+                .Where(x => x.ExecutionId == executionId && !x.Execution.IsDeleted)
                 .OrderBy(x => x.Sequence)
                 .Take(_maxRows * 4)
                 .Select(x => new RunStep(
@@ -407,7 +407,7 @@ namespace Business.Ai.Tools
 
             return await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => flowId == 0 || x.FlowId == flowId)
+                .Where(x => !x.IsDeleted && (flowId == 0 || x.FlowId == flowId))
                 .GroupBy(x => x.Status)
                 .Select(g => new RunOutcomeCount(g.Key.ToString(), g.Count()))
                 .ToListAsync();

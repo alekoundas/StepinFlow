@@ -51,6 +51,7 @@ namespace Business.Flows.DataService.DataHandlers
         public static Task<int> DeleteWhereAsync(AppDbContext dbContext, Expression<Func<Execution, bool>> which, CancellationToken ct)
         {
             return dbContext.Executions
+                .Where(x => !x.IsDeleted)
                 .Where(which)
                 .ExecuteUpdateAsync(x => x.SetProperty(execution => execution.IsDeleted, true), ct);
         }

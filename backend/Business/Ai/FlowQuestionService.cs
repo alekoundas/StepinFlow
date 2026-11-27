@@ -237,7 +237,7 @@ namespace Business.Ai
             {
                 int flowId = await dbContext.Executions
                     .AsNoTracking()
-                    .Where(x => x.Id == request.ExecutionId)
+                    .Where(x => x.Id == request.ExecutionId && !x.IsDeleted)
                     .Select(x => x.FlowId)
                     .FirstOrDefaultAsync(ct);
 

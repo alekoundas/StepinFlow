@@ -55,8 +55,9 @@ same values in memory either way, so a step still reads the step above it.
 
 Steps are written in batches while the execution goes, a second behind it at most. Nothing is
 deleted on its own: an execution, or every execution of a flow, is deleted from the Executions page,
-and deleting a flow deletes its executions. Their screenshots go with them, and the database gives the
-space back to the disk.
+and deleting a flow deletes its executions. What is deleted is gone from every page at once. Its steps,
+its screenshots and the disk space they took go when **Clean up** is pressed on Home's Disk space card,
+which shows once there is enough to win back.
 
 ## Screenshots
 

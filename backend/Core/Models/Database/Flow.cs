@@ -19,6 +19,9 @@ namespace Core.Models.Database
         // Not on the repository's current branch: kept for its executions, and back on a branch that has it.
         public bool IsHidden { get; set; }
 
+        // Deleted: hidden as well, for good, until the cleanup on Home takes its rows.
+        public bool IsDeleted { get; set; }
+
 
         public IEnumerable<FlowStep> FlowSteps { get; set; } = new Collection<FlowStep>();
         public IEnumerable<FlowArea> FlowAreas { get; set; } = new Collection<FlowArea>();

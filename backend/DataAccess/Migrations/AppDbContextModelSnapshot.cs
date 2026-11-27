@@ -106,6 +106,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ScreenshotFolderName")
                         .HasColumnType("TEXT");
 
@@ -235,6 +238,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsHidden")
                         .HasColumnType("INTEGER");
 
@@ -260,7 +266,8 @@ namespace DataAccess.Migrations
                         .IsUnique();
 
                     b.HasIndex("PublicId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = 0");
 
                     b.ToTable("Flows");
                 });

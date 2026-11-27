@@ -99,7 +99,7 @@ namespace Business.Ai
 
             ExecutionDto? execution = await dbContext.Executions
                 .AsNoTracking()
-                .Where(x => x.Id == executionId)
+                .Where(x => x.Id == executionId && !x.IsDeleted)
                 .Select(x => new ExecutionDto
                 {
                     Id = x.Id,

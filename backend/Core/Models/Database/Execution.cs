@@ -30,6 +30,9 @@ namespace Core.Models.Database
         /// <summary>The flow's script as it executed, kept only when the commit cannot say: changes not committed, or no commit.</summary>
         public string? Script { get; set; }
 
+        /// <summary>Deleted: every read that shows executions leaves it out, and its steps, row and screenshots go when the cleanup on Home is pressed.</summary>
+        public bool IsDeleted { get; set; }
+
 
         public int FlowId { get; set; }
         public Flow Flow { get; set; } = null!;

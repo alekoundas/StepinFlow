@@ -259,7 +259,7 @@ namespace Business.Flows.DataService.DataHandlers
             {
                 target.FlowId = existing.Id;
                 target.FlowName = existing.Name;
-                target.ExecutionCount = await dbContext.Executions.CountAsync(x => x.FlowId == existing.Id, ct);
+                target.ExecutionCount = await dbContext.Executions.CountAsync(x => x.FlowId == existing.Id && !x.IsDeleted, ct);
             }
 
             target.NameTaken = await ValidateNameIsFreeAsync(dbContext, name, existing?.Id ?? 0, ct);

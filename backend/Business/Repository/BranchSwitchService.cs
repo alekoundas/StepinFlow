@@ -168,7 +168,7 @@ namespace Business.Repository
 
             Dictionary<Guid, Flow> known = await dbContext.Flows
                 .AsNoTracking()
-                .Where(x => publicIds.Contains(x.PublicId))
+                .Where(x => publicIds.Contains(x.PublicId) && !x.IsDeleted)
                 .Select(x => new Flow { Id = x.Id, PublicId = x.PublicId, Name = x.Name, IsSubFlow = x.IsSubFlow, IsHidden = x.IsHidden })
                 .ToDictionaryAsync(x => x.PublicId, ct);
 
