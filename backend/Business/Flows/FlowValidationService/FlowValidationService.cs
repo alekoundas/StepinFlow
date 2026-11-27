@@ -76,7 +76,12 @@ namespace Business.Flows.FlowValidationService
             // Validate step count.
             if (everyAuthored.Count == 0)
             {
-                result.Add(null, string.Empty, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.FLOW_HAS_NO_STEPS, "This flow has no steps yet.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.FLOW_HAS_NO_STEPS,
+                    Message = "This flow has no steps yet.",
+                });
                 result.HasErrors = true;
                 return result;
             }

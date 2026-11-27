@@ -36,8 +36,14 @@ namespace Business.Flows.FlowValidationService.Rules
                 if (IsUnderEndExecution(byId[check.FlowStepId], byId))
                     continue;
 
-                result.Add(check.FlowStepId, check.Name, ValidationSeverityEnum.INFO, FlowValidationCodeEnum.CHECK_CANNOT_FAIL,
-                    "Failing this check never fails the execution: nothing under its Failure branch ends it. Add End Execution failed there if the test is meant to prove it.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = check.FlowStepId,
+                    FlowStepName = check.Name,
+                    Severity = ValidationSeverityEnum.INFO,
+                    Code = FlowValidationCodeEnum.CHECK_CANNOT_FAIL,
+                    Message = "Failing this check never fails the execution: nothing under its Failure branch ends it. Add End Execution failed there if the test is meant to prove it.",
+                });
             }
         }
 

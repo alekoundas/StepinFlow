@@ -25,13 +25,23 @@ namespace Business.Flows.FlowValidationService.Rules
 
                 if (input.IsSecret && input.SecretValue.Length == 0)
                 {
-                    result.Add(null, input.Name, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.INPUT_VALUE_MISSING,
-                        $"This secret has no value yet, so the steps that type {written} have nothing to type. Set it once on the Inputs tab: it stays in this machine's database and is never shown again.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepName = input.Name,
+                        Severity = ValidationSeverityEnum.ERROR,
+                        Code = FlowValidationCodeEnum.INPUT_VALUE_MISSING,
+                        Message = $"This secret has no value yet, so the steps that type {written} have nothing to type. Set it once on the Inputs tab: it stays in this machine's database and is never shown again.",
+                    });
                 }
                 else if (!input.IsSecret && input.DefaultValue.Length == 0)
                 {
-                    result.Add(null, input.Name, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.INPUT_VALUE_MISSING,
-                        $"This input has no value, so the steps that type {written} have nothing to type. Give it one on the Inputs tab.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepName = input.Name,
+                        Severity = ValidationSeverityEnum.ERROR,
+                        Code = FlowValidationCodeEnum.INPUT_VALUE_MISSING,
+                        Message = $"This input has no value, so the steps that type {written} have nothing to type. Give it one on the Inputs tab.",
+                    });
                 }
             }
         }

@@ -6,9 +6,9 @@ namespace Business.Recording.Generation
 {
     /// <summary>
     /// Owns one generation at a time: the model's draft of a recording, or a revision the Check page
-    /// asked for. A model takes minutes over a draft - longer than a request can wait, on a pipe
-    /// that answers one call at a time - so the request starts it and returns,
-    /// FLOW_GENERATION_PROGRESS says how far, and GetResult has what was saved once it says DONE.
+    /// asked for. A model takes minutes over a draft - longer than Electron waits for a request -
+    /// so the request starts it and returns, FLOW_GENERATION_PROGRESS says how far, and GetResult
+    /// has what was saved once it says DONE.
     /// A request shown before a cloud model is sent it waits here for Send, or for Cancel.
     /// </summary>
     public sealed class FlowGenerationSessionService : IFlowGenerationSessionService, IDisposable

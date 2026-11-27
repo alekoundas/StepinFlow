@@ -53,7 +53,14 @@ namespace Business.Flows.FlowValidationService.Rules
 
                 // A step that branches and has nothing in.
                 if (TreeStepHelper.HasBranchChildren(step.FlowStepType) && IsEveryBranchEmpty(step, childrenByParentId))
-                    result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.BRANCHES_EMPTY, "Success and Failure are both empty.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.WARNING,
+                        Code = FlowValidationCodeEnum.BRANCHES_EMPTY,
+                        Message = "Success and Failure are both empty.",
+                    });
             }
 
             // A disabled step keeps its name: it is still a line of the script, which reads by name.
@@ -84,8 +91,14 @@ namespace Business.Flows.FlowValidationService.Rules
 
                 if (current.FlowStepType == FlowStepTypeEnum.END_EXECUTION)
                 {
-                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.END_EXECUTION_UNREACHABLE,
-                        $"\"{current.Name}\" already ended the execution, so this one never decides anything.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.ERROR,
+                        Code = FlowValidationCodeEnum.END_EXECUTION_UNREACHABLE,
+                        Message = $"\"{current.Name}\" already ended the execution, so this one never decides anything.",
+                    });
                     return;
                 }
 
@@ -120,8 +133,14 @@ namespace Business.Flows.FlowValidationService.Rules
                     }
                     else if (!known.Contains(name))
                     {
-                        result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.VARIABLE_UNKNOWN,
-                            $"Nothing in this flow is called \"{name}\", so this step can never fill it in.");
+                        result.Issues.Add(new FlowValidationIssueDto
+                        {
+                            FlowStepId = step.Id,
+                            FlowStepName = step.Name,
+                            Severity = ValidationSeverityEnum.ERROR,
+                            Code = FlowValidationCodeEnum.VARIABLE_UNKNOWN,
+                            Message = $"Nothing in this flow is called \"{name}\", so this step can never fill it in.",
+                        });
                     }
                 }
             }
@@ -134,22 +153,40 @@ namespace Business.Flows.FlowValidationService.Rules
 
             if (TreeStepHelper.GivesNoResult(source))
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
-                    $"{written} reads \"{source.Name}\", which waits until its text stops matching and so keeps no value.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    Message = $"{written} reads \"{source.Name}\", which waits until its text stops matching and so keeps no value.",
+                });
                 return;
             }
 
             if (!TreeStepHelper.GivesValue(source))
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
-                    $"{written} reads \"{source.Name}\", which keeps no value. Only a Read Text or a System Command step keeps what it read or printed.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    Message = $"{written} reads \"{source.Name}\", which keeps no value. Only a Read Text or a System Command step keeps what it read or printed.",
+                });
                 return;
             }
 
             if (!TreeStepHelper.CanReadValueOf(byId, step.Id, source.Id))
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
-                    $"{written} reads \"{source.Name}\", which is not above this step, so it has no value here. A step's value is kept for the steps under it.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
+                    Message = $"{written} reads \"{source.Name}\", which is not above this step, so it has no value here. A step's value is kept for the steps under it.",
+                });
             }
         }
 
@@ -168,16 +205,27 @@ namespace Business.Flows.FlowValidationService.Rules
 
             foreach (FlowStep step in authoredSteps.Where(x => duplicated.Contains(x.Name.Trim())))
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NAME_DUPLICATE,
-                    $"\"{step.Name}\" is used more than once. Steps, areas and points share one set of names, because the script refers to them by name.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.NAME_DUPLICATE,
+                    Message = $"\"{step.Name}\" is used more than once. Steps, areas and points share one set of names, because the script refers to them by name.",
+                });
             }
 
             // A name shared by two areas, or an area and a point, has no step to hang the message
             // on - but it is the same problem and has to be sayable.
             foreach (string name in duplicates.Where(x => !authoredSteps.Any(s => string.Equals(s.Name.Trim(), x, StringComparison.OrdinalIgnoreCase))))
             {
-                result.Add(null, name, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NAME_DUPLICATE,
-                    $"\"{name}\" is used by more than one area or point.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepName = name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.NAME_DUPLICATE,
+                    Message = $"\"{name}\" is used by more than one area or point.",
+                });
             }
         }
 
@@ -185,7 +233,14 @@ namespace Business.Flows.FlowValidationService.Rules
         {
             if (step.FlowStepReferenceId == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.BREAK_TARGET_MISSING, "Pick the step to break out of. A Break goes inside a loop or a check.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.BREAK_TARGET_MISSING,
+                    Message = "Pick the step to break out of. A Break goes inside a loop or a check.",
+                });
                 return;
             }
 
@@ -196,7 +251,14 @@ namespace Business.Flows.FlowValidationService.Rules
             if (byId.TryGetValue(step.FlowStepReferenceId.Value, out StepChainNode target))
                 name = target.Name;
 
-            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.BREAK_TARGET_UNREACHABLE, $"This step is not inside \"{name}\", so it cannot break out of it.");
+            result.Issues.Add(new FlowValidationIssueDto
+            {
+                FlowStepId = step.Id,
+                FlowStepName = step.Name,
+                Severity = ValidationSeverityEnum.ERROR,
+                Code = FlowValidationCodeEnum.BREAK_TARGET_UNREACHABLE,
+                Message = $"This step is not inside \"{name}\", so it cannot break out of it.",
+            });
         }
 
         private static void ValidateCursor(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
@@ -221,7 +283,14 @@ namespace Business.Flows.FlowValidationService.Rules
             // Neither set says nothing about which was meant, so the message offers both.
             if (referenceId == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, $"There is no {label}point to act on. Pick a saved point, or a search whose result gives one.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.POINT_MISSING,
+                    Message = $"There is no {label}point to act on. Pick a saved point, or a search whose result gives one.",
+                });
                 return;
             }
 
@@ -233,20 +302,41 @@ namespace Business.Flows.FlowValidationService.Rules
                 else
                     name = "that step";
 
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
+                    Message = $"The {label}point reads \"{name}\", which no longer runs above this step on the Success side.",
+                });
                 return;
             }
 
             StepChainNode source = byId[referenceId.Value];
             if (TreeStepHelper.GivesNoResult(source))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN, $"The {label}point reads \"{source.Name}\", which waits until it finds nothing and so gives no point.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    Message = $"The {label}point reads \"{source.Name}\", which waits until it finds nothing and so gives no point.",
+                });
         }
 
         private static void ValidateValueSource(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
         {
             if (step.FlowStepReferenceId == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_MISSING, "Pick the step whose result is checked.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_MISSING,
+                    Message = "Pick the step whose result is checked.",
+                });
                 return;
             }
 
@@ -258,13 +348,27 @@ namespace Business.Flows.FlowValidationService.Rules
                 else
                     name = "that step";
 
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE, $"This checks \"{name}\", which no longer runs above this step on the Success side.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_UNREACHABLE,
+                    Message = $"This checks \"{name}\", which no longer runs above this step on the Success side.",
+                });
                 return;
             }
 
             StepChainNode source = byId[step.FlowStepReferenceId.Value];
             if (TreeStepHelper.GivesNoResult(source))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN, $"This checks \"{source.Name}\", which waits until its text stops matching and so gives no value.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.STEP_RESULT_NOT_GIVEN,
+                    Message = $"This checks \"{source.Name}\", which waits until its text stops matching and so gives no value.",
+                });
         }
 
         private static void ValidateNotify(FlowValidationResultDto result, FlowStep step, IReadOnlyDictionary<int, StepChainNode> byId)
@@ -272,7 +376,14 @@ namespace Business.Flows.FlowValidationService.Rules
             if (step.FlowStepReferenceId is int referenceId)
             {
                 if (!TreeStepHelper.CanReportOn(byId, step.Id, referenceId))
-                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.REPORTED_STEP_UNREACHABLE, "The step whose result this includes is no longer one it sits under.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.ERROR,
+                        Code = FlowValidationCodeEnum.REPORTED_STEP_UNREACHABLE,
+                        Message = "The step whose result this includes is no longer one it sits under.",
+                    });
             }
         }
 
@@ -301,8 +412,14 @@ namespace Business.Flows.FlowValidationService.Rules
 
                 if (!isReleased)
                 {
-                    result.Add(hold, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.KEYS_NOT_RELEASED,
-                        $"Nothing below lets go of {hold.KeyboardInputText}, so it stays held until the execution ends.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = hold.Id,
+                        FlowStepName = hold.Name,
+                        Severity = ValidationSeverityEnum.WARNING,
+                        Code = FlowValidationCodeEnum.KEYS_NOT_RELEASED,
+                        Message = $"Nothing below lets go of {hold.KeyboardInputText}, so it stays held until the execution ends.",
+                    });
                 }
             }
         }

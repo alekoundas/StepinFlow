@@ -23,8 +23,14 @@ namespace Business.Flows.FlowValidationService.Rules
             {
                 if (step.FlowAreaId != null && areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? area) && IsOnScreen(area, areasById))
                 {
-                    result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.SCREEN_COORDINATES,
-                        $"\"{area.Name}\" is placed in screen coordinates, so this step only works on a screen laid out like this one. Put it inside a window or a monitor.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.WARNING,
+                        Code = FlowValidationCodeEnum.SCREEN_COORDINATES,
+                        Message = $"\"{area.Name}\" is placed in screen coordinates, so this step only works on a screen laid out like this one. Put it inside a window or a monitor.",
+                    });
                 }
 
                 ValidatePoint(result, step, step.FlowPointId, pointsById, areasById);
@@ -54,8 +60,14 @@ namespace Business.Flows.FlowValidationService.Rules
             if (!isOnScreen)
                 return;
 
-            result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.SCREEN_COORDINATES,
-                $"\"{point.Name}\" is a screen coordinate, so this step only works on a screen laid out like this one. Measure it from a window or a monitor.");
+            result.Issues.Add(new FlowValidationIssueDto
+            {
+                FlowStepId = step.Id,
+                FlowStepName = step.Name,
+                Severity = ValidationSeverityEnum.WARNING,
+                Code = FlowValidationCodeEnum.SCREEN_COORDINATES,
+                Message = $"\"{point.Name}\" is a screen coordinate, so this step only works on a screen laid out like this one. Measure it from a window or a monitor.",
+            });
         }
 
         // A region with no parent is wherever it was drawn on this screen, and so is anything inside it.

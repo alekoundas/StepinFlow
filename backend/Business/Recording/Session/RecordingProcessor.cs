@@ -9,8 +9,8 @@ namespace Business.Recording.Session
     /// <summary>
     /// A stopped recording worked through in the background, stage by stage: what each click hit,
     /// which clicks hit the same picture, then what changed on the screen. Finding what a click hit
-    /// is seconds per click, and the request pipe answers one call at a time, so the stop starts
-    /// this and returns. Never while recording, where the application being recorded would feel it.
+    /// is seconds per click, longer in all than Electron waits for a request, so the stop starts this
+    /// and returns. Never while recording, where the application being recorded would feel it.
     /// Each stage says how far it is, then the recording is READY.
     ///
     /// A stage that fails costs the review what it would have added, never the recording.

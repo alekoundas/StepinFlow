@@ -37,7 +37,14 @@ namespace Business.Flows.FlowValidationService.Rules
             foreach (FlowStep step in authoredSteps)
             {
                 if (string.IsNullOrWhiteSpace(step.Name))
-                    result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.NAME_MISSING, "This step has no name.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.WARNING,
+                        Code = FlowValidationCodeEnum.NAME_MISSING,
+                        Message = "This step has no name.",
+                    });
 
                 ValidateQuotes(result, step);
 
@@ -50,7 +57,14 @@ namespace Business.Flows.FlowValidationService.Rules
                         ValidateArea(result, step);
 
                         if (!templateCountByStepId.TryGetValue(step.Id, out int templates) || templates == 0)
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.NO_TEMPLATES, "There is nothing to look for: add a template.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.NO_TEMPLATES,
+                                Message = "There is nothing to look for: add a template.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.SEARCH_TEXT:
@@ -58,7 +72,14 @@ namespace Business.Flows.FlowValidationService.Rules
                         ValidateReader(result, step, installedReaders);
 
                         if (NeedsValue(step.ConditionType) && string.IsNullOrWhiteSpace(step.ConditionText))
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SEARCH_TEXT_MISSING, "There is no text to look for.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.SEARCH_TEXT_MISSING,
+                                Message = "There is no text to look for.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.SYSTEM_COMMAND:
@@ -68,24 +89,59 @@ namespace Business.Flows.FlowValidationService.Rules
                     case FlowStepTypeEnum.WAIT:
                         // Zero is "not a range" rather than a bad range, so it is not an error.
                         if (step.WaitForMillisecondsMax > 0 && step.WaitForMillisecondsMax <= step.WaitForMilliseconds)
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WAIT_RANGE_INVALID, "The longest wait has to be longer than the shortest.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.WAIT_RANGE_INVALID,
+                                Message = "The longest wait has to be longer than the shortest.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.LOOP:
                         if (!step.IsLoopInfinite && step.LoopCount < 1)
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LOOP_COUNT_MISSING, "A loop runs at least once, or for ever.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.LOOP_COUNT_MISSING,
+                                Message = "A loop runs at least once, or for ever.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.SUB_FLOW:
                         if (step.SubFlowId == null)
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.SUB_FLOW_MISSING, "Pick the flow to run.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.SUB_FLOW_MISSING,
+                                Message = "Pick the flow to run.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.NOTIFY:
                         if (step.DiscordBotId == null)
-                            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.DISCORD_BOT_MISSING, "Pick the bot to send through.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.ERROR,
+                                Code = FlowValidationCodeEnum.DISCORD_BOT_MISSING,
+                                Message = "Pick the bot to send through.",
+                            });
                         else if (webhooklessBots.TryGetValue(step.DiscordBotId.Value, out string? bot))
-                            result.Add(step, ValidationSeverityEnum.WARNING, FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK, $"\"{bot}\" has no webhook yet, so this sends nothing. Paste it in under Settings, Discord bots.");
+                            result.Issues.Add(new FlowValidationIssueDto
+                            {
+                                FlowStepId = step.Id,
+                                FlowStepName = step.Name,
+                                Severity = ValidationSeverityEnum.WARNING,
+                                Code = FlowValidationCodeEnum.DISCORD_BOT_NO_WEBHOOK,
+                                Message = $"\"{bot}\" has no webhook yet, so this sends nothing. Paste it in under Settings, Discord bots.",
+                            });
                         break;
 
                     case FlowStepTypeEnum.CHECK_VALUE:
@@ -107,7 +163,14 @@ namespace Business.Flows.FlowValidationService.Rules
             OcrReader? reader = OcrReaderCatalog.Find(step.OcrLanguage);
             if (reader == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"\"{step.OcrLanguage}\" is not a text reader this app knows. Pick one.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED,
+                    Message = $"\"{step.OcrLanguage}\" is not a text reader this app knows. Pick one.",
+                });
                 return;
             }
 
@@ -115,9 +178,23 @@ namespace Business.Flows.FlowValidationService.Rules
                 return;
 
             if (reader.IsBuiltIn)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"The {reader.Name} text reader is missing from the app. Reinstall it.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED,
+                    Message = $"The {reader.Name} text reader is missing from the app. Reinstall it.",
+                });
             else
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED, $"The {reader.Name} text reader is not downloaded on this machine. Download it in Settings, under Text recognition.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.OCR_READER_NOT_DOWNLOADED,
+                    Message = $"The {reader.Name} text reader is not downloaded on this machine. Download it in Settings, under Text recognition.",
+                });
         }
 
         // A FlowStep column cant contain <[ and ]>
@@ -141,48 +218,117 @@ namespace Business.Flows.FlowValidationService.Rules
             if (!text.Contains(quoteOpen, StringComparison.Ordinal) && !text.Contains(quoteClose, StringComparison.Ordinal))
                 return;
 
-            result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.QUOTE_INSIDE,
-                $"Text in this step can't contain \"{quoteOpen}\" or \"{quoteClose}\".");
+            result.Issues.Add(new FlowValidationIssueDto
+            {
+                FlowStepId = step.Id,
+                FlowStepName = step.Name,
+                Severity = ValidationSeverityEnum.ERROR,
+                Code = FlowValidationCodeEnum.QUOTE_INSIDE,
+                Message = $"Text in this step can't contain \"{quoteOpen}\" or \"{quoteClose}\".",
+            });
         }
 
         private static void ValidateWindow(FlowValidationResultDto result, FlowStep step, Dictionary<int, FlowArea> areasById)
         {
             if (step.FlowAreaId == null)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_MISSING, "Pick the window this step acts on.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.AREA_MISSING,
+                    Message = "Pick the window this step acts on.",
+                });
             else if (areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? area) && area.Type != FlowAreaTypeEnum.APPLICATION && area.Type != FlowAreaTypeEnum.BROWSER_TAB)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_NOT_A_WINDOW, $"\"{area.Name}\" is not a window, so there is nothing to focus, resize, move or close. Pick an application or a browser tab.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.AREA_NOT_A_WINDOW,
+                    Message = $"\"{area.Name}\" is not a window, so there is nothing to focus, resize, move or close. Pick an application or a browser tab.",
+                });
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RESIZE && (step.WindowWidth < 1 || step.WindowHeight < 1))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.WINDOW_SIZE_MISSING, "Give the window a size to resize to.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.WINDOW_SIZE_MISSING,
+                    Message = "Give the window a size to resize to.",
+                });
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_RELOCATE && step.FlowPointId == null)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.POINT_MISSING, "There is no point to move the window to.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.POINT_MISSING,
+                    Message = "There is no point to move the window to.",
+                });
 
             if (step.FlowStepType == FlowStepTypeEnum.WINDOW_CLOSE && step.IsCloseForced && step.FlowAreaId != null
                 && areasById.TryGetValue(step.FlowAreaId.Value, out FlowArea? tab) && tab.Type == FlowAreaTypeEnum.BROWSER_TAB)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CLOSE_FORCED_ON_TAB, $"\"{tab.Name}\" is a browser tab, and forcing it would end the whole browser, every tab in it. A tab closes the way Ctrl+W closes it, or stays open.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.CLOSE_FORCED_ON_TAB,
+                    Message = $"\"{tab.Name}\" is a browser tab, and forcing it would end the whole browser, every tab in it. A tab closes the way Ctrl+W closes it, or stays open.",
+                });
         }
 
         private static void ValidateArea(FlowValidationResultDto result, FlowStep step)
         {
             if (step.FlowAreaId == null)
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.AREA_MISSING, "There is no area to work in.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.AREA_MISSING,
+                    Message = "There is no area to work in.",
+                });
         }
 
         private static void ValidateCondition(FlowValidationResultDto result, FlowStep step)
         {
             if (step.ConditionType == null)
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_TYPE_MISSING, "Pick what to check for.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.CONDITION_TYPE_MISSING,
+                    Message = "Pick what to check for.",
+                });
                 return;
             }
 
             // Only between takes a second value.
             if (NeedsValue(step.ConditionType) && string.IsNullOrWhiteSpace(step.ConditionText))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_VALUE_MISSING, "There is nothing to check the result against.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.CONDITION_VALUE_MISSING,
+                    Message = "There is nothing to check the result against.",
+                });
 
             if (step.ConditionType == ConditionTypeEnum.BETWEEN && string.IsNullOrWhiteSpace(step.ConditionTextEnd))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE, "A range needs both ends.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.CONDITION_RANGE_INCOMPLETE,
+                    Message = "A range needs both ends.",
+                });
         }
 
         // Empty and not empty compare against nothing.
@@ -196,7 +342,14 @@ namespace Business.Flows.FlowValidationService.Rules
             if (step.ShellCommandMode == ShellCommandModeEnum.CUSTOM)
             {
                 if (string.IsNullOrWhiteSpace(step.ShellCommandValue))
-                    result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_MISSING, "There is no command to run.");
+                    result.Issues.Add(new FlowValidationIssueDto
+                    {
+                        FlowStepId = step.Id,
+                        FlowStepName = step.Name,
+                        Severity = ValidationSeverityEnum.ERROR,
+                        Code = FlowValidationCodeEnum.COMMAND_MISSING,
+                        Message = "There is no command to run.",
+                    });
                 return;
             }
 
@@ -216,14 +369,28 @@ namespace Business.Flows.FlowValidationService.Rules
             }
 
             if (mode.HasParameter && string.IsNullOrWhiteSpace(step.ShellCommandValue))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"\"{mode.Label}\" needs a {mode.ParameterLabel.ToLowerInvariant()}.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING,
+                    Message = $"\"{mode.Label}\" needs a {mode.ParameterLabel.ToLowerInvariant()}.",
+                });
         }
 
         private static void ValidateLaunchOf(FlowValidationResultDto result, FlowStep step, FlowArea opens)
         {
             if (string.IsNullOrWhiteSpace(opens.LaunchCommand))
             {
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING, $"Nothing starts \"{opens.Name}\". Say what does on the Areas tab, under Started by.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.COMMAND_PARAMETER_MISSING,
+                    Message = $"Nothing starts \"{opens.Name}\". Say what does on the Areas tab, under Started by.",
+                });
                 return;
             }
 
@@ -231,7 +398,14 @@ namespace Business.Flows.FlowValidationService.Rules
             // would never reach the game.
             string program = CommandLineHelper.SplitProgram(opens.LaunchCommand, out _);
             if (!string.IsNullOrWhiteSpace(step.ShellArguments) && program.Contains("://", StringComparison.Ordinal))
-                result.Add(step, ValidationSeverityEnum.ERROR, FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK, $"\"{opens.Name}\" is started by a link, and a link takes no arguments. A Steam game's are set in Steam, in its launch options.");
+                result.Issues.Add(new FlowValidationIssueDto
+                {
+                    FlowStepId = step.Id,
+                    FlowStepName = step.Name,
+                    Severity = ValidationSeverityEnum.ERROR,
+                    Code = FlowValidationCodeEnum.LAUNCH_ARGUMENTS_ON_LINK,
+                    Message = $"\"{opens.Name}\" is started by a link, and a link takes no arguments. A Steam game's are set in Steam, in its launch options.",
+                });
         }
     }
 }
