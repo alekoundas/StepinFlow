@@ -26,14 +26,15 @@ namespace Business.Repository
     /// commits it through the git port.
     ///
     /// One thing at a time: a write, a read and a commit each wait their turn, so a commit never
-    /// takes a file half written. Writing takes its turn a flow at a time, because requests arrive one
-    /// at a time on one pipe, and a read waiting behind the whole startup would hold up every other.
+    /// takes a file half written. Writing takes its turn a flow at a time, so a read or a commit waits
+    /// for one flow rather than for the whole startup.
     ///
     /// A flow is written by its export, which writes only the bytes that changed and removes the
     /// images the flow no longer uses. The files of a flow renamed or deleted are removed whole.
     ///
     /// A fetch and a push go outside the lock: the network can take seconds, and they touch only
-    /// what the remote has, so the flows go on being written meanwhile.
+    /// what the remote has, so the flows go on being written meanwhile. They take turns on a lock
+    /// of their own, since two at once would fight over libgit2's lock files.
     /// </summary>
     public sealed class GitRepositoryService : IGitRepositoryService, IDisposable
     {
@@ -46,6 +47,7 @@ namespace Business.Repository
         private static readonly TimeSpan QUIET = TimeSpan.FromMilliseconds(500);
 
         private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _network = new SemaphoreSlim(1, 1);
         private readonly Channel<int> _changes = Channel.CreateUnbounded<int>(new UnboundedChannelOptions { SingleReader = true }); // Keep all pending changes in a queue.
 
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -80,6 +82,7 @@ namespace Business.Repository
         public void Dispose()
         {
             _gate.Dispose();
+            _network.Dispose();
         }
 
 
@@ -667,7 +670,7 @@ namespace Business.Repository
                 _gate.Release();
             }
 
-            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            string? unreachable = await OverTheNetworkAsync(() => _git.Fetch(_folderPath, token), ct);
             if (unreachable != null)
             {
                 // An address that does not answer is not kept.
@@ -705,7 +708,7 @@ namespace Business.Repository
             // An empty remote is sent every branch, history and all.
             if (branches.Count > 0)
             {
-                string? notSent = OverTheNetwork(() => _git.Push(_folderPath, branches, token));
+                string? notSent = await OverTheNetworkAsync(() => _git.Push(_folderPath, branches, token), ct);
                 if (notSent != null)
                     return ResultDto<RepositoryConnectDto>.Failure($"Connected, but the branches were not sent: {notSent} Push sends them.");
 
@@ -722,7 +725,7 @@ namespace Business.Repository
             if (!await HasRemoteAsync(ct))
                 return ResultDto<RepositoryPullDto>.Failure(NO_REMOTE);
 
-            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            string? unreachable = await OverTheNetworkAsync(() => _git.Fetch(_folderPath, token), ct);
             if (unreachable != null)
                 return ResultDto<RepositoryPullDto>.Failure(unreachable);
 
@@ -799,7 +802,7 @@ namespace Business.Repository
                 return ResultDto<RepositoryPushDto>.Failure(NO_REMOTE);
 
             // Fetched first, so what the remote has that the branch does not is known.
-            string? unreachable = OverTheNetwork(() => _git.Fetch(_folderPath, token));
+            string? unreachable = await OverTheNetworkAsync(() => _git.Fetch(_folderPath, token), ct);
             if (unreachable != null)
                 return ResultDto<RepositoryPushDto>.Failure(unreachable);
 
@@ -836,7 +839,7 @@ namespace Business.Repository
             if (sending > 0)
             {
                 string branch = local.Name;
-                string? notSent = OverTheNetwork(() => _git.Push(_folderPath, [branch], token));
+                string? notSent = await OverTheNetworkAsync(() => _git.Push(_folderPath, [branch], token), ct);
                 if (notSent != null)
                     return ResultDto<RepositoryPushDto>.Failure(notSent);
 
@@ -1156,6 +1159,19 @@ namespace Business.Repository
         }
 
         // Outside the lock. The message to show when the remote cannot be reached or refuses.
+        private async Task<string?> OverTheNetworkAsync(Action action, CancellationToken ct)
+        {
+            await _network.WaitAsync(ct);
+            try
+            {
+                return OverTheNetwork(action);
+            }
+            finally
+            {
+                _network.Release();
+            }
+        }
+
         private static string? OverTheNetwork(Action action)
         {
             try
