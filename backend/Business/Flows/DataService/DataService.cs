@@ -14,8 +14,9 @@ namespace Business.Flows.DataService
         public FlowInputDataService FlowInput { get; }
         public FlowTemplateDataService FlowTemplate { get; }
         public DiscordBotDataService DiscordBot { get; }
+        public ExecutionDataService Execution { get; }
 
-        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowInputDataService flowInput, FlowTemplateDataService flowTemplate, DiscordBotDataService discordBot)
+        public DataService(FlowDataService flow, FlowStepDataService flowStep, FlowAreaDataService flowArea, FlowPointDataService flowPoint, FlowInputDataService flowInput, FlowTemplateDataService flowTemplate, DiscordBotDataService discordBot, ExecutionDataService execution)
         {
             Flow = flow;
             FlowStep = flowStep;
@@ -24,6 +25,7 @@ namespace Business.Flows.DataService
             FlowInput = flowInput;
             FlowTemplate = flowTemplate;
             DiscordBot = discordBot;
+            Execution = execution;
         }
     }
 }

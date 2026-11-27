@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Business.Ai
 {
     /// <summary>
-    /// The answers being written. An answer takes longer than a request can wait, on a pipe that
-    /// answers one call at a time, so the request starts it and AI_CHAT_EVENT says how it goes.
+    /// The answers being written. An answer comes a few words at a time and can take longer than
+    /// Electron waits for a request, so the request starts it and AI_CHAT_EVENT says how it goes.
     /// Several conversations can be answering at once; Ollama queues them.
     /// </summary>
     public sealed class AiChatSessionService : IAiChatSessionService

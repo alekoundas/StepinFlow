@@ -1,4 +1,3 @@
-using Business.Executions;
 using Business.FlowScript.Diagnostics;
 using Business.FlowScript.Models;
 using Business.Flows.FlowValidationService;
@@ -21,19 +20,13 @@ namespace Business.Flows.DataService.DataHandlers
     public sealed class FlowDataService : BaseDataService
     {
         private readonly IGitRepositoryService _gitRepositoryService;
-        private readonly IExecutionEngine _executionEngine;
-        private readonly IExecutionDeleteService _executionDeleteService;
 
         public FlowDataService(
             IDbContextFactory<AppDbContext> dbContextFactory,
             IFlowValidationService flowValidationService,
-            IGitRepositoryService gitRepositoryService,
-            IExecutionEngine executionEngine,
-            IExecutionDeleteService executionDeleteService) : base(dbContextFactory, flowValidationService)
+            IGitRepositoryService gitRepositoryService) : base(dbContextFactory, flowValidationService)
         {
             _gitRepositoryService = gitRepositoryService;
-            _executionEngine = executionEngine;
-            _executionDeleteService = executionDeleteService;
         }
 
 
@@ -151,25 +144,33 @@ namespace Business.Flows.DataService.DataHandlers
         }
 
         /// <summary>
-        /// Deletes a flow with its executions, their screenshots folders too, and hands the space
-        /// back to the disk. Refused while an execution is using the flow, as its own or as a
-        /// sub-flow it calls.
+        /// Deletes a flow with its executions. Its row reaches millions below it - every execution
+        /// step that executed one of its steps - so it is hidden for good instead, at once, and the
+        /// cleanup on Home takes the rows. Whether an execution is using it is the handler's to ask.
         /// </summary>
         public async Task<ResultDto<bool>> DeleteAsync(int id, CancellationToken ct)
         {
-            if (_executionEngine.IsExecuting(id))
-                return ResultDto<bool>.Failure("An execution is using this flow. Stop it, then delete the flow.");
-
-            await _executionDeleteService.DeleteForFlowAsync(id, ct);
-
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
+            await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(ct);
 
-            int count = await dbContext.Flows.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
+            int count = await dbContext.Flows
+                .Where(x => x.Id == id && !x.IsDeleted)
+                .ExecuteUpdateAsync(x => x.SetProperty(flow => flow.IsDeleted, true).SetProperty(flow => flow.IsHidden, true), ct);
+
             if (count <= 0)
                 return ResultDto<bool>.Failure("Entity doesnt exist in the Database!");
 
+            await ExecutionDataService.DeleteWhereAsync(dbContext, x => x.FlowId == id, ct);
+
+            // What deleting the row would have cleared: the callers' link to it.
+            List<int> callerIds = await dbContext.FlowSteps.Where(x => x.SubFlowId == id).Select(x => x.RootId).Distinct().ToListAsync(ct);
+            await dbContext.FlowSteps.Where(x => x.SubFlowId == id).ExecuteUpdateAsync(x => x.SetProperty(step => step.SubFlowId, (int?)null), ct);
+
+            await transaction.CommitAsync(ct);
+
             _gitRepositoryService.Changed(id);
-            await dbContext.ReclaimFreeSpaceAsync(CancellationToken.None);
+            foreach (int callerId in callerIds)
+                _gitRepositoryService.Changed(callerId);
 
             return ResultDto<bool>.Success(true);
         }
@@ -251,7 +252,7 @@ namespace Business.Flows.DataService.DataHandlers
         {
             await using AppDbContext dbContext = await DbContextFactory.CreateDbContextAsync(ct);
 
-            Flow? existing = await dbContext.Flows.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
+            Flow? existing = await dbContext.Flows.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted, ct);
 
             FlowScriptImportTargetDto target = new FlowScriptImportTargetDto();
             if (existing != null)
@@ -288,7 +289,8 @@ namespace Business.Flows.DataService.DataHandlers
         /// </summary>
         public async Task<ResultDto<(int FlowId, FlowValidationResultDto Validation)>> ReplaceAsync(AppDbContext dbContext, FlowScriptSchema schema, CancellationToken ct)
         {
-            Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == schema.Flow.PublicId, ct);
+            // A deleted flow stays deleted: the script comes back as a new flow.
+            Flow? existing = await dbContext.Flows.FirstOrDefaultAsync(x => x.PublicId == schema.Flow.PublicId && !x.IsDeleted, ct);
 
             string? taken = await ValidateNameIsFreeAsync(dbContext, schema.Flow.Name, existing?.Id ?? 0, ct);
             if (taken != null)
@@ -349,7 +351,7 @@ namespace Business.Flows.DataService.DataHandlers
         public static Task HideAsync(AppDbContext dbContext, IReadOnlyCollection<Guid> publicIds, CancellationToken ct)
         {
             return dbContext.Flows
-                .Where(x => publicIds.Contains(x.PublicId))
+                .Where(x => publicIds.Contains(x.PublicId) && !x.IsDeleted)
                 .ExecuteUpdateAsync(x => x.SetProperty(flow => flow.IsHidden, true), ct);
         }
 
@@ -360,7 +362,7 @@ namespace Business.Flows.DataService.DataHandlers
         /// </summary>
         public static async Task ReleaseNamesAsync(AppDbContext dbContext, IReadOnlyCollection<Guid> publicIds, CancellationToken ct)
         {
-            List<Flow> flows = await dbContext.Flows.Where(x => publicIds.Contains(x.PublicId)).ToListAsync(ct);
+            List<Flow> flows = await dbContext.Flows.Where(x => publicIds.Contains(x.PublicId) && !x.IsDeleted).ToListAsync(ct);
 
             foreach (Flow flow in flows)
                 flow.Name = flow.PublicId.ToString();
