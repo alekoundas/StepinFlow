@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
-export const aiKeys = {
+const aiKeys = {
   all: ["ai"] as const,
   status: () => ["ai", "status"] as const,
   localModel: () => ["ai", "localModel"] as const,
@@ -14,7 +14,7 @@ export const aiKeys = {
 } as const;
 
 /** What a page says in place of an AI feature while useAiStatus is false. */
-export const AI_OFF =
+const AI_OFF =
   "AI is off until Ollama is running on this machine with a model downloaded. Choose the model in Settings.";
 
 /**
@@ -22,19 +22,19 @@ export const AI_OFF =
  * Read once so a page can offer the feature or explain why it is not there, rather than letting
  * somebody click and get an error.
  */
-export function useAiStatus() {
+function useAiStatus() {
   return useQuery({
     queryKey: aiKeys.status(),
-    queryFn: () => backendApiService.Ai.getStatus(),
+    queryFn: () => BackendApiService.Ai.getStatus(),
     staleTime: 0,
   });
 }
 
 /** The models downloaded into Ollama, and the cloud provider's. */
-export function useAiModels(isEnabled: boolean) {
+function useAiModels(isEnabled: boolean) {
   return useQuery({
     queryKey: aiKeys.models(),
-    queryFn: () => backendApiService.Lookup.aiModels(),
+    queryFn: () => BackendApiService.Lookup.aiModels(),
     enabled: isEnabled,
     staleTime: 0,
   });
@@ -43,11 +43,19 @@ export function useAiModels(isEnabled: boolean) {
 /**
  * Local models worth offering to somebody who has none, with the ones already downloaded marked.
  */
-export function useAiModelSuggestions(isEnabled: boolean) {
+function useAiModelSuggestions(isEnabled: boolean) {
   return useQuery({
     queryKey: aiKeys.suggestions(),
-    queryFn: () => backendApiService.Lookup.aiModelSuggestions(),
+    queryFn: () => BackendApiService.Lookup.aiModelSuggestions(),
     enabled: isEnabled,
     staleTime: 0,
   });
 }
+
+export const AiHooks = {
+  keys: aiKeys,
+  AI_OFF,
+  useAiStatus,
+  useAiModels,
+  useAiModelSuggestions,
+};

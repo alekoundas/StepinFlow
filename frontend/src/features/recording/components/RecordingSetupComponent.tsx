@@ -8,21 +8,18 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/forms/FlowAreaScalesWithFieldComponent";
-import { DESCRIPTION_MAX_LENGTH } from "@/features/flow/components/form/flow.zod";
+import { FlowZod } from "@/features/flow/components/form/flow.zod";
 import RecordingSectionComponent from "@/features/recording/components/RecordingSectionComponent";
 import RecordingWindowPickerComponent from "@/features/recording/components/RecordingWindowPickerComponent";
 import RecordingWindowSizeComponent from "@/features/recording/components/RecordingWindowSizeComponent";
 import WhileYouRecordComponent from "@/features/recording/components/WhileYouRecordComponent";
-import {
-  RecordingSetupSchema,
-  type RecordingSetupForm,
-} from "@/features/recording/components/recording-setup.zod";
+import { RecordingSetupZod, type RecordingSetupForm } from "@/features/recording/components/recording-setup.zod";
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 // import { AI_OFF, useAiStatus } from "@/features/ai/hooks/use-ai";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
@@ -58,7 +55,7 @@ const DEFAULT_VALUES: RecordingSetupForm = {
  */
 export default function RecordingSetupComponent({ isSubFlow, onCreated, onCancel }: Props) {
   const form = useForm<RecordingSetupForm>({
-    resolver: zodResolver(RecordingSetupSchema),
+    resolver: zodResolver(RecordingSetupZod.RecordingSetupSchema),
     mode: "onChange",
     defaultValues: DEFAULT_VALUES,
   });
@@ -76,7 +73,7 @@ export default function RecordingSetupComponent({ isSubFlow, onCreated, onCancel
     setError(null);
 
     try {
-      const flowId = await backendApiService.Recording.setup({
+      const flowId = await BackendApiService.Recording.setup({
         ...values,
         name: values.name.trim(),
         isSubFlow,
@@ -113,7 +110,7 @@ export default function RecordingSetupComponent({ isSubFlow, onCreated, onCancel
                 label="What should it do?"
                 placeholderText="Sign in to the billing portal, open Invoices and download last month's."
                 hintText="In your own words. It becomes the flow's description, and the list shows its first line."
-                maxLength={DESCRIPTION_MAX_LENGTH}
+                maxLength={FlowZod.DESCRIPTION_MAX_LENGTH}
               />
             </RecordingSectionComponent>
 

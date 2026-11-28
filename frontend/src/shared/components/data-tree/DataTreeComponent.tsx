@@ -16,32 +16,25 @@ import {
 } from "primereact/tree";
 import { classNames } from "primereact/utils";
 import { Button } from "primereact/button";
-import {
-  useWorkflowStore,
-  type TreeExpansion,
-} from "@/features/workflow/store/workflow-store";
+import { useWorkflowStore, type TreeExpansion } from "@/features/workflow/store/workflow-store";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { DataTreeFlowTemplate } from "@/features/flow/components/data-tree-templates/DataTreeFlowTemplate";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { TreeNodeDto, buildTreeNodeKey, keysUnderDisabled } from "@/shared/models/tree-node-dto";
-import type {
-  FlowStepMoveDto,
-  FlowStepMovePreviewDto,
-} from "@/shared/models/flow-step-move.dto";
+import { BackendApiService } from "@/shared/services/backend-api-service";
+import { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
 import IconComponent from "@/shared/components/IconComponent";
 import { FlowStepTreeNodeComponent } from "@/features/flow-step/components/templates/data-tree/FlowStepTreeNodeComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { TreeMoveConfirmContentComponent } from "@/shared/components/data-tree/TreeMoveConfirmContentComponent";
 import { useTreeDragDrop } from "@/shared/components/data-tree/use-tree-drag-drop";
 import { TreeSelectionRingComponent } from "@/shared/components/data-tree/TreeSelectionRingComponent";
-import { flowStepAccent, tint } from "@/shared/models/flow-step-catalog";
-import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
 import { useSetFlowStepDisabled } from "@/features/flow-step/hooks/use-set-flow-step-disabled";
-import {
-  groupIssuesBelowStep,
-  groupIssuesByStep,
-  useFlowValidation,
-} from "@/features/flow/hooks/use-flow-validation";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { TreeNodeKeys } from "@/shared/utils/tree-node-keys";
+import { FlowValidation } from "@/features/flow/flow-validation";
+import type { FlowStepMovePreviewDto } from "@/shared/models/flow-step-move-preview-dto";
 
 interface Props {
   flowId: number;
@@ -74,18 +67,18 @@ export function DataTreeComponent({ flowId }: Props) {
   } = useWorkflowStore();
   const [loading, setLoading] = useState(false);
   const { openConfirm, close } = useDialogStore();
-  const { moveFlowStepMutation, pasteFlowStepMutation } = useFlowStepMutations();
+  const { moveFlowStepMutation, pasteFlowStepMutation } = FlowStepHooks.useFlowStepMutations();
   const { setDisabled, isSettingDisabled } = useSetFlowStepDisabled();
 
   // Fetched once for the flow rather than per branch: whether a step can read another step's
   // result depends on the whole parent chain, not on the branch being expanded.
   const { data: validation } = useFlowValidation(flowId);
   const issuesByStepId = useMemo(
-    () => groupIssuesByStep(validation?.issues ?? []),
+    () => FlowValidation.groupIssuesByStep(validation?.issues ?? []),
     [validation],
   );
   const issuesBelowByStepId = useMemo(
-    () => groupIssuesBelowStep(validation?.issues ?? []),
+    () => FlowValidation.groupIssuesBelowStep(validation?.issues ?? []),
     [validation],
   );
 
@@ -176,7 +169,7 @@ export function DataTreeComponent({ flowId }: Props) {
     return map;
   }, [data]);
 
-  const underDisabled = useMemo(() => keysUnderDisabled(data), [data]);
+  const underDisabled = useMemo(() => TreeNodeKeys.keysUnderDisabled(data), [data]);
 
   // Read inside loadTreeChildren without making it a dependency, which would rebuild the
   // callback on every data change and retrigger the refresh effect.
@@ -206,9 +199,9 @@ export function DataTreeComponent({ flowId }: Props) {
       try {
         // isFlow decides which column the backend matches the id against: the Flow node wants
         // its root steps, a FlowStep node wants its children.
-        const parentKey = buildTreeNodeKey(parentNodeId, isParentNodeFlow);
+        const parentKey = TreeNodeKeys.buildTreeNodeKey(parentNodeId, isParentNodeFlow);
         const response = withNewChild(
-          await backendApiService.FlowStep.getTreeNodes({
+          await BackendApiService.FlowStep.getTreeNodes({
             id: parentNodeId,
             isFlow: isParentNodeFlow,
           }),
@@ -248,7 +241,7 @@ export function DataTreeComponent({ flowId }: Props) {
   }, [loadTreeChildren]);
 
   useEffect(() => {
-    backendApiService.Flow.getTreeNodes(flowId).then((response) =>
+    BackendApiService.Flow.getTreeNodes(flowId).then((response) =>
       setData(response),
     );
   }, [flowId]);
@@ -260,7 +253,7 @@ export function DataTreeComponent({ flowId }: Props) {
       setTreeRefreshTrigger(null);
 
       if (id === -1) {
-        backendApiService.Flow.getTreeNodes(flowId).then((response) =>
+        BackendApiService.Flow.getTreeNodes(flowId).then((response) =>
           setData(response),
         );
         return;
@@ -295,16 +288,16 @@ export function DataTreeComponent({ flowId }: Props) {
 
     const reveal = async () => {
       const ancestors: number[] = [];
-      let step = await backendApiService.FlowStep.get(flowStepId);
+      let step = await BackendApiService.FlowStep.get(flowStepId);
       while (step.parentFlowStepId) {
         ancestors.unshift(step.parentFlowStepId);
-        step = await backendApiService.FlowStep.get(step.parentFlowStepId);
+        step = await BackendApiService.FlowStep.get(step.parentFlowStepId);
       }
 
-      const opened: TreeExpandedKeysType = { [buildTreeNodeKey(flowId, true)]: true };
+      const opened: TreeExpandedKeysType = { [TreeNodeKeys.buildTreeNodeKey(flowId, true)]: true };
       let children = await loadTreeChildren(flowId, true);
       for (const id of ancestors) {
-        opened[buildTreeNodeKey(id, false)] = true;
+        opened[TreeNodeKeys.buildTreeNodeKey(id, false)] = true;
         children = await loadTreeChildren(id, false);
       }
 
@@ -339,7 +332,7 @@ export function DataTreeComponent({ flowId }: Props) {
   const expandAll = async () => {
     setLoading(true);
     try {
-      const roots = await backendApiService.FlowStep.getTreeNodesRecursive(flowId);
+      const roots = await BackendApiService.FlowStep.getTreeNodesRecursive(flowId);
       const opened: TreeExpandedKeysType = {};
 
       const open = (
@@ -348,7 +341,7 @@ export function DataTreeComponent({ flowId }: Props) {
         isParentNodeFlow: boolean,
         canAddChildren: boolean,
       ): TreeNodeDto[] => {
-        opened[buildTreeNodeKey(parentNodeId, isParentNodeFlow)] = true;
+        opened[TreeNodeKeys.buildTreeNodeKey(parentNodeId, isParentNodeFlow)] = true;
 
         return withNewChild(
           children.map((node) =>
@@ -360,7 +353,7 @@ export function DataTreeComponent({ flowId }: Props) {
         );
       };
 
-      const flowKey = buildTreeNodeKey(flowId, true);
+      const flowKey = TreeNodeKeys.buildTreeNodeKey(flowId, true);
       const loaded = open(roots, flowId, true, true);
       setData((prev) => updateTreeNodeChildren(prev, flowKey, loaded));
       setExpandedKeys(opened);
@@ -373,7 +366,7 @@ export function DataTreeComponent({ flowId }: Props) {
 
   // The flow stays open on its first steps, if it was open at all.
   const collapseAll = () => {
-    const flowKey = buildTreeNodeKey(flowId, true);
+    const flowKey = TreeNodeKeys.buildTreeNodeKey(flowId, true);
     setExpandedKeys((prev) => (prev[flowKey] ? { [flowKey]: true } : {}));
   };
 
@@ -436,7 +429,7 @@ export function DataTreeComponent({ flowId }: Props) {
     async (move: FlowStepMoveDto, dragged: TreeNodeDto) => {
       let preview: FlowStepMovePreviewDto;
       try {
-        preview = await backendApiService.FlowStep.getMovePreview(move);
+        preview = await BackendApiService.FlowStep.getMovePreview(move);
       } catch (err) {
         console.error(err);
         return;
@@ -591,7 +584,7 @@ export function DataTreeComponent({ flowId }: Props) {
     const accent =
       treeNodeDto.isFlow || treeNodeDto.isNew
         ? "var(--primary-color)"
-        : flowStepAccent(treeNodeDto.flowStepType);
+        : FlowStepCatalog.flowStepAccent(treeNodeDto.flowStepType);
 
     let borderRadius: number | undefined;
     if (isSelected) borderRadius = 6;
@@ -613,7 +606,7 @@ export function DataTreeComponent({ flowId }: Props) {
               ? "var(--highlight-bg)"
               : undefined,
           boxShadow: isSelected
-            ? `0 0 0 4px ${tint(accent, 12)}, 0 8px 22px -10px ${accent}`
+            ? `0 0 0 4px ${FlowStepCatalog.tint(accent, 12)}, 0 8px 22px -10px ${accent}`
             : undefined,
           transition: "box-shadow 160ms ease",
         }}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useAppSettingMutations } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 
 /**
@@ -14,7 +14,7 @@ import type { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-e
  * to be fetched from that provider. They differ in what they render, never in when a value is saved.
  */
 export function useSettingEditor() {
-  const { setSettingMutation } = useAppSettingMutations();
+  const { setSettingMutation } = AppSettingHooks.useAppSettingMutations();
 
   const [editing, setEditing] = useState<Record<string, string>>({});
 

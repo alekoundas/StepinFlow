@@ -15,7 +15,7 @@ Pure Canvas 2D, no image libraries.
 frontend/src/windows/image-editor/
 ├── ImageEditorPage.tsx        # orchestration: IPC, tool state, shortcuts, layout
 ├── ImageEditorPage.css        # window chrome (the app has no utility CSS framework)
-├── types.ts                   # shared types + the coordinate space contract
+├── types/                     # shared types, one per file; view-transform.ts is the coordinate space contract
 ├── hooks/
 │   ├── useImageCanvas.ts      # the image document + crop/erase operations
 │   ├── useUndoRedo.ts         # snapshot stack with thumbnails and a memory budget
@@ -27,12 +27,14 @@ frontend/src/windows/image-editor/
 │   ├── OptionsPanel.tsx       # right sidebar: selection, eraser, view options
 │   ├── Minimap.tsx            # navigation preview
 │   └── HistoryPanel.tsx       # undo/redo list
-└── utils/canvas-utils.ts      # base64 <-> blob/image, canvas helpers, geometry
+└── utils/
+    ├── canvas-utils.ts        # base64 <-> blob/image, canvas helpers, geometry
+    └── is-image-editor-point.ts  # whether the editor answered with a point rather than a picture
 ```
 
 ## Coordinate spaces
 
-Everything hangs off one transform, defined in `types.ts`:
+Everything hangs off one transform, defined in `types/view-transform.ts`:
 
 ```
 viewport = image * scale + offset
@@ -69,11 +71,11 @@ Images travel as **base64 PNG strings** — the shape .Net already produces for
 `byte[]` in the JSON payload, so nothing has to be converted on the way through.
 
 ```
-caller  ElectronApiService.imageEditor.openWindow(pngBase64)
+caller  ElectronApiService.ImageEditor.openWindow(pngBase64)
           -> image-editor-handler.ts creates the window
-editor  ElectronApiService.imageEditor.signalReady()          -> pngBase64
-editor  ElectronApiService.imageEditor.signalCloseWindow(png) -> saved
-        ElectronApiService.imageEditor.signalCloseWindow(null)-> cancelled
+editor  ElectronApiService.ImageEditor.signalReady()          -> pngBase64
+editor  ElectronApiService.ImageEditor.signalCloseWindow(png) -> saved
+        ElectronApiService.ImageEditor.signalCloseWindow(null)-> cancelled
           -> handler closes the window and resolves openWindow()
 ```
 

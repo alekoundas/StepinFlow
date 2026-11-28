@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 
 export function useDiscordBotMutations() {
@@ -14,17 +14,17 @@ export function useDiscordBotMutations() {
   };
 
   const createDiscordBotMutation = useMutation({
-    mutationFn: (dto: DiscordBotDto) => backendApiService.DiscordBot.create(dto),
+    mutationFn: (dto: DiscordBotDto) => BackendApiService.DiscordBot.create(dto),
     onSuccess: invalidate,
   });
 
   const updateDiscordBotMutation = useMutation({
-    mutationFn: (dto: DiscordBotDto) => backendApiService.DiscordBot.update(dto),
+    mutationFn: (dto: DiscordBotDto) => BackendApiService.DiscordBot.update(dto),
     onSuccess: invalidate,
   });
 
   const deleteDiscordBotMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.DiscordBot.delete(id),
+    mutationFn: (id: number) => BackendApiService.DiscordBot.delete(id),
     onSuccess: invalidate,
   });
 

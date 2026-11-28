@@ -6,35 +6,3 @@ export interface FlowStepMoveDto {
   targetFlowId?: number;
   targetIndex: number;
 }
-
-// A copy of flowStepId and everything under it, placed the way a move places a step.
-export interface FlowStepPasteDto {
-  flowStepId: number;
-  targetParentFlowStepId?: number;
-  targetFlowId?: number;
-  targetIndex: number;
-}
-
-export interface FlowStepDisabledDto {
-  flowStepId: number;
-  isDisabled: boolean;
-}
-
-export interface FlowStepBrokenReferenceDto {
-  flowStepId: number;
-  flowStepName: string;
-  referencedStepName: string;
-  isEndReference: boolean;
-}
-
-export interface FlowStepMovePreviewDto {
-  isValid: boolean;
-  errorMessage?: string;
-
-  movedStepName: string;
-  targetParentName: string;
-  movedDescendantCount: number;
-  isReorderOnly: boolean;
-
-  brokenReferences: FlowStepBrokenReferenceDto[];
-}

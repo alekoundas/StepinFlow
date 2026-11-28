@@ -2,12 +2,12 @@ import { z } from "zod";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
+import { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 // The four cursor modes are separate FlowStepTypes so the tree, the icons and the executor keep a
 // flat dispatch. Only the form merges them, and the mode buttons rewrite flowStepType.
-export const CURSOR_FLOW_STEP_TYPES = [
+const CURSOR_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.CURSOR_CLICK,
   FlowStepTypeEnum.CURSOR_RELOCATE,
   FlowStepTypeEnum.CURSOR_DRAG,
@@ -16,12 +16,7 @@ export const CURSOR_FLOW_STEP_TYPES = [
 
 export type CursorFlowStepType = (typeof CURSOR_FLOW_STEP_TYPES)[number];
 
-export const isCursorFlowStepType = (
-  type: FlowStepTypeEnum | undefined,
-): type is CursorFlowStepType =>
-  CURSOR_FLOW_STEP_TYPES.includes(type as CursorFlowStepType);
-
-export const FlowStepCursorSchema = z
+const FlowStepCursorSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
     flowStepType: z.enum(CURSOR_FLOW_STEP_TYPES),
@@ -37,7 +32,7 @@ export const FlowStepCursorSchema = z
     flowStepReferenceEndId: z.number().int().nullish(),
 
     // CURSOR_CLICK / CURSOR_DRAG
-    cursorButtonActionType: z.enum(cursorButtonActionTypeEnum).nullish(),
+    cursorButtonActionType: z.enum(CursorButtonActionTypeEnum).nullish(),
     cursorButtonType: z.enum(CursorButtonTypeEnum).nullish(),
 
     // CURSOR_SCROLL
@@ -123,3 +118,8 @@ export const FlowStepCursorSchema = z
       }
     }
   });
+
+export const FlowStepCursorZod = {
+  CURSOR_FLOW_STEP_TYPES,
+  FlowStepCursorSchema,
+};

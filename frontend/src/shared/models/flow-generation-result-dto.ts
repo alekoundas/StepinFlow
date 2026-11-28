@@ -1,5 +1,6 @@
-import type { FlowScriptErrorDto, FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
+import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
 import type { ProposedCheckDto } from "@/shared/models/proposed-check-dto";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 /**
  * What a recording's draft saved, and what the Check page shows of it: the plain draft, the

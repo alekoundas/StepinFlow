@@ -10,8 +10,8 @@ import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import FlowInputFormComponent from "@/features/flow-input/components/forms/FlowInputFormComponent";
 import { useFlowInputMutations } from "@/features/flow-input/hooks/use-flow-input";
-import { typesInput } from "@/features/workflow/hooks/use-flow-parts";
 import { WorkflowUsedByComponent } from "@/features/workflow/components/WorkflowUsedByComponent";
+import { FlowParts } from "@/features/workflow/flow-parts";
 import type { WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
 
 interface Props {
@@ -64,7 +64,7 @@ export function FlowInputPanelComponent({ flow, uses, selected, onSelect }: Prop
       />
     );
 
-  const usedBy = (uses ?? []).filter((x) => typesInput(x, input.name));
+  const usedBy = (uses ?? []).filter((x) => FlowParts.typesInput(x, input.name));
 
   const save = async (dto: FlowInputDto) => {
     setError(undefined);

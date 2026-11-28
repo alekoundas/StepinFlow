@@ -1,11 +1,11 @@
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { useFlowMutations } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 
 export function useDeleteFlow() {
   const { openConfirm } = useDialogStore();
-  const { deleteFlowMutation } = useFlowMutations();
+  const { deleteFlowMutation } = FlowHooks.useFlowMutations();
 
   // onDeleted is for callers that were showing the flow they just deleted, and have to go
   // somewhere else afterwards.

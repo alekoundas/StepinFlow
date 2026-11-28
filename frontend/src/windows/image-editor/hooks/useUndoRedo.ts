@@ -8,12 +8,8 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
-import type { HistoryEntry } from "@/windows/image-editor/types";
-import {
-  canvasByteSize,
-  canvasToThumbnail,
-  cloneCanvas,
-} from "@/windows/image-editor/utils/canvas-utils";
+import { CanvasUtils } from "@/windows/image-editor/utils/canvas-utils";
+import type { HistoryEntry } from "@/windows/image-editor/types/history-entry";
 
 const DEFAULT_BUDGET_BYTES = 256 * 1024 * 1024;
 const MAX_ENTRIES = 40;
@@ -30,8 +26,8 @@ export function useUndoRedo(memoryBudgetBytes = DEFAULT_BUDGET_BYTES) {
     (source: HTMLCanvasElement, label: string): HistoryEntry => ({
       id: crypto.randomUUID(),
       label,
-      canvas: cloneCanvas(source),
-      thumbnail: canvasToThumbnail(source),
+      canvas: CanvasUtils.cloneCanvas(source),
+      thumbnail: CanvasUtils.canvasToThumbnail(source),
       timestamp: Date.now(),
     }),
     [],
@@ -41,14 +37,14 @@ export function useUndoRedo(memoryBudgetBytes = DEFAULT_BUDGET_BYTES) {
   const evict = useCallback(
     (entries: HistoryEntry[]): HistoryEntry[] => {
       let kept = entries;
-      let bytes = kept.reduce((sum, e) => sum + canvasByteSize(e.canvas), 0);
+      let bytes = kept.reduce((sum, e) => sum + CanvasUtils.canvasByteSize(e.canvas), 0);
 
       let dropCount = 0;
       while (
         kept.length - dropCount > 1 &&
         (bytes > memoryBudgetBytes || kept.length - dropCount > MAX_ENTRIES)
       ) {
-        bytes -= canvasByteSize(kept[dropCount].canvas);
+        bytes -= CanvasUtils.canvasByteSize(kept[dropCount].canvas);
         dropCount++;
       }
 

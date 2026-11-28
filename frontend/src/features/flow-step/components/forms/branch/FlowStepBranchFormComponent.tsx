@@ -7,7 +7,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
 import { FlowStepBranchSchema } from "@/features/flow-step/components/forms/branch/flow-step-branch.zod";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 
@@ -49,7 +49,7 @@ export default function FlowStepBranchFormComponent({
     formState: { isValid, isDirty },
   } = form;
 
-  const { data: parent } = useFlowStep(defaultValues.parentFlowStepId ?? null);
+  const { data: parent } = FlowStepHooks.useFlowStep(defaultValues.parentFlowStepId ?? null);
 
   const isSuccess = defaultValues.flowStepType === FlowStepTypeEnum.SUCCESS;
   const parentName = parent ? `“${parent.name}”` : "the step it belongs to";

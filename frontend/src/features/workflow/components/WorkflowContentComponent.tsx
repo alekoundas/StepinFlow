@@ -7,13 +7,10 @@ import DisabledTooltipComponent from "@/shared/components/DisabledTooltipCompone
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import FlowStepPickerComponent from "@/features/flow-step/components/FlowStepPickerComponent";
 import { FormMode } from "@/shared/enums/form-mode-enum";
-import {
-  useFlowStep,
-  useFlowStepMutations,
-} from "@/features/flow-step/hooks/use-flow-step";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { useFlow, useFlowMutations } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
@@ -69,17 +66,17 @@ export function WorkflowContentComponent() {
 
   // ── React Query for Flow (when root node is selected) ──
   const flowId = selectedTreeNode?.isFlow ? selectedTreeNode.entityId : null;
-  const { data: loadedFlow, isLoading: flowLoading } = useFlow(flowId);
+  const { data: loadedFlow, isLoading: flowLoading } = FlowHooks.useFlow(flowId);
 
   // ── React Query for FlowStep ──
   const stepId =
     selectedTreeNode && !selectedTreeNode.isNew && !selectedTreeNode.isFlow
       ? selectedTreeNode.entityId
       : null;
-  const { data: loadedStep, isLoading: stepLoading } = useFlowStep(stepId);
+  const { data: loadedStep, isLoading: stepLoading } = FlowStepHooks.useFlowStep(stepId);
   const { createFlowStepMutation, updateFlowStepMutation } =
-    useFlowStepMutations();
-  const { updateFlowMutation } = useFlowMutations();
+    FlowStepHooks.useFlowStepMutations();
+  const { updateFlowMutation } = FlowHooks.useFlowMutations();
   const { data: validation } = useFlowValidation(rootFlowId ?? null);
   const issues = validation?.issues ?? [];
 

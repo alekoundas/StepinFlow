@@ -6,11 +6,11 @@ import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectBu
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { CursorScrollDirectionTypeEnum } from "@/shared/enums/backend/cursor-scroll-direction-type-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
+import type { FlowStepCursorZod } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 import FlowStepCursorLocationFieldsComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorLocationFieldsComponent";
-import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
+import { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 
-type CursorForm = z.infer<typeof FlowStepCursorSchema>;
+type CursorForm = z.infer<typeof FlowStepCursorZod.FlowStepCursorSchema>;
 
 interface Props {
   flowId: number | undefined;
@@ -19,10 +19,10 @@ interface Props {
 }
 
 const ACTION_OPTIONS = [
-  { label: "Single", value: cursorButtonActionTypeEnum.SINGLE_CLICK },
-  { label: "Double", value: cursorButtonActionTypeEnum.DOUBLE_CLICK },
-  { label: "Hold", value: cursorButtonActionTypeEnum.HOLD_CLICK },
-  { label: "Release", value: cursorButtonActionTypeEnum.RELEASE_CLICK },
+  { label: "Single", value: CursorButtonActionTypeEnum.SINGLE_CLICK },
+  { label: "Double", value: CursorButtonActionTypeEnum.DOUBLE_CLICK },
+  { label: "Hold", value: CursorButtonActionTypeEnum.HOLD_CLICK },
+  { label: "Release", value: CursorButtonActionTypeEnum.RELEASE_CLICK },
 ];
 
 const BUTTON_OPTIONS = [

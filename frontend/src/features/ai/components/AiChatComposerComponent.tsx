@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { InputTextarea } from "primereact/inputtextarea";
 
-import { MONO, MUTED } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import type { AiChatAvailabilityDto } from "@/shared/models/ai-chat/ai-chat-availability-dto";
 import type { AiChatPage, AiChatPageKind } from "@/features/ai/hooks/use-ai-chat-page";
-import type { AiChatAvailabilityDto } from "@/shared/models/ai-chat-dtos";
 
 const PLACEHOLDERS: Record<AiChatPageKind, string> = {
   execution: "Ask about this execution",
@@ -65,7 +65,7 @@ export default function AiChatComposerComponent({
 
   const placeholder = PLACEHOLDERS[isContextOn ? page.kind : "none"];
 
-  let imagesStyle: CSSProperties = { borderColor: "var(--surface-border)", background: "transparent", ...MUTED };
+  let imagesStyle: CSSProperties = { borderColor: "var(--surface-border)", background: "transparent", ...ExecutionFormat.MUTED };
   if (areImagesOn)
     imagesStyle = {
       borderColor: "color-mix(in srgb, var(--primary-color) 55%, transparent)",
@@ -100,7 +100,7 @@ export default function AiChatComposerComponent({
                   type="button"
                   aria-label="Leave this out of the question"
                   className="flex-none flex align-items-center justify-content-center border-none cursor-pointer border-round-md"
-                  style={{ width: 20, height: 20, padding: 0, background: "transparent", ...MUTED }}
+                  style={{ width: 20, height: 20, padding: 0, background: "transparent", ...ExecutionFormat.MUTED }}
                   onClick={() => onContextOn(false)}
                 >
                   <i
@@ -114,7 +114,7 @@ export default function AiChatComposerComponent({
               <button
                 type="button"
                 className="inline-flex align-items-center gap-2 border-round-lg cursor-pointer min-w-0"
-                style={{ ...CHIP, ...MUTED, background: "transparent", border: "1px dashed var(--surface-border)" }}
+                style={{ ...CHIP, ...ExecutionFormat.MUTED, background: "transparent", border: "1px dashed var(--surface-border)" }}
                 onClick={() => onContextOn(true)}
               >
                 <i
@@ -148,7 +148,7 @@ export default function AiChatComposerComponent({
         {showCloudNote ? (
           <div
             className="text-xs line-height-3"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             The images stay on this computer. To send them, turn on "Let a cloud model see your screen" in AI settings.
           </div>
@@ -199,7 +199,7 @@ export default function AiChatComposerComponent({
             )}
             <span
               className="white-space-nowrap overflow-hidden text-overflow-ellipsis"
-              style={{ fontFamily: MONO, color: "var(--text-color)" }}
+              style={{ fontFamily: ExecutionFormat.MONO, color: "var(--text-color)" }}
             >
               {availability?.model}
             </span>

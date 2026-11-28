@@ -12,19 +12,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  EditorTool,
-  GridOptions,
-  PendingSelection,
-  Point,
-  Size,
-} from "@/windows/image-editor/types";
-import {
-  clampRectToImage,
-  distance,
-  rectFromPoints,
-} from "@/windows/image-editor/utils/canvas-utils";
-import type { useViewTransform } from "@/windows/image-editor/hooks/useViewTransform";
+import { CanvasUtils } from "@/windows/image-editor/utils/canvas-utils";
+import type { ViewTransformHooks } from "@/windows/image-editor/hooks/useViewTransform";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Size } from "@/windows/image-editor/types/size";
+import type { EditorTool } from "@/windows/image-editor/types/editor-tool";
+import type { PendingSelection } from "@/windows/image-editor/types/pending-selection";
+import type { GridOptions } from "@/windows/image-editor/types/grid-options";
 
 const CHECKER_SIZE = 8;
 const POLYGON_CLOSE_DISTANCE = 10; // viewport px
@@ -52,7 +46,7 @@ interface CanvasProps {
   getDocument: () => HTMLCanvasElement | null;
   imageSize: Size | null;
   revision: number;
-  view: ReturnType<typeof useViewTransform>;
+  view: ReturnType<typeof ViewTransformHooks.useViewTransform>;
   tool: EditorTool;
   grid: GridOptions;
   brushSize: number;
@@ -553,7 +547,7 @@ export default function Canvas({
               x: open[0].x * scale + offset.x,
               y: open[0].y * scale + offset.y,
             };
-            if (distance(firstScreen, viewportPoint) <= POLYGON_CLOSE_DISTANCE) {
+            if (CanvasUtils.distance(firstScreen, viewportPoint) <= POLYGON_CLOSE_DISTANCE) {
               onSelectionChange({ kind: "polygon", points: open, committed: true });
               break;
             }
@@ -616,8 +610,8 @@ export default function Canvas({
         }
 
         case "rect": {
-          const rect = clampRectToImage(
-            rectFromPoints(interaction.current.origin, imagePoint),
+          const rect = CanvasUtils.clampRectToImage(
+            CanvasUtils.rectFromPoints(interaction.current.origin, imagePoint),
             imageSize,
           );
           onSelectionChange({ kind: "rect", rect, committed: false });

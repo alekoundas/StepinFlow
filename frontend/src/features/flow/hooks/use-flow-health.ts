@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
 
-export const flowHealthKeys = {
+const flowHealthKeys = {
   all: ["flow", "health"] as const,
 } as const;
 
@@ -23,19 +23,19 @@ export const flowHealthKeys = {
 function useFlowHealthQuery() {
   return useQuery({
     queryKey: flowHealthKeys.all,
-    queryFn: () => backendApiService.Flow.getHealth([]),
+    queryFn: () => BackendApiService.Flow.getHealth([]),
     staleTime: 0,
   });
 }
 
-export function useFlowHealth() {
+function useFlowHealth() {
   const { data } = useFlowHealthQuery();
 
   return new Map<number, FlowHealthDto>((data ?? []).map((x) => [x.flowId, x]));
 }
 
 /** The flows with an error or a warning, the most errors first. */
-export function useFlowsWithIssues() {
+function useFlowsWithIssues() {
   const { data, isPending } = useFlowHealthQuery();
 
   const flows = (data ?? [])
@@ -49,3 +49,9 @@ export function useFlowsWithIssues() {
 
   return { flows, isLoading: isPending };
 }
+
+export const FlowHealthHooks = {
+  keys: flowHealthKeys,
+  useFlowHealth,
+  useFlowsWithIssues,
+};

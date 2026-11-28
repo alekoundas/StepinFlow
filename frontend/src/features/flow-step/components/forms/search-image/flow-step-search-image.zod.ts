@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { TemplateMatchModeEnum } from "@/shared/enums/backend/template-match-mode-enum";
-import { isWaitingMode } from "@/features/flow-step/components/forms/shared/search-modes";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepSearchImageSchema = z
@@ -33,7 +33,7 @@ export const FlowStepSearchImageSchema = z
       });
     }
 
-    if (isWaitingMode(data.searchMode)) {
+    if (SearchModes.isWaitingMode(data.searchMode)) {
       if (data.pollIntervalMilliseconds < 50) {
         ctx.addIssue({
           code: "custom",

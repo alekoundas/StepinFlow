@@ -4,25 +4,24 @@ import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import IconComponent from "@/shared/components/IconComponent";
-import StatusPillComponent, {
-  type StatusPillSeverity,
-} from "@/shared/components/StatusPillComponent";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import ExecutionPanelComponent from "@/features/execution/components/templates/ExecutionPanelComponent";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import { getFlowStepCatalogEntry, hasBranches } from "@/shared/models/flow-step-catalog";
-import { DONE_COLOR, HANDLED_COLOR, INSET, MONO, MUTED } from "@/features/execution/execution-format";
-import { isCheckStep } from "@/features/execution/execution-overview";
-import { useFlowStep } from "@/features/flow-step/hooks/use-flow-step";
-import { useExecutionStepScreenshot, useSavedExecutionStep } from "@/features/execution/hooks/use-execution";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { useAiStatus } from "@/features/ai/hooks/use-ai";
-import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+import { ExecutionStepKind } from "@/features/execution/execution-step-kind";
+import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 
 interface Props {
   executionStep: ExecutionStepDto | undefined;
@@ -55,7 +54,7 @@ export default function ExecutionStepDetailComponent({
   isLive,
   onSelect,
 }: Props) {
-  const { data: savedStep } = useSavedExecutionStep(
+  const { data: savedStep } = ExecutionHooks.useSavedExecutionStep(
     shownStep,
     isLive,
     historyLevel !== ExecutionHistoryLevelEnum.NONE,
@@ -84,7 +83,7 @@ export default function ExecutionStepDetailComponent({
           Step{" "}
           <span
             className="font-normal"
-            style={{ ...MUTED, fontFamily: MONO }}
+            style={{ ...ExecutionFormat.MUTED, fontFamily: ExecutionFormat.MONO }}
           >
             {executionStep.sequence.toLocaleString()}
           </span>
@@ -130,7 +129,7 @@ function StepDetail({ executionStep, parentStep: parent, historyLevel, execution
       <button
         type="button"
         className="p-0 border-none bg-transparent cursor-pointer text-left text-xs"
-        style={{ ...MUTED, font: "inherit", fontSize: "0.75rem" }}
+        style={{ ...ExecutionFormat.MUTED, font: "inherit", fontSize: "0.75rem" }}
         title="Select the step it executed inside"
         onClick={() => onSelect(parent.sequence)}
       >
@@ -141,7 +140,7 @@ function StepDetail({ executionStep, parentStep: parent, historyLevel, execution
     where = (
       <span
         className="text-xs"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         At the top of the flow
       </span>
@@ -162,17 +161,17 @@ function StepDetail({ executionStep, parentStep: parent, historyLevel, execution
           <div
             key={fact.label}
             className="px-2 py-1 border-1 border-round-lg min-w-0"
-            style={INSET}
+            style={ExecutionFormat.INSET}
           >
             <dt
               className="text-xs"
-              style={MUTED}
+              style={ExecutionFormat.MUTED}
             >
               {fact.label}
             </dt>
             <dd
               className="m-0 text-sm white-space-nowrap overflow-hidden text-overflow-ellipsis"
-              style={{ fontFamily: MONO }}
+              style={{ fontFamily: ExecutionFormat.MONO }}
               title={fact.value}
             >
               {fact.value}
@@ -245,9 +244,9 @@ function outcomeOf(executionStep: ExecutionStepDto, isFatal: boolean): Outcome {
     return { text: "Came round", severity: "neutral" };
 
   if (executionStep.outcome === StepOutcomeEnum.FAILURE)
-    return { text: hasBranches(executionStep.flowStepType) ? "Handled" : "Failed", severity: "warning" };
+    return { text: FlowStepCatalog.hasBranches(executionStep.flowStepType) ? "Handled" : "Failed", severity: "warning" };
 
-  if (!isCheckStep(executionStep)) return { text: "Done", severity: "success" };
+  if (!ExecutionStepKind.isCheckStep(executionStep)) return { text: "Done", severity: "success" };
 
   const isSearch =
     executionStep.flowStepType === FlowStepTypeEnum.SEARCH_IMAGE ||
@@ -260,7 +259,7 @@ function whereOf(parent: ExecutionStepDto): string {
   if (parent.flowStepType === FlowStepTypeEnum.LOOP)
     return `${parent.name}, pass ${((parent.loopPass ?? 0) + 1).toLocaleString()}`;
 
-  if (hasBranches(parent.flowStepType))
+  if (FlowStepCatalog.hasBranches(parent.flowStepType))
     return `${parent.outcome === StepOutcomeEnum.SUCCESS ? "Success" : "Failure"} of ${parent.name}`;
 
   return `Inside ${parent.name}`;
@@ -275,7 +274,7 @@ function factsOf(executionStep: ExecutionStepDto): Fact[] {
   const facts: Fact[] = [
     {
       label: "Type",
-      value: getFlowStepCatalogEntry(executionStep.flowStepType)?.label ?? executionStep.flowStepType,
+      value: FlowStepCatalog.getFlowStepCatalogEntry(executionStep.flowStepType)?.label ?? executionStep.flowStepType,
     },
     { label: "Took", value: `${executionStep.durationMilliseconds} ms` },
   ];
@@ -311,13 +310,13 @@ function TextBlock({ label, text }: TextBlockProps) {
     <div className="flex flex-column gap-1">
       <span
         className="text-xs"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         {label}
       </span>
       <div
         className="border-1 border-round-lg p-2 text-sm"
-        style={{ ...INSET, overflowWrap: "anywhere" }}
+        style={{ ...ExecutionFormat.INSET, overflowWrap: "anywhere" }}
       >
         {text}
       </div>
@@ -333,7 +332,7 @@ interface OpenInEditorButtonProps {
 function OpenInEditorButton({ flowStepId }: OpenInEditorButtonProps) {
   const navigate = useNavigate();
   const setStepToReveal = useWorkflowStore((x) => x.setStepToReveal);
-  const { data: flowStep } = useFlowStep(flowStepId ?? null);
+  const { data: flowStep } = FlowStepHooks.useFlowStep(flowStepId ?? null);
 
   const flowId = flowStep?.flowId;
 
@@ -367,8 +366,8 @@ interface SuggestFixButtonProps {
  * and "what else could it be?", and the chat can take those where a single verdict cannot.
  */
 function SuggestFixButton({ executionStep }: SuggestFixButtonProps) {
-  const { data: isConfigured } = useAiStatus();
-  const { askInNewConversation } = useAskAi();
+  const { data: isConfigured } = AiHooks.useAiStatus();
+  const { askInNewConversation } = AiChatHooks.useAskAi();
 
   if (!isConfigured || !executionStep.flowStepId) return null;
 
@@ -407,27 +406,27 @@ interface AccuracyMeterProps {
  * it.
  */
 function AccuracyMeterComponent({ flowStepId, bestTemplateId, bestScore }: AccuracyMeterProps) {
-  const { data: flowStep } = useFlowStep(flowStepId);
+  const { data: flowStep } = FlowStepHooks.useFlowStep(flowStepId);
 
   const template = flowStep?.flowStepTemplates.find((x) => x.id === bestTemplateId);
   if (!template) return null;
 
   const accuracy = template.accuracy;
   const isPass = bestScore >= accuracy;
-  const color = isPass ? DONE_COLOR : HANDLED_COLOR;
+  const color = isPass ? ExecutionFormat.DONE_COLOR : ExecutionFormat.HANDLED_COLOR;
 
   return (
     <div className="flex flex-column gap-2">
       <div className="flex justify-content-between gap-2 text-sm white-space-nowrap">
         <span>
           Match{" "}
-          <span style={{ fontFamily: MONO }}>{bestScore.toFixed(2)}</span>
+          <span style={{ fontFamily: ExecutionFormat.MONO }}>{bestScore.toFixed(2)}</span>
           {template.flowTemplate?.name ? (
-            <span style={MUTED}> · {template.flowTemplate.name}</span>
+            <span style={ExecutionFormat.MUTED}> · {template.flowTemplate.name}</span>
           ) : null}
         </span>
-        <span style={MUTED}>
-          needs <span style={{ fontFamily: MONO }}>{accuracy.toFixed(2)}</span>
+        <span style={ExecutionFormat.MUTED}>
+          needs <span style={{ fontFamily: ExecutionFormat.MONO }}>{accuracy.toFixed(2)}</span>
         </span>
       </div>
 
@@ -482,7 +481,7 @@ interface TemplateImagesProps {
 }
 
 function TemplateImages({ flowStepId }: TemplateImagesProps) {
-  const { data: flowStep } = useFlowStep(flowStepId);
+  const { data: flowStep } = FlowStepHooks.useFlowStep(flowStepId);
 
   const images = flowStep?.flowStepTemplates ?? [];
   if (images.length === 0) return null;
@@ -491,7 +490,7 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
     <div className="flex flex-column gap-1">
       <span
         className="text-xs"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         {images.length === 1 ? "Template image" : "Template images"}
       </span>
@@ -501,7 +500,7 @@ function TemplateImages({ flowStepId }: TemplateImagesProps) {
           <div
             key={image.id}
             className="border-1 border-round-lg p-2 flex flex-column align-items-center gap-1"
-            style={{ ...INSET, width: 96 }}
+            style={{ ...ExecutionFormat.INSET, width: 96 }}
           >
             {image.flowTemplate?.templateImage ? (
               <img
@@ -541,14 +540,14 @@ interface StepScreenshotProps {
 function StepScreenshot({ executionStep, historyLevel, executionStatus, isLive }: StepScreenshotProps) {
   const fileName = executionStep.screenshotFileName;
   const asks = !!fileName || (isLive && executionStep.id > 0);
-  const { data: screenshot } = useExecutionStepScreenshot(asks ? executionStep.id : null);
+  const { data: screenshot } = ExecutionHooks.useExecutionStepScreenshot(asks ? executionStep.id : null);
 
   if (screenshot)
     return (
       <div className="flex flex-column gap-1">
         <span
           className="text-xs"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           Screenshot
         </span>
@@ -563,7 +562,7 @@ function StepScreenshot({ executionStep, historyLevel, executionStatus, isLive }
   return (
     <div
       className="flex gap-2 align-items-start px-3 py-2 border-1 border-round-lg text-xs"
-      style={{ ...MUTED, borderColor: "var(--surface-border)" }}
+      style={{ ...ExecutionFormat.MUTED, borderColor: "var(--surface-border)" }}
     >
       <i
         className="pi pi-image"
@@ -582,7 +581,7 @@ function StepScreenshot({ executionStep, historyLevel, executionStatus, isLive }
 }
 
 function ScreenshotNote({ executionStep, historyLevel, executionStatus, isLive }: StepScreenshotProps) {
-  const { data: settings = [] } = useAppSettings();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
   const limit = settings.find((x) => x.key === AppSettingKeyEnum.EXECUTION_SCREENSHOT_LIMIT)?.value;
 
   // A live row is the broadcast's, which carries no file, until the history has written it.

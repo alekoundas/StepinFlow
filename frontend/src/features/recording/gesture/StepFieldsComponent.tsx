@@ -7,7 +7,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
 import DiscordBotPickerComponent from "@/features/recording/gesture/DiscordBotPickerComponent";
-import { type GestureFields, toScriptName, WAIT_UNITS } from "@/features/recording/gesture/gesture";
+import { Gesture, type GestureFields } from "@/features/recording/gesture/gesture";
 
 const MONOSPACE = { fontFamily: "ui-monospace, Consolas, monospace" };
 
@@ -66,7 +66,7 @@ export default function StepFieldsComponent({ fields, onChange, onNewBot }: Prop
             id="gesture-input"
             value={fields.inputName}
             placeholder="email"
-            onChange={(e) => onChange({ inputName: toScriptName(e.target.value) })}
+            onChange={(e) => onChange({ inputName: Gesture.toScriptName(e.target.value) })}
             style={{ ...MONOSPACE, width: 240 }}
           />
         </FieldComponent>
@@ -177,8 +177,8 @@ function FieldComponent({ id, label, children }: { id: string; label: string; ch
 // The amount in the unit it divides into evenly, largest first: 30 minutes rather than 1800 seconds.
 function WaitFieldsComponent({ waitMilliseconds, onChange }: { waitMilliseconds: number; onChange: (milliseconds: number) => void }) {
   const [unit, setUnit] = useState(() => {
-    const fitting = [...WAIT_UNITS].reverse().find((x) => waitMilliseconds > 0 && waitMilliseconds % x.value === 0);
-    return fitting?.value ?? WAIT_UNITS[0].value;
+    const fitting = [...Gesture.WAIT_UNITS].reverse().find((x) => waitMilliseconds > 0 && waitMilliseconds % x.value === 0);
+    return fitting?.value ?? Gesture.WAIT_UNITS[0].value;
   });
 
   const amount = Math.round(waitMilliseconds / unit);
@@ -200,7 +200,7 @@ function WaitFieldsComponent({ waitMilliseconds, onChange }: { waitMilliseconds:
         <Dropdown
           aria-label="Unit"
           value={unit}
-          options={WAIT_UNITS}
+          options={Gesture.WAIT_UNITS}
           optionLabel="label"
           optionValue="value"
           onChange={(e) => {

@@ -12,11 +12,11 @@ import { setBackendReady } from "../services/backend-status-service.js";
 
 export type InvokeBackend = (action: string, payload: unknown) => Promise<any>;
 
-// A delete waits for its rows to go and for the disk to get their space back, which for a flow
-// executed day and night for weeks is most of a minute.
+// A switch or a pull brings every flow that differs across, which for a big repository is more than
+// 30 seconds, and its dialog stays up until the answer comes.
 const TIMEOUT_MS = 30_000;
-const DELETE_TIMEOUT_MS = 10 * 60_000;
-const DELETE_ACTIONS = new Set(["Flow.delete", "Execution.delete", "Execution.deleteForFlow"]);
+const LONG_TIMEOUT_MS = 10 * 60_000;
+const LONG_ACTIONS = new Set(["Repository.switchBranch", "Repository.pull"]);
 
 interface PendingResolver {
   resolve: (value: any) => void;
@@ -109,7 +109,7 @@ export async function registerBackendRequestHandler(
           pending.delete(correlationId);
           reject(new Error(`[BackendHandler] Timeout for "${action}"`));
         }
-      }, DELETE_ACTIONS.has(action) ? DELETE_TIMEOUT_MS : TIMEOUT_MS);
+      }, LONG_ACTIONS.has(action) ? LONG_TIMEOUT_MS : TIMEOUT_MS);
 
       pending.set(correlationId, { resolve, reject, timeoutId });
     });

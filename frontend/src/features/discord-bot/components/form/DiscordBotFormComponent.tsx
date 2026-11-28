@@ -10,11 +10,7 @@ import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponen
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import {
-  RATE_LIMIT_MAX_SECONDS,
-  RATE_LIMIT_MIN_SECONDS,
-  type DiscordBotDto,
-} from "@/shared/models/database/discord-bot-dto";
+import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import { DiscordBotSchema } from "@/features/discord-bot/components/form/discord-bot.zod";
 import DiscordBotTestButtonComponent from "@/features/discord-bot/components/form/DiscordBotTestButtonComponent";
 
@@ -116,9 +112,9 @@ export default function DiscordBotFormComponent({
             <FormInputNumberComponent
               fieldName="rateLimitSeconds"
               label="Shortest gap between messages (seconds)"
-              min={RATE_LIMIT_MIN_SECONDS}
-              max={RATE_LIMIT_MAX_SECONDS}
-              hintText={`Applies to this bot only. Anything arriving inside the gap is dropped rather than queued, so a Notify step in a retry loop sends once instead of a hundred times. ${RATE_LIMIT_MIN_SECONDS}-${RATE_LIMIT_MAX_SECONDS}.`}
+              min={DiscordBotDto.RATE_LIMIT_MIN_SECONDS}
+              max={DiscordBotDto.RATE_LIMIT_MAX_SECONDS}
+              hintText={`Applies to this bot only. Anything arriving inside the gap is dropped rather than queued, so a Notify step in a retry loop sends once instead of a hundred times. ${DiscordBotDto.RATE_LIMIT_MIN_SECONDS}-${DiscordBotDto.RATE_LIMIT_MAX_SECONDS}.`}
               isRequired={true}
               isDisabled={isDisabled}
             />

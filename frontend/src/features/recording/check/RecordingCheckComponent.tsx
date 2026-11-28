@@ -11,17 +11,17 @@ import { Tag } from "primereact/tag";
 import type { TreeExpandedKeysType } from "primereact/tree";
 
 import ReadOnlyFlowTreeComponent from "@/shared/components/data-tree/ReadOnlyFlowTreeComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowGenerationStageEnum } from "@/shared/enums/backend/flow-generation-stage-enum";
-import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
 import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 import type { ProposedCheckDto } from "@/shared/models/proposed-check-dto";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import ScriptMergeComponent from "@/shared/components/script-view/ScriptMergeComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
-import { RefusedComponent } from "@/features/recording/generate/RecordingGeneratingComponent";
+import { RefusedComponent } from "@/features/recording/generate/RefusedComponent";
+import { ValidationSeverityEnum } from "@/shared/enums/backend/validation-severity-enum";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 // The theme's own variables: PrimeFlex 4's surface and text-color classes read tokens this theme
 // does not define.
@@ -740,7 +740,7 @@ function ChangesComponent({ draft, script }: { draft: string; script: string }) 
 function CheckTreeComponent({ flowId }: { flowId: number }) {
   const { data: treeNodes } = useQuery({
     queryKey: ["flowStep", "treeNodesRecursive", flowId],
-    queryFn: () => backendApiService.FlowStep.getTreeNodesRecursive(flowId),
+    queryFn: () => BackendApiService.FlowStep.getTreeNodesRecursive(flowId),
     enabled: flowId > 0,
   });
 

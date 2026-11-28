@@ -13,12 +13,9 @@ import {
 import LabelComponent from "@/shared/components/LabelComponent";
 import { ChoiceCardComponent } from "@/shared/components/ChoiceCardComponent";
 import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import {
-  stepsSearchingFor,
-  useFlowStepUses,
-  useFlowTemplates,
-} from "@/features/workflow/hooks/use-flow-parts";
+import { BackendApiService } from "@/shared/services/backend-api-service";
+import { FlowPartHooks } from "@/features/workflow/hooks/use-flow-parts";
+import { FlowParts } from "@/features/workflow/flow-parts";
 
 interface Props {
   flowId: number;
@@ -47,8 +44,8 @@ export function FlowTemplateAddDialogComponent({
   const [isReusing, setIsReusing] = useState(false);
   const [pickedId, setPickedId] = useState<number | null>(null);
 
-  const { data: templates } = useFlowTemplates(flowId);
-  const { data: uses } = useFlowStepUses(flowId);
+  const { data: templates } = FlowPartHooks.useFlowTemplates(flowId);
+  const { data: uses } = FlowPartHooks.useFlowStepUses(flowId);
 
   const options = (templates ?? []).filter((x) => !takenIds.includes(x.id));
   const picked = options.find((x) => x.id === pickedId);
@@ -73,10 +70,10 @@ export function FlowTemplateAddDialogComponent({
       isListening = false;
 
       unsubscribe?.();
-      backendApiService.System.inputRecordHotkeyStop().catch(() => {});
+      BackendApiService.System.inputRecordHotkeyStop().catch(() => {});
     };
 
-    unsubscribe = backendApiService.OnBroadcast((event: IpcBroadcastMessage<RecordedInput>) => {
+    unsubscribe = BackendApiService.onBroadcast((event: IpcBroadcastMessage<RecordedInput>) => {
       if (event.type !== BroadcastTypeEnum.HOTKEY_CAPTURE_EVENT) return;
       if (event.payload.type !== RecordedInputTypeEnum.KEY_DOWN || event.payload.keyCode !== KeyCodeEnum.F3) return;
 
@@ -84,7 +81,7 @@ export function FlowTemplateAddDialogComponent({
       captureByKey();
     });
 
-    backendApiService.System.inputRecordHotkeyStart().catch(() => {});
+    BackendApiService.System.inputRecordHotkeyStart().catch(() => {});
 
     return stop;
   }, [isReusing]);
@@ -112,7 +109,7 @@ export function FlowTemplateAddDialogComponent({
   );
 
   const usedByText = (template: FlowTemplateDto) => {
-    const names = stepsSearchingFor(uses, template.name);
+    const names = FlowParts.stepsSearchingFor(uses, template.name);
     if (names.length === 0) return "No step uses it yet";
 
     return `Used by ${names.join(", ")}`;

@@ -6,14 +6,7 @@ import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/exec
 import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 import { ExecutionTally, type ExecutionOverview } from "@/features/execution/execution-overview";
-import {
-  findStep,
-  releaseOldestRows,
-  releaseQuietPasses,
-  type KeptRows,
-  type QuietRun,
-  type ReleasedRows,
-} from "@/features/execution/execution-list";
+import { ExecutionList, type KeptRows, type ReleasedRows, type QuietRun } from "@/features/execution/execution-list";
 
 // The newest rows stay whole, so a pass that just ended opens without asking the history.
 const KEEP_NEWEST_ROWS = 2_000;
@@ -134,8 +127,8 @@ export const useExecutionStore = create<Props>()(
         let foldRows = state.foldRows;
 
         if (kept.executionSteps.length - rowsAtLastRelease >= RELEASE_EVERY_ROWS) {
-          const { kept: afterQuiet, rowsByRun } = releaseQuietPasses(kept, KEEP_NEWEST_ROWS);
-          kept = releaseOldestRows(afterQuiet, MAX_KEPT_ROWS);
+          const { kept: afterQuiet, rowsByRun } = ExecutionList.releaseQuietPasses(kept, KEEP_NEWEST_ROWS);
+          kept = ExecutionList.releaseOldestRows(afterQuiet, MAX_KEPT_ROWS);
           foldRows = keepOpenFoldRows(foldRows, state.openFolds, rowsByRun, kept.quietRuns);
           rowsAtLastRelease = kept.executionSteps.length;
         }
@@ -216,22 +209,6 @@ export const useExecutionStore = create<Props>()(
     },
   })),
 );
-
-/** A row kept, or one read back for an open fold. */
-export function findKeptStep(
-  state: { executionSteps: ExecutionStepDto[]; foldRows: ReadonlyMap<number, ExecutionStepDto[]> },
-  sequence: number,
-): ExecutionStepDto | undefined {
-  const kept = findStep(state.executionSteps, sequence);
-  if (kept) return kept;
-
-  for (const rows of state.foldRows.values()) {
-    const step = findStep(rows, sequence);
-    if (step) return step;
-  }
-
-  return undefined;
-}
 
 // A fold open while its passes are let go of takes their rows with it, rather than reading them back.
 function keepOpenFoldRows(

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowInputDto } from "@/shared/models/database/flow-input-dto";
 
 // Mutation CRUD
@@ -15,17 +15,17 @@ export function useFlowInputMutations() {
     ]);
 
   const createFlowInputMutation = useMutation({
-    mutationFn: (dto: FlowInputDto) => backendApiService.FlowInput.create(dto),
+    mutationFn: (dto: FlowInputDto) => BackendApiService.FlowInput.create(dto),
     onSuccess: invalidate,
   });
 
   const updateFlowInputMutation = useMutation({
-    mutationFn: (dto: FlowInputDto) => backendApiService.FlowInput.update(dto),
+    mutationFn: (dto: FlowInputDto) => BackendApiService.FlowInput.update(dto),
     onSuccess: invalidate,
   });
 
   const deleteFlowInputMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.FlowInput.delete(id),
+    mutationFn: (id: number) => BackendApiService.FlowInput.delete(id),
     onSuccess: invalidate,
   });
 

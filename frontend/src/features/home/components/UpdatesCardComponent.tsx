@@ -2,17 +2,18 @@ import { Button } from "primereact/button";
 import { ProgressBar } from "primereact/progressbar";
 import { Skeleton } from "primereact/skeleton";
 
-import StatusPillComponent, { type StatusPillSeverity } from "@/shared/components/StatusPillComponent";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import { dayAndTime } from "@/shared/utils/day-and-time";
-import { percentOf } from "@/features/ai/ai-format";
+import { DayAndTime } from "@/shared/utils/day-and-time";
+import { AiFormat } from "@/features/ai/ai-format";
 import { downloadedOf } from "@/features/auto-updater/auto-updater-format";
 import { useAutoUpdaterStatus } from "@/features/auto-updater/hooks/use-auto-updater-status";
 import { useIsExecuting } from "@/features/execution/hooks/use-is-executing";
 import HomeCardComponent from "@/features/home/components/HomeCardComponent";
 import StatTileComponent from "@/features/home/components/StatTileComponent";
-import { MUTED } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 import { AutoUpdaterStateEnum, type AutoUpdaterStatus } from "../../../../../electron/shared/types";
+import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 
 const ICON = "arrow-circle-up";
 const TITLE = "Updates";
@@ -20,8 +21,8 @@ const TITLE = "Updates";
 const DOWNLOADING_COLOR = "var(--blue-500)";
 const READY_COLOR = "var(--yellow-500)";
 
-const check = () => void ElectronApiService.autoUpdater.check();
-const restart = () => void ElectronApiService.autoUpdater.restart();
+const check = () => void ElectronApiService.AutoUpdater.check();
+const restart = () => void ElectronApiService.AutoUpdater.restart();
 
 const pillOf = (status: AutoUpdaterStatus): { text: string; severity: StatusPillSeverity; pulse: boolean } => {
   switch (status.state) {
@@ -36,7 +37,7 @@ const pillOf = (status: AutoUpdaterStatus): { text: string; severity: StatusPill
     default:
       // A check going on leaves it saying when the last one got an answer: the button shows this one.
       if (!status.lastCheckedAt) return { text: "Not checked yet", severity: "neutral", pulse: false };
-      return { text: `Last check ${dayAndTime(status.lastCheckedAt)}`, severity: "success", pulse: false };
+      return { text: `Last check ${DayAndTime.dayAndTime(status.lastCheckedAt)}`, severity: "success", pulse: false };
   }
 };
 
@@ -121,7 +122,7 @@ export default function UpdatesCardComponent() {
       {isDownloading && (
         <div className="flex flex-column gap-1">
           <ProgressBar
-            value={percentOf(status.transferredBytes, status.totalBytes)}
+            value={AiFormat.percentOf(status.transferredBytes, status.totalBytes)}
             mode={isSizeKnown ? "determinate" : "indeterminate"}
             showValue={false}
             style={{ height: 6 }}
@@ -129,7 +130,7 @@ export default function UpdatesCardComponent() {
           {isSizeKnown && (
             <span
               className="text-xs"
-              style={MUTED}
+              style={HomeFormat.MUTED}
             >
               {downloadedOf(status)}
             </span>
@@ -140,7 +141,7 @@ export default function UpdatesCardComponent() {
       <div className="flex align-items-center justify-content-between flex-wrap gap-2">
         <span
           className="text-sm"
-          style={MUTED}
+          style={HomeFormat.MUTED}
         >
           {noteOf(status, isExecuting)}
         </span>
@@ -153,7 +154,7 @@ export default function UpdatesCardComponent() {
               size="small"
               severity="secondary"
               text
-              onClick={() => void ElectronApiService.files.showInFolder(status.logPath)}
+              onClick={() => void ElectronApiService.Files.showInFolder(status.logPath)}
             />
           )}
 

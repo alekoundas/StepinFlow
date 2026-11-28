@@ -4,8 +4,8 @@ import { classNames } from "primereact/utils";
 import IconComponent from "@/shared/components/IconComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
-import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
-import { hitsOf, nearMissOf, refusedOf } from "@/features/flow-step/components/forms/search-image/image-search-test";
+import { ImageSearchTest } from "@/features/flow-step/components/forms/search-image/image-search-test";
+import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-image-dto";
 
 interface Props {
   name: string;
@@ -30,9 +30,9 @@ export function FlowStepSearchImageTestRowComponent({
   isSelected,
   onSelect,
 }: Props) {
-  const hits = hitsOf(image);
-  const nearMiss = nearMissOf(image);
-  const refused = refusedOf(image);
+  const hits = ImageSearchTest.hitsOf(image);
+  const nearMiss = ImageSearchTest.nearMissOf(image);
+  const refused = ImageSearchTest.refusedOf(image);
   const lowestHit = hits.length > 0 ? Math.min(...hits.map((x) => x.score)) : null;
   const isMoved = accuracy !== tested.accuracy;
 

@@ -5,17 +5,14 @@ import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import {
-  useOcrLanguageMutations,
-  useOcrLanguages,
-} from "@/features/settings/hooks/use-ocr-languages";
+import { OcrLanguageHooks } from "@/features/settings/hooks/use-ocr-languages";
 
 export default function OcrLanguagesPanelComponent() {
   const [downloadingTag, setDownloadingTag] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: languages = [], isLoading } = useOcrLanguages();
-  const { downloadLanguageMutation } = useOcrLanguageMutations();
+  const { data: languages = [], isLoading } = OcrLanguageHooks.useOcrLanguages();
+  const { downloadLanguageMutation } = OcrLanguageHooks.useOcrLanguageMutations();
 
   const handleDownload = async (tag: string) => {
     setError(null);

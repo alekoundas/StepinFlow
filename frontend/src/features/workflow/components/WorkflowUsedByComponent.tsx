@@ -2,7 +2,7 @@ import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { flowStepAccent, getFlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
 
 interface Props {
@@ -34,12 +34,12 @@ export function WorkflowUsedByComponent({ steps, emptyText }: Props) {
               key={step.flowStepId}
               type="button"
               label={step.name}
-              icon={`pi pi-${getFlowStepCatalogEntry(step.flowStepType)?.iconName ?? "circle"}`}
+              icon={`pi pi-${FlowStepCatalog.getFlowStepCatalogEntry(step.flowStepType)?.iconName ?? "circle"}`}
               size="small"
               outlined
               severity="secondary"
               onClick={() => setStepToReveal(step.flowStepId)}
-              pt={{ icon: { style: { color: flowStepAccent(step.flowStepType) } } }}
+              pt={{ icon: { style: { color: FlowStepCatalog.flowStepAccent(step.flowStepType) } } }}
             />
           ))}
         </div>

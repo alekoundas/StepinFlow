@@ -7,8 +7,8 @@ import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
-import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-kind-enum";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
 
 interface Props {
@@ -29,7 +29,7 @@ export default function AppSettingsPanelComponent({
   description,
   keyPrefix,
 }: Props) {
-  const { data: all = [], isLoading } = useAppSettings();
+  const { data: all = [], isLoading } = AppSettingHooks.useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
 
   // A hotkey or a gesture is captured from the hook, which HotkeysPanelComponent does.

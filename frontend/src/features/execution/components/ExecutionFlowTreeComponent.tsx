@@ -4,20 +4,16 @@ import type { TreeExpandedKeysType } from "primereact/tree";
 import { classNames } from "primereact/utils";
 
 import ReadOnlyFlowTreeComponent from "@/shared/components/data-tree/ReadOnlyFlowTreeComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import {
-  flowStepAccent,
-  getFlowStepCatalogEntry,
-  hasBranches,
-  tint,
-} from "@/shared/models/flow-step-catalog";
-import { FOUND_COLOR, HANDLED_COLOR, MONO, MUTED } from "@/features/execution/execution-format";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
-import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import { TreeNodeKeys } from "@/shared/utils/tree-node-keys";
 import type { StepCounts } from "@/features/execution/execution-overview";
-import { keysUnderDisabled, type TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 interface Props {
   flowId: number;
@@ -39,13 +35,13 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
   const runState = useExecutionStore((x) => x.runState);
   const toggleBreakpoint = useExecutionStore((x) => x.toggleBreakpoint);
 
-  const { setBreakpointsMutation } = useExecutionMutations();
+  const { setBreakpointsMutation } = ExecutionHooks.useExecutionMutations();
 
   // The whole flow at once, not a level at a time: a step you have not expanded to is a step you
   // could not put a breakpoint on.
   const { data: treeNodes } = useQuery({
     queryKey: ["flowStep", "treeNodesRecursive", flowId],
-    queryFn: () => backendApiService.FlowStep.getTreeNodesRecursive(flowId),
+    queryFn: () => BackendApiService.FlowStep.getTreeNodesRecursive(flowId),
     enabled: flowId > 0,
   });
 
@@ -70,7 +66,7 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
     return keys;
   }, [tree, collapsedKeys]);
 
-  const underDisabled = useMemo(() => keysUnderDisabled(treeNodes ?? []), [treeNodes]);
+  const underDisabled = useMemo(() => TreeNodeKeys.keysUnderDisabled(treeNodes ?? []), [treeNodes]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const currentRowRef = useRef<HTMLDivElement>(null);
@@ -97,7 +93,7 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
     if (!isPointerOverRef.current) centerIfOutOfView(currentRowRef.current, scrollerRef.current);
   }, [currentFlowStepId, expandedKeys]);
 
-  const ringColor = runState === RunStateEnum.PAUSED ? HANDLED_COLOR : FOUND_COLOR;
+  const ringColor = runState === RunStateEnum.PAUSED ? ExecutionFormat.HANDLED_COLOR : ExecutionFormat.FOUND_COLOR;
 
   return (
     // Its own scroll rather than the panel's, so the pointer on the scrollbar counts as over it.
@@ -129,8 +125,8 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
               })}
               style={{
                 height: 28,
-                background: isCurrent ? tint(ringColor, 12) : undefined,
-                boxShadow: isCurrent ? `inset 0 0 0 1px ${tint(ringColor, 55)}` : undefined,
+                background: isCurrent ? FlowStepCatalog.tint(ringColor, 12) : undefined,
+                boxShadow: isCurrent ? `inset 0 0 0 1px ${FlowStepCatalog.tint(ringColor, 55)}` : undefined,
               }}
             >
               {/* The engine never parks on a branch, so it has no gutter. */}
@@ -146,7 +142,7 @@ function ExecutionFlowTreeComponent({ flowId, countsByFlowStepId }: Props) {
               {isBranch ? (
                 <span
                   className="text-xs font-semibold"
-                  style={{ color: flowStepAccent(node.flowStepType) }}
+                  style={{ color: FlowStepCatalog.flowStepAccent(node.flowStepType) }}
                 >
                   {node.name}
                 </span>
@@ -229,15 +225,15 @@ interface StepGlyphProps {
 }
 
 function StepGlyph({ flowStepType }: StepGlyphProps) {
-  const accent = flowStepAccent(flowStepType);
+  const accent = FlowStepCatalog.flowStepAccent(flowStepType);
 
   return (
     <span
       className="flex align-items-center justify-content-center border-round-sm"
-      style={{ width: 20, height: 20, flex: "none", color: accent, background: tint(accent, 18) }}
+      style={{ width: 20, height: 20, flex: "none", color: accent, background: FlowStepCatalog.tint(accent, 18) }}
     >
       <i
-        className={`pi pi-${getFlowStepCatalogEntry(flowStepType)?.iconName ?? "circle"}`}
+        className={`pi pi-${FlowStepCatalog.getFlowStepCatalogEntry(flowStepType)?.iconName ?? "circle"}`}
         style={{ fontSize: "0.65rem" }}
       />
     </span>
@@ -257,7 +253,7 @@ function StepCount({ node, isBranch, countsByFlowStepId }: StepCountProps) {
 
   let text = `×${counts.executed.toLocaleString()}`;
   let title = `Executed ${counts.executed.toLocaleString()} times`;
-  let color = MUTED.color;
+  let color = ExecutionFormat.MUTED.color;
 
   if (isBranch) {
     const taken = node.flowStepType === FlowStepTypeEnum.SUCCESS ? counts.found : counts.failed;
@@ -265,16 +261,16 @@ function StepCount({ node, isBranch, countsByFlowStepId }: StepCountProps) {
 
     text = `×${taken.toLocaleString()}`;
     title = `Taken ${taken.toLocaleString()} times`;
-  } else if (hasBranches(node.flowStepType) && counts.found > 0) {
+  } else if (FlowStepCatalog.hasBranches(node.flowStepType) && counts.found > 0) {
     text = `found ${counts.found.toLocaleString()}`;
     title += `, found ${counts.found.toLocaleString()}`;
-    color = FOUND_COLOR;
+    color = ExecutionFormat.FOUND_COLOR;
   }
 
   return (
     <span
       className="ml-auto pl-2 text-xs white-space-nowrap"
-      style={{ fontFamily: MONO, color }}
+      style={{ fontFamily: ExecutionFormat.MONO, color }}
       title={title}
     >
       {text}

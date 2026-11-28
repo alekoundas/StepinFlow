@@ -1,4 +1,4 @@
-import { MONO, UNCOMMITTED_COLOR } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 
 interface Props {
   commitSha?: string | null;
@@ -15,7 +15,7 @@ export default function ExecutedVersionComponent({ commitSha, hasUncommittedChan
         <span
           title={`Executed at commit ${commitSha}`}
           className="text-color-secondary"
-          style={{ fontFamily: MONO }}
+          style={{ fontFamily: RepositoryFormat.MONO }}
         >
           {commitSha.slice(0, 7)}
         </span>
@@ -25,11 +25,11 @@ export default function ExecutedVersionComponent({ commitSha, hasUncommittedChan
         <span
           title="The flow, or a sub-flow it calls, had changes not committed yet. The script it executed is kept with the run."
           className="inline-flex align-items-center gap-1"
-          style={{ color: UNCOMMITTED_COLOR }}
+          style={{ color: RepositoryFormat.UNCOMMITTED_COLOR }}
         >
           <span
             className="border-circle"
-            style={{ width: 7, height: 7, background: UNCOMMITTED_COLOR }}
+            style={{ width: 7, height: 7, background: RepositoryFormat.UNCOMMITTED_COLOR }}
           />
           uncommitted
         </span>

@@ -7,13 +7,13 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { SearchTextTestResultDto } from "@/shared/models/database/search-text-test-result-dto";
 import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
 import FlowStepSearchTextFormFieldsComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextFormFieldsComponent";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import FlowStepSearchTextTestPanelComponent from "@/features/flow-step/components/forms/search-text/FlowStepSearchTextTestPanelComponent";
-import { DEFAULT_OCR_READER } from "@/features/settings/hooks/use-ocr-languages";
+import { OcrLanguageHooks } from "@/features/settings/hooks/use-ocr-languages";
 
 interface Props {
   formMode: FormMode;
@@ -34,7 +34,7 @@ export default function FlowStepSearchTextFormComponent({
   const form = useForm<z.infer<typeof FlowStepSearchTextSchema>>({
     resolver: zodResolver(FlowStepSearchTextSchema),
     mode: "onChange",
-    defaultValues: { ...defaultValues, ocrLanguage: defaultValues.ocrLanguage || DEFAULT_OCR_READER } as never,
+    defaultValues: { ...defaultValues, ocrLanguage: defaultValues.ocrLanguage || OcrLanguageHooks.DEFAULT_OCR_READER } as never,
   });
 
   const {
@@ -56,7 +56,7 @@ export default function FlowStepSearchTextFormComponent({
     setIsTesting(true);
     try {
       setTestResult(
-        await backendApiService.FlowStep.testSearchText(buildDto(form.getValues())),
+        await BackendApiService.FlowStep.testSearchText(buildDto(form.getValues())),
       );
     } catch (err) {
       console.error(err);

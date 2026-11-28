@@ -4,7 +4,8 @@
  */
 
 import { Button } from "primereact/button";
-import type { Point, Size } from "@/windows/image-editor/types";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Size } from "@/windows/image-editor/types/size";
 
 const SEPARATOR_STYLE: React.CSSProperties = {
   width: 1,

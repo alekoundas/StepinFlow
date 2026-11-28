@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "primereact/skeleton";
 
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
-import { chipStyle } from "@/features/execution/execution-format";
-import { useFlowsWithIssues } from "@/features/flow/hooks/use-flow-health";
-import { plural } from "@/features/repository/repository-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { FlowHealthHooks } from "@/features/flow/hooks/use-flow-health";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 import HomeCardComponent from "@/features/home/components/HomeCardComponent";
-import { MUTED, iconTile } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 const ERROR_COLOR = "var(--red-400)";
 const WARNING_COLOR = "var(--yellow-500)";
@@ -15,16 +15,16 @@ const CLEAR_COLOR = "var(--green-400)";
 
 /** Every flow validation has something to say about. Clicking one opens it, where the messages are. */
 export default function NeedsAttentionCardComponent() {
-  const { flows, isLoading } = useFlowsWithIssues();
+  const { flows, isLoading } = FlowHealthHooks.useFlowsWithIssues();
 
   let action = null;
   if (flows.length > 0)
     action = (
       <span
         className="text-sm white-space-nowrap"
-        style={MUTED}
+        style={HomeFormat.MUTED}
       >
-        {plural(flows.length, "flow")}
+        {RepositoryFormat.plural(flows.length, "flow")}
       </span>
     );
 
@@ -80,7 +80,7 @@ function IssueRowComponent({ flow }: { flow: FlowHealthDto }) {
     >
       <i
         className={`pi pi-${flow.isSubFlow ? "clone" : "sitemap"} text-sm flex-none`}
-        style={MUTED}
+        style={HomeFormat.MUTED}
         aria-hidden="true"
       />
       <span
@@ -90,12 +90,12 @@ function IssueRowComponent({ flow }: { flow: FlowHealthDto }) {
         {flow.flowName}
       </span>
 
-      {flow.errorCount > 0 && <span style={chipStyle(ERROR_COLOR)}>{plural(flow.errorCount, "error")}</span>}
-      {flow.warningCount > 0 && <span style={chipStyle(WARNING_COLOR)}>{plural(flow.warningCount, "warning")}</span>}
+      {flow.errorCount > 0 && <span style={ExecutionFormat.chipStyle(ERROR_COLOR)}>{RepositoryFormat.plural(flow.errorCount, "error")}</span>}
+      {flow.warningCount > 0 && <span style={ExecutionFormat.chipStyle(WARNING_COLOR)}>{RepositoryFormat.plural(flow.warningCount, "warning")}</span>}
 
       <i
         className="pi pi-angle-right text-sm flex-none"
-        style={MUTED}
+        style={HomeFormat.MUTED}
         aria-hidden="true"
       />
     </button>
@@ -107,7 +107,7 @@ function AllClearComponent() {
     <div className="flex flex-column align-items-center justify-content-center gap-2 flex-1 py-5 text-center">
       <span
         className="flex align-items-center justify-content-center border-circle"
-        style={{ width: 44, height: 44, ...iconTile(CLEAR_COLOR) }}
+        style={{ width: 44, height: 44, ...HomeFormat.iconTile(CLEAR_COLOR) }}
       >
         <i
           className="pi pi-check"
@@ -117,7 +117,7 @@ function AllClearComponent() {
       <span className="font-semibold">No issues in any flow</span>
       <span
         className="text-sm"
-        style={MUTED}
+        style={HomeFormat.MUTED}
       >
         A flow with an error or a warning shows up here.
       </span>

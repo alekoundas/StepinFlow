@@ -11,11 +11,12 @@ import { Tag } from "primereact/tag";
 import PageComponent from "@/shared/components/PageComponent";
 import ScriptMergeComponent from "@/shared/components/script-view/ScriptMergeComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import type { FlowScriptFileDto } from "@/shared/models/flow-script-export-dtos";
-import type { FlowScriptErrorDto, FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
+import type { FlowScriptImportResultDto } from "@/shared/models/flow-script-import-result-dto";
 import type { FlowScriptPreviewDto } from "@/shared/models/flow-script-preview-dto";
+import type { FlowScriptFileDto } from "@/shared/models/flow-script-export/flow-script-file-dto";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 // The theme's own variables: PrimeFlex 4's surface and text-color classes read tokens this theme
 // does not define.
@@ -54,7 +55,7 @@ export default function ImportFlowPage() {
 
   const { data: exportFolder } = useQuery({
     queryKey: ["flowScript", "exportFolder"],
-    queryFn: () => backendApiService.FlowScript.getExportFolder(),
+    queryFn: () => BackendApiService.FlowScript.getExportFolder(),
   });
 
   const {
@@ -63,7 +64,7 @@ export default function ImportFlowPage() {
     error: readError,
   } = useQuery({
     queryKey: ["flowScript", "preview", picked?.path, picked?.at],
-    queryFn: () => backendApiService.FlowScript.preview(picked!.path),
+    queryFn: () => BackendApiService.FlowScript.preview(picked!.path),
     enabled: picked !== null,
     staleTime: 0,
   });
@@ -75,7 +76,7 @@ export default function ImportFlowPage() {
   };
 
   const choose = async () => {
-    const path = await ElectronApiService.files.chooseScript(exportFolder?.folderPath);
+    const path = await ElectronApiService.Files.chooseScript(exportFolder?.folderPath);
     if (path) pick(path);
   };
 
@@ -85,7 +86,7 @@ export default function ImportFlowPage() {
     const file = event.dataTransfer.files[0];
     if (!file) return;
 
-    const path = ElectronApiService.files.pathOf(file);
+    const path = ElectronApiService.Files.pathOf(file);
     if (!path.toLowerCase().endsWith(".sflw")) {
       setError("Drop a .sflw file exported from StepinFlow.");
       return;
@@ -101,7 +102,7 @@ export default function ImportFlowPage() {
     setError(null);
 
     try {
-      const result = await backendApiService.FlowScript.import(picked.path);
+      const result = await BackendApiService.FlowScript.import(picked.path);
       if (!result.isSuccess) {
         setError(`Nothing was imported. ${linesOf(result.errors)}`);
         return;

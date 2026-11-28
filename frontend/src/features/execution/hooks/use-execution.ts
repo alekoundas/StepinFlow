@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { ExecutionStartDto } from "@/shared/models/execution-start-dto";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
@@ -8,7 +8,7 @@ import type { ExecutionStepDto } from "@/shared/models/database/execution-step-d
 // As GetExecutionFeedHandler's: a page shorter than this is the last one.
 const FEED_PAGE_SIZE = 50;
 
-export const executionKeys = {
+const executionKeys = {
   detail: (id: number) => ["execution", "detail", id] as const,
   list: (flowId: number) => ["execution", "list", flowId] as const,
   state: () => ["execution", "state"] as const,
@@ -25,19 +25,19 @@ export const executionKeys = {
 } as const;
 
 /** Every flow with the shape of its run history, for the executions list. */
-export function useFlowExecutionSummaries() {
+function useFlowExecutionSummaries() {
   return useQuery({
     queryKey: executionKeys.flowSummaries(),
-    queryFn: () => backendApiService.Execution.getFlowSummaries(),
+    queryFn: () => BackendApiService.Execution.getFlowSummaries(),
     staleTime: 0,
   });
 }
 
 /** Every flow's executions, or one flow's, newest first, a page at a time. */
-export function useExecutionFeed(flowId: number | null, statuses: ExecutionStatusEnum[]) {
+function useExecutionFeed(flowId: number | null, statuses: ExecutionStatusEnum[]) {
   return useInfiniteQuery({
     queryKey: executionKeys.feed(flowId, statuses),
-    queryFn: ({ pageParam }) => backendApiService.Execution.getFeed({ flowId, beforeId: pageParam, statuses }),
+    queryFn: ({ pageParam }) => BackendApiService.Execution.getFeed({ flowId, beforeId: pageParam, statuses }),
     initialPageParam: null as number | null,
     getNextPageParam: (page) => (page.length < FEED_PAGE_SIZE ? undefined : page[page.length - 1].id),
     staleTime: 0,
@@ -45,40 +45,40 @@ export function useExecutionFeed(flowId: number | null, statuses: ExecutionStatu
 }
 
 /** How executions ended, counted: every flow's or one flow's, over every day or the last few. */
-export function useExecutionStats(flowId: number | null, days: number | null) {
+function useExecutionStats(flowId: number | null, days: number | null) {
   return useQuery({
     queryKey: executionKeys.stats(flowId, days),
-    queryFn: () => backendApiService.Execution.getStats({ flowId, days }),
+    queryFn: () => BackendApiService.Execution.getStats({ flowId, days }),
     staleTime: 0,
   });
 }
 
 /** The engine's state asked again every second while it executes, for a count of steps that keeps moving. */
-export function useLiveExecutionState(isExecuting: boolean) {
+function useLiveExecutionState(isExecuting: boolean) {
   return useQuery({
     queryKey: executionKeys.liveState(),
-    queryFn: () => backendApiService.Execution.getState(),
+    queryFn: () => BackendApiService.Execution.getState(),
     enabled: isExecuting,
     refetchInterval: isExecuting ? 1000 : false,
   });
 }
 
 /** One past run and every step of it. */
-export function useExecution(id: number | null) {
+function useExecution(id: number | null) {
   return useQuery({
     queryKey: id ? executionKeys.detail(id) : ["execution", "detail", "disabled"],
-    queryFn: () => backendApiService.Execution.get(id!),
+    queryFn: () => BackendApiService.Execution.get(id!),
     enabled: !!id,
   });
 }
 
 /** One screenshot a run left on disk, base64. Null when it is not there any more. */
-export function useExecutionStepScreenshot(executionStepId: number | null) {
+function useExecutionStepScreenshot(executionStepId: number | null) {
   return useQuery({
     queryKey: executionStepId
       ? executionKeys.stepScreenshot(executionStepId)
       : ["execution", "stepScreenshot", "disabled"],
-    queryFn: () => backendApiService.Execution.getStepScreenshot(executionStepId!),
+    queryFn: () => BackendApiService.Execution.getStepScreenshot(executionStepId!),
     enabled: !!executionStepId,
   });
 }
@@ -88,7 +88,7 @@ export function useExecutionStepScreenshot(executionStepId: number | null) {
  * exit code or stderr. Null until the step is written, which for a failure is straight away and for
  * the rest within a batch; asked again once the execution ends, when everything is.
  */
-export function useSavedExecutionStep(
+function useSavedExecutionStep(
   executionStep: ExecutionStepDto | undefined,
   isLive: boolean,
   isHistoryKept: boolean,
@@ -100,7 +100,7 @@ export function useSavedExecutionStep(
       ? executionKeys.savedStep(executionStep.executionId, executionStep.sequence, isLive)
       : ["execution", "savedStep", "disabled"],
     queryFn: async () => {
-      const steps = await backendApiService.Execution.getSteps({
+      const steps = await BackendApiService.Execution.getSteps({
         executionId: executionStep!.executionId,
         firstSequence: executionStep!.sequence,
         lastSequence: executionStep!.sequence,
@@ -113,10 +113,10 @@ export function useSavedExecutionStep(
 }
 
 /** Past runs of one flow, newest first. */
-export function useExecutionList(flowId: number | null) {
+function useExecutionList(flowId: number | null) {
   return useQuery({
     queryKey: flowId ? executionKeys.list(flowId) : ["execution", "list", "disabled"],
-    queryFn: () => backendApiService.Execution.getList(flowId!),
+    queryFn: () => BackendApiService.Execution.getList(flowId!),
     enabled: !!flowId,
   });
 }
@@ -125,20 +125,20 @@ export function useExecutionList(flowId: number | null) {
  * What the engine is doing. Read once on mount - after that the broadcast says what changed, so
  * this never polls.
  */
-export function useExecutionState() {
+function useExecutionState() {
   return useQuery({
     queryKey: executionKeys.state(),
-    queryFn: () => backendApiService.Execution.getState(),
+    queryFn: () => BackendApiService.Execution.getState(),
     staleTime: 0,
   });
 }
 
 // Mutation CRUD
-export function useExecutionMutations() {
+function useExecutionMutations() {
   const queryClient = useQueryClient();
 
   const startExecutionMutation = useMutation({
-    mutationFn: (dto: ExecutionStartDto) => backendApiService.Execution.start(dto),
+    mutationFn: (dto: ExecutionStartDto) => BackendApiService.Execution.start(dto),
     onSuccess: (_, dto) => {
       queryClient.invalidateQueries({ queryKey: executionKeys.list(dto.flowId) });
       queryClient.invalidateQueries({ queryKey: executionKeys.state() });
@@ -147,40 +147,40 @@ export function useExecutionMutations() {
 
   // The engine's own state settles it, if the run had already ended and nothing will say so.
   const stopExecutionMutation = useMutation({
-    mutationFn: () => backendApiService.Execution.stop(),
+    mutationFn: () => BackendApiService.Execution.stop(),
     onSettled: () => queryClient.invalidateQueries({ queryKey: executionKeys.state() }),
   });
 
   const pauseExecutionMutation = useMutation({
-    mutationFn: () => backendApiService.Execution.pause(),
+    mutationFn: () => BackendApiService.Execution.pause(),
   });
 
   const continueExecutionMutation = useMutation({
-    mutationFn: () => backendApiService.Execution.continue(),
+    mutationFn: () => BackendApiService.Execution.continue(),
   });
 
   const stepIntoExecutionMutation = useMutation({
-    mutationFn: () => backendApiService.Execution.stepInto(),
+    mutationFn: () => BackendApiService.Execution.stepInto(),
   });
 
   const stepOverExecutionMutation = useMutation({
-    mutationFn: () => backendApiService.Execution.stepOver(),
+    mutationFn: () => BackendApiService.Execution.stepOver(),
   });
 
   const setBreakpointsMutation = useMutation({
     mutationFn: (flowStepIds: number[]) =>
-      backendApiService.Execution.setBreakpoints(flowStepIds),
+      BackendApiService.Execution.setBreakpoints(flowStepIds),
   });
 
   // Every list, count and summary of executions is out of date after a delete. Awaited, so the
   // dialog closes on a page that no longer shows what went.
   const deleteExecutionMutation = useMutation({
-    mutationFn: (executionId: number) => backendApiService.Execution.delete(executionId),
+    mutationFn: (executionId: number) => BackendApiService.Execution.delete(executionId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execution"] }),
   });
 
   const deleteFlowExecutionsMutation = useMutation({
-    mutationFn: (flowId: number) => backendApiService.Execution.deleteForFlow(flowId),
+    mutationFn: (flowId: number) => BackendApiService.Execution.deleteForFlow(flowId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["execution"] }),
   });
 
@@ -196,3 +196,17 @@ export function useExecutionMutations() {
     deleteFlowExecutionsMutation,
   };
 }
+
+export const ExecutionHooks = {
+  keys: executionKeys,
+  useFlowExecutionSummaries,
+  useExecutionFeed,
+  useExecutionStats,
+  useLiveExecutionState,
+  useExecution,
+  useExecutionStepScreenshot,
+  useSavedExecutionStep,
+  useExecutionList,
+  useExecutionState,
+  useExecutionMutations,
+};

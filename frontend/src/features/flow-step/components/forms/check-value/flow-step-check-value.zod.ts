@@ -1,11 +1,6 @@
 import { z } from "zod";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import {
-  isLength,
-  isLengthValue,
-  needsSecondValue,
-  needsValue,
-} from "@/features/flow-step/components/forms/shared/condition-types";
+import { ConditionTypes } from "@/features/flow-step/components/forms/shared/condition-types";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepCheckValueSchema = z
@@ -35,13 +30,13 @@ export const FlowStepCheckValueSchema = z
       });
     }
 
-    if (needsValue(data.conditionType) && data.conditionText.trim().length === 0) {
+    if (ConditionTypes.needsValue(data.conditionType) && data.conditionText.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
         message: "Type what to check the result against",
         path: ["conditionText"],
       });
-    } else if (isLength(data.conditionType) && !isLengthValue(data.conditionText)) {
+    } else if (ConditionTypes.isLength(data.conditionType) && !ConditionTypes.isLengthValue(data.conditionText)) {
       ctx.addIssue({
         code: "custom",
         message: "Type a whole number of characters",
@@ -49,7 +44,7 @@ export const FlowStepCheckValueSchema = z
       });
     }
 
-    if (needsSecondValue(data.conditionType) && data.conditionTextEnd.trim().length === 0) {
+    if (ConditionTypes.needsSecondValue(data.conditionType) && data.conditionTextEnd.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
         message: "A range needs both ends",

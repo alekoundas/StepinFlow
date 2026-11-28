@@ -8,7 +8,7 @@ import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
-import { executionKeys } from "@/features/execution/hooks/use-execution";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import type { ExecutionEventDto } from "@/shared/models/execution-event-dto";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
 
@@ -72,8 +72,8 @@ export function useExecutionEvents(flowId: number) {
 
     // The run is only in the history list once it has ended.
     if (endedExecutionId !== null) {
-      queryClient.invalidateQueries({ queryKey: executionKeys.list(flowId) });
-      queryClient.invalidateQueries({ queryKey: executionKeys.flowSummaries() });
+      queryClient.invalidateQueries({ queryKey: ExecutionHooks.keys.list(flowId) });
+      queryClient.invalidateQueries({ queryKey: ExecutionHooks.keys.flowSummaries() });
     }
   };
 
@@ -96,7 +96,7 @@ export function useExecutionEvents(flowId: number) {
       apply(events);
     };
 
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.EXECUTION_EVENT) return;
 
       pending.push(message.payload as ExecutionEventDto);

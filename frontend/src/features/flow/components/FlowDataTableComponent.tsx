@@ -9,17 +9,14 @@ import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
-import {
-  executionStatusSeverity,
-  executionStatusText,
-} from "@/shared/utils/execution-status";
-import { dayAndTime, daysAgo, shortDate } from "@/shared/utils/day-and-time";
+import { ExecutionStatus } from "@/shared/utils/execution-status";
+import { DayAndTime } from "@/shared/utils/day-and-time";
 import FlowHealthBadgeComponent from "@/features/flow/components/FlowHealthBadgeComponent";
 import { useDeleteFlow } from "@/features/flow/hooks/use-delete-flow";
-import { useFlowHealth } from "@/features/flow/hooks/use-flow-health";
-import { useFlowExecutionSummaries } from "@/features/execution/hooks/use-execution";
+import { FlowHealthHooks } from "@/features/flow/hooks/use-flow-health";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import UncommittedBadgeComponent from "@/features/repository/components/UncommittedBadgeComponent";
-import { MONO } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -42,8 +39,8 @@ export function FlowDataTableComponent({
 }: Props) {
   const navigate = useNavigate();
   const deleteFlow = useDeleteFlow();
-  const health = useFlowHealth();
-  const { data: summaries } = useFlowExecutionSummaries();
+  const health = FlowHealthHooks.useFlowHealth();
+  const { data: summaries } = ExecutionHooks.useFlowExecutionSummaries();
 
   // Undefined until they arrive, so a row does not say "Never executed" for a moment first.
   const executions = summaries
@@ -100,7 +97,7 @@ export function FlowDataTableComponent({
           header="Steps"
           align="right"
           body={(row: FlowDto) => (
-            <span style={{ ...MUTED, fontFamily: MONO }}>{row.stepCount}</span>
+            <span style={{ ...MUTED, fontFamily: RepositoryFormat.MONO }}>{row.stepCount}</span>
           )}
         />
         <Column
@@ -191,12 +188,12 @@ function LastExecutionComponent({ flow, summary }: LastExecutionProps) {
   if (summary?.lastStatus && summary.lastRunOn) {
     pill = (
       <StatusPillComponent
-        text={executionStatusText(summary.lastStatus)}
-        severity={executionStatusSeverity(summary.lastStatus)}
+        text={ExecutionStatus.executionStatusText(summary.lastStatus)}
+        severity={ExecutionStatus.executionStatusSeverity(summary.lastStatus)}
         pulse={summary.lastStatus === ExecutionStatusEnum.RUNNING}
       />
     );
-    when = dayAndTime(summary.lastRunOn);
+    when = DayAndTime.dayAndTime(summary.lastRunOn);
   }
 
   return (
@@ -220,11 +217,11 @@ const editedWhen = (value: string | null | undefined): string => {
   if (!value) return "";
 
   const date = new Date(value);
-  const days = daysAgo(date);
+  const days = DayAndTime.daysAgo(date);
 
   if (days === 0) return "today";
   if (days === 1) return "yesterday";
   if (days < 30) return `${days} days ago`;
 
-  return shortDate(date);
+  return DayAndTime.shortDate(date);
 };

@@ -2,8 +2,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import PageComponent from "@/shared/components/PageComponent";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
-import { MUTED } from "@/features/execution/execution-format";
-import { useExecutionStats, useFlowExecutionSummaries } from "@/features/execution/hooks/use-execution";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import { useDeleteExecutions } from "@/features/execution/hooks/use-delete-executions";
 import { useLiveExecution } from "@/features/execution/hooks/use-live-execution";
 import ExecutionFeedComponent from "@/features/execution/components/executions/ExecutionFeedComponent";
@@ -21,8 +21,8 @@ export default function ExecutionsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: summaries } = useFlowExecutionSummaries();
-  const { data: allStats } = useExecutionStats(null, null);
+  const { data: summaries } = ExecutionHooks.useFlowExecutionSummaries();
+  const { data: allStats } = ExecutionHooks.useExecutionStats(null, null);
   const live = useLiveExecution();
   const { deleteOne, deleteAll } = useDeleteExecutions();
 
@@ -63,7 +63,7 @@ export default function ExecutionsPage() {
         </h1>
         <p
           className="m-0"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           Everything this machine has executed, newest first.
         </p>

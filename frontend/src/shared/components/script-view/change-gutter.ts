@@ -39,7 +39,7 @@ export function changeGutter(original: string, script: string): Extension {
 }
 
 /** Each line of the script that differs from the original, by its line number. */
-export function lineChanges(original: string, script: string): Map<number, LineChange> {
+function lineChanges(original: string, script: string): Map<number, LineChange> {
   const before = original.split(/\r?\n/);
   const after = script.split(/\r?\n/);
 

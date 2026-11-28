@@ -8,15 +8,10 @@ import { FormInputTextComponent } from "@/shared/components/form/FormInputTextCo
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
-import {
-  KEY_ACTIONS,
-  KEYBOARD_MODES,
-} from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
-import {
-  toDisplay,
-  useCaptureCombination,
-} from "@/features/flow-step/hooks/use-capture-combination";
+import { KeyboardModes } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { useCaptureCombination } from "@/features/flow-step/hooks/use-capture-combination";
 import { FlowStepInputPickerComponent } from "@/features/flow-step/components/forms/keyboard/FlowStepInputPickerComponent";
+import { KeyCombination } from "@/features/flow-step/key-combination";
 
 interface Props {
   // The flow whose inputs the text can type.
@@ -63,10 +58,10 @@ export default function FlowStepKeyboardFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="keyboardInputType"
         labelText="Mode"
-        options={KEYBOARD_MODES.map((x) => ({ label: x.label, value: x.value }))}
+        options={KeyboardModes.KEYBOARD_MODES.map((x) => ({ label: x.label, value: x.value }))}
         isRequired={true}
         isDisabled={isDisabled || isCapturing}
-        hintText={KEYBOARD_MODES.find((x) => x.value === mode)?.description}
+        hintText={KeyboardModes.KEYBOARD_MODES.find((x) => x.value === mode)?.description}
       />
 
       {!isCombination && (
@@ -90,10 +85,10 @@ export default function FlowStepKeyboardFormFieldsComponent({
         <FormSelectButtonComponent
           fieldName="keyboardKeyActionType"
           labelText="Keys"
-          options={KEY_ACTIONS.map((x) => ({ label: x.label, value: x.value }))}
+          options={KeyboardModes.KEY_ACTIONS.map((x) => ({ label: x.label, value: x.value }))}
           isRequired={true}
           isDisabled={isDisabled || isCapturing}
-          hintText={KEY_ACTIONS.find((x) => x.value === keyAction)?.description}
+          hintText={KeyboardModes.KEY_ACTIONS.find((x) => x.value === keyAction)?.description}
         />
       )}
 
@@ -109,7 +104,7 @@ export default function FlowStepKeyboardFormFieldsComponent({
               <>
                 <Tag
                   severity="info"
-                  value={heldKeys.length > 0 ? toDisplay(heldKeys) : "Press the keys..."}
+                  value={heldKeys.length > 0 ? KeyCombination.toDisplay(heldKeys) : "Press the keys..."}
                 />
                 <Button
                   type="button"

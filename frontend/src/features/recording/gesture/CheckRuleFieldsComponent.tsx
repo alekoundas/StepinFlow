@@ -2,7 +2,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { CHECK_RULES, type GestureFields, ruleNeedsWords } from "@/features/recording/gesture/gesture";
+import { Gesture, type GestureFields } from "@/features/recording/gesture/gesture";
 
 interface Props {
   fields: GestureFields;
@@ -37,14 +37,14 @@ export default function CheckRuleFieldsComponent({ fields, onChange, readText }:
         <Dropdown
           inputId="gesture-check-rule"
           value={rule}
-          options={CHECK_RULES}
+          options={Gesture.CHECK_RULES}
           optionLabel="label"
           optionValue="value"
           onChange={(e) => onChange({ conditionType: e.value })}
           style={{ width: 220 }}
         />
 
-        {ruleNeedsWords(rule) && (
+        {Gesture.ruleNeedsWords(rule) && (
           <InputText
             aria-label="What they are compared with"
             value={fields.searchText}

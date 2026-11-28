@@ -1,12 +1,6 @@
-import {
-  DialogConfirmComponent,
-  type IDialogConfirmComponentProps,
-} from "@/shared/components/modal-component/dialogs/DialogConfirmComponent";
+import { DialogConfirmComponent, type IDialogConfirmComponentProps } from "@/shared/components/modal-component/dialogs/DialogConfirmComponent";
 import { DialogDeleteComponent } from "@/shared/components/modal-component/dialogs/DialogDeleteComponent";
-import {
-  DialogFormComponent,
-  type IDialogFormComponentProps,
-} from "@/shared/components/modal-component/dialogs/DialogFormComponent";
+import { DialogFormComponent, type IDialogFormComponentProps } from "@/shared/components/modal-component/dialogs/DialogFormComponent";
 import { DialogWarningComponent } from "@/shared/components/modal-component/dialogs/DialogWarningComponent";
 import type { ReactNode } from "react";
 import React from "react";

@@ -1,7 +1,7 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
-import { hasBranches } from "@/shared/models/flow-step-catalog";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+import { ExecutionStepKind } from "@/features/execution/execution-step-kind";
 
 const MAX_ACTIVITY_BARS = 120;
 
@@ -129,11 +129,11 @@ export class ExecutionTally {
     this.stepCount++;
     this.maxDurationMilliseconds = Math.max(this.maxDurationMilliseconds, step.durationMilliseconds);
 
-    const isFound = isCheckStep(step) && step.outcome === StepOutcomeEnum.SUCCESS;
+    const isFound = ExecutionStepKind.isCheckStep(step) && step.outcome === StepOutcomeEnum.SUCCESS;
     if (isFound) this.foundCount++;
     if (step.outcome === StepOutcomeEnum.FAILURE) this.failureCount++;
 
-    if (step.flowStepId && !isServedHit(step)) {
+    if (step.flowStepId && !ExecutionStepKind.isServedHit(step)) {
       const counts = this.countsByFlowStepId.get(step.flowStepId) ?? { executed: 0, found: 0, failed: 0 };
       counts.executed++;
       if (isFound) counts.found++;
@@ -231,25 +231,6 @@ export class ExecutionTally {
       lastPassThatFound,
     };
   }
-}
-
-/** A step that routes on its outcome: it either found what it looked for or went to its Failure. */
-export function isCheckStep(step: ExecutionStepDto): boolean {
-  return hasBranches(step.flowStepType) && !isServedHit(step);
-}
-
-/** A hit handed out from an earlier search's screenshot. Nothing executed, so it carries no time. */
-export function isServedHit(step: ExecutionStepDto): boolean {
-  return step.matchIndex !== null && step.matchIndex !== undefined && step.matchIndex > 0;
-}
-
-/** Two passes are of one loop when they sit at one depth and come from one step. */
-export function isSameLoop(first: ExecutionStepDto, other: ExecutionStepDto): boolean {
-  if (other.flowStepType !== FlowStepTypeEnum.LOOP || other.depth !== first.depth) return false;
-
-  // Steps deleted since keep their rows with no step to point at.
-  if (first.flowStepId) return other.flowStepId === first.flowStepId;
-  return other.name === first.name;
 }
 
 // isSameLoop as a key, for a loop met again thousands of passes later.

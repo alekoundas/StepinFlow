@@ -3,14 +3,11 @@ import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { AutoComplete } from "primereact/autocomplete";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowSearchHitDto } from "@/shared/models/flow-search-hit-dto";
-import {
-  flowStepAccent,
-  getFlowStepCatalogEntry,
-} from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { MONO } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -48,7 +45,7 @@ export default function FlowSearchComponent() {
   }, []);
 
   const search = async (query: string) => {
-    const hits = await backendApiService.Flow.search(query);
+    const hits = await BackendApiService.Flow.search(query);
 
     const found: HitGroup[] = [
       { label: "Flows", hits: hits.filter((x) => x.flowStepId === null) },
@@ -114,7 +111,7 @@ export default function FlowSearchComponent() {
       />
       <kbd
         className="text-xs border-1 surface-border border-round px-1 white-space-nowrap"
-        style={{ ...MUTED, fontFamily: MONO }}
+        style={{ ...MUTED, fontFamily: RepositoryFormat.MONO }}
       >
         Ctrl K
       </kbd>
@@ -141,13 +138,13 @@ function HitComponent({ hit }: { hit: FlowSearchHitDto }) {
       </div>
     );
 
-  const step = getFlowStepCatalogEntry(hit.flowStepType ?? undefined);
+  const step = FlowStepCatalog.getFlowStepCatalogEntry(hit.flowStepType ?? undefined);
 
   return (
     <div className="flex align-items-center gap-2">
       <i
         className={`pi pi-${step?.iconName ?? "circle"} text-sm`}
-        style={{ color: flowStepAccent(hit.flowStepType ?? undefined) }}
+        style={{ color: FlowStepCatalog.flowStepAccent(hit.flowStepType ?? undefined) }}
         aria-hidden="true"
       />
       <span>{hit.flowStepName}</span>

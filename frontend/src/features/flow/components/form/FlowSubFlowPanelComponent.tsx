@@ -3,7 +3,7 @@ import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
 interface Props {
   flowId: number;
@@ -20,7 +20,7 @@ interface Props {
 export default function FlowSubFlowPanelComponent({ flowId, isSubFlow }: Props) {
   const { data: callers = [] } = useQuery({
     queryKey: ["flow", "callers", flowId],
-    queryFn: () => backendApiService.Flow.getCallers(flowId),
+    queryFn: () => BackendApiService.Flow.getCallers(flowId),
     enabled: flowId > 0 && isSubFlow,
   });
 

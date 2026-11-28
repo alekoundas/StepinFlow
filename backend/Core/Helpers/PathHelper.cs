@@ -17,15 +17,15 @@
             return appDataFolder;
         }
 
-        /// <summary> Get ".../Database" path. Creates it if missing. </summary>
-        public static string GetDatabaseDataPath()
+        /// <summary> Get ".../Database/StepinFlowSQLite.db" path. Creates the folder if missing. </summary>
+        public static string GetDatabaseFilePath()
         {
             string path = Path.Combine(_appDataPath, _appFolderName, "Database");
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
-            return path;
+            return Path.Combine(path, "StepinFlowSQLite.db");
         }
 
         /// <summary> Get ".../AiDocumentsIndex" path. Creates it if missing. </summary>

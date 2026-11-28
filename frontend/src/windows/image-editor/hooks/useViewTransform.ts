@@ -12,11 +12,13 @@
  */
 
 import { useCallback, useState } from "react";
-import type { Point, Size, ViewTransform } from "@/windows/image-editor/types";
-import { clamp } from "@/windows/image-editor/utils/canvas-utils";
+import { CanvasUtils } from "@/windows/image-editor/utils/canvas-utils";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Size } from "@/windows/image-editor/types/size";
+import type { ViewTransform } from "@/windows/image-editor/types/view-transform";
 
-export const MIN_SCALE = 0.02;
-export const MAX_SCALE = 64;
+const MIN_SCALE = 0.02;
+const MAX_SCALE = 64;
 const FIT_PADDING = 24;
 
 const INITIAL: ViewTransform = { scale: 1, offset: { x: 0, y: 0 } };
@@ -27,7 +29,7 @@ function zoomAround(
   nextScale: number,
   anchor: Point,
 ): ViewTransform {
-  const scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+  const scale = CanvasUtils.clamp(nextScale, MIN_SCALE, MAX_SCALE);
   if (scale === view.scale) return view;
 
   const ratio = scale / view.scale;
@@ -40,7 +42,7 @@ function zoomAround(
   };
 }
 
-export function useViewTransform() {
+function useViewTransform() {
   const [view, setView] = useState<ViewTransform>(INITIAL);
   const { scale, offset } = view;
 
@@ -94,7 +96,7 @@ export function useViewTransform() {
       return;
     }
 
-    const scaleToFit = clamp(
+    const scaleToFit = CanvasUtils.clamp(
       Math.min(
         (viewport.width - FIT_PADDING * 2) / image.width,
         (viewport.height - FIT_PADDING * 2) / image.height,
@@ -143,3 +145,9 @@ export function useViewTransform() {
     actualSize,
   };
 }
+
+export const ViewTransformHooks = {
+  MIN_SCALE,
+  MAX_SCALE,
+  useViewTransform,
+};

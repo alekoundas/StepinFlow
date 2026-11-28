@@ -9,14 +9,11 @@ import FlowAreaScalesWithFieldComponent from "@/features/flow-area/components/fo
 import RecordingSectionComponent from "@/features/recording/components/RecordingSectionComponent";
 import RecordingWindowPickerComponent from "@/features/recording/components/RecordingWindowPickerComponent";
 import WhileYouRecordComponent from "@/features/recording/components/WhileYouRecordComponent";
-import {
-  RecordingWindowSchema,
-  type RecordingWindowForm,
-} from "@/features/recording/components/recording-setup.zod";
+import { RecordingSetupZod, type RecordingWindowForm } from "@/features/recording/components/recording-setup.zod";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -45,7 +42,7 @@ const DEFAULT_VALUES: RecordingWindowForm = {
  */
 export default function RecordingMainAreaComponent({ flowId, onSaved, onCancel }: Props) {
   const form = useForm<RecordingWindowForm>({
-    resolver: zodResolver(RecordingWindowSchema),
+    resolver: zodResolver(RecordingSetupZod.RecordingWindowSchema),
     mode: "onChange",
     defaultValues: DEFAULT_VALUES,
   });
@@ -68,7 +65,7 @@ export default function RecordingMainAreaComponent({ flowId, onSaved, onCancel }
     if (isWebsite) name = tabAddress;
 
     try {
-      await backendApiService.FlowArea.create(
+      await BackendApiService.FlowArea.create(
         new FlowAreaDto({
           flowId,
           name,

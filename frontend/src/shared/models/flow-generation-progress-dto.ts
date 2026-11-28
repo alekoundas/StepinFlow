@@ -1,6 +1,6 @@
 import type { FlowGenerationStageEnum } from "@/shared/enums/backend/flow-generation-stage-enum";
 import type { FlowGenerationStateEnum } from "@/shared/enums/backend/flow-generation-state-enum";
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 /** Where the model's draft of a reviewed recording is. Sent whole on every change. */
 export interface FlowGenerationProgressDto {

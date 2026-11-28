@@ -8,14 +8,14 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import FlowPointFormComponent from "@/features/flow-point/components/forms/FlowPointFormComponent";
 import { useFlowPointMutations } from "@/features/flow-point/hooks/use-flow-point";
-import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
+import type { FlowStepCursorZod } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 
-type CursorForm = z.infer<typeof FlowStepCursorSchema>;
+type CursorForm = z.infer<typeof FlowStepCursorZod.FlowStepCursorSchema>;
 
 // The dropdowns speak numbers, the lookup endpoint speaks strings.
 interface LocationOption {
@@ -58,7 +58,7 @@ export default function FlowStepCursorLocationFieldsComponent({
   const { data: areaOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
+      BackendApiService.Lookup.flowArea({ flowId }).then((res) =>
         res.data.map(
           (item) =>
             new FlowAreaDto({
@@ -88,7 +88,7 @@ export default function FlowStepCursorLocationFieldsComponent({
   ];
 
   const loadLocations = (filter?: string): Promise<LocationOption[]> =>
-    backendApiService.Lookup.flowPoint({
+    BackendApiService.Lookup.flowPoint({
       searchText: filter,
       flowId,
     }).then((res) =>
@@ -100,7 +100,7 @@ export default function FlowStepCursorLocationFieldsComponent({
     );
 
   const loadStepReferences = (filter?: string): Promise<StepOption[]> =>
-    backendApiService.Lookup.flowStep({
+    BackendApiService.Lookup.flowStep({
       searchText: filter,
       flowStepId: parentFlowStepId,
     }).then((res) =>
@@ -147,8 +147,8 @@ export default function FlowStepCursorLocationFieldsComponent({
     setTestError(null);
 
     try {
-      const point = await backendApiService.FlowPoint.getPreview(flowPointId);
-      await backendApiService.System.moveCursor(point);
+      const point = await BackendApiService.FlowPoint.getPreview(flowPointId);
+      await BackendApiService.System.moveCursor(point);
     } catch (err) {
       setTestError(err instanceof Error ? err.message : "The location could not be worked out.");
     }

@@ -24,18 +24,13 @@ import OptionsPanel from "@/windows/image-editor/components/OptionsPanel";
 import Toolbar from "@/windows/image-editor/components/Toolbar";
 import ToolRail from "@/windows/image-editor/components/ToolRail";
 import { useImageCanvas } from "@/windows/image-editor/hooks/useImageCanvas";
-import { useViewTransform } from "@/windows/image-editor/hooks/useViewTransform";
-import type {
-  EditorTool,
-  GridOptions,
-  PendingSelection,
-  Point,
-  Size,
-} from "@/windows/image-editor/types";
-import {
-  canvasToPngBase64,
-  loadImage,
-} from "@/windows/image-editor/utils/canvas-utils";
+import { ViewTransformHooks } from "@/windows/image-editor/hooks/useViewTransform";
+import { CanvasUtils } from "@/windows/image-editor/utils/canvas-utils";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Size } from "@/windows/image-editor/types/size";
+import type { EditorTool } from "@/windows/image-editor/types/editor-tool";
+import type { PendingSelection } from "@/windows/image-editor/types/pending-selection";
+import type { GridOptions } from "@/windows/image-editor/types/grid-options";
 
 const DEFAULT_GRID: GridOptions = { enabled: true, opacity: 0.25, minScale: 8 };
 const ZOOM_STEP = 1.25;
@@ -50,7 +45,7 @@ const OVERLAY_MESSAGE_STYLE: React.CSSProperties = {
 
 export default function ImageEditorPage() {
   const image = useImageCanvas();
-  const view = useViewTransform();
+  const view = ViewTransformHooks.useViewTransform();
 
   const [tool, setTool] = useState<EditorTool>("crop-rect");
   const [grid, setGrid] = useState<GridOptions>(DEFAULT_GRID);
@@ -84,12 +79,12 @@ export default function ImageEditorPage() {
 
     const load = async () => {
       try {
-        const ready = await ElectronApiService.imageEditor.signalReady();
+        const ready = await ElectronApiService.ImageEditor.signalReady();
         if (cancelled) return;
         if (!ready?.imageBase64)
           throw new Error("No image was passed to the editor");
 
-        const bitmap = await loadImage(ready.imageBase64);
+        const bitmap = await CanvasUtils.loadImage(ready.imageBase64);
         if (cancelled) return;
 
         setMode(ready.mode);
@@ -172,8 +167,8 @@ export default function ImageEditorPage() {
 
     setSaving(true);
     try {
-      const base64 = await canvasToPngBase64(canvas);
-      ElectronApiService.imageEditor.signalCloseWindow(base64);
+      const base64 = await CanvasUtils.canvasToPngBase64(canvas);
+      ElectronApiService.ImageEditor.signalCloseWindow(base64);
     } catch (error) {
       console.error("[ImageEditor] Failed to export PNG:", error);
       setErrorMessage("Failed to export the image");
@@ -182,7 +177,7 @@ export default function ImageEditorPage() {
   }, [image, saving]);
 
   const handleCancel = useCallback(() => {
-    ElectronApiService.imageEditor.signalCloseWindow(null);
+    ElectronApiService.ImageEditor.signalCloseWindow(null);
   }, []);
 
   // ==========================================================================
@@ -294,9 +289,9 @@ export default function ImageEditorPage() {
           width={imageSize.width}
           height={imageSize.height}
           onConfirm={(x, y) =>
-            ElectronApiService.imageEditor.signalCloseWindow({ x, y })
+            ElectronApiService.ImageEditor.signalCloseWindow({ x, y })
           }
-          onCancel={() => ElectronApiService.imageEditor.signalCloseWindow(null)}
+          onCancel={() => ElectronApiService.ImageEditor.signalCloseWindow(null)}
         />
       </div>
     );

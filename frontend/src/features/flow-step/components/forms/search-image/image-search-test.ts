@@ -1,12 +1,10 @@
 import { MatchRefusalEnum } from "@/shared/enums/backend/match-refusal-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import type { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
-import type {
-  ImageSearchTestImageDto,
-  ImageSearchTestMatchDto,
-  ImageSearchTestResultDto,
-} from "@/shared/models/database/image-search-test-result-dto";
-import { searchImageModeOf } from "@/features/flow-step/components/forms/shared/search-modes";
+import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
+import type { ImageSearchTestMatchDto } from "@/shared/models/database/image-search-test-match-dto";
+import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-image-dto";
 
 const MIN_ACCURACY = 0.1;
 const MAX_ACCURACY = 1;
@@ -22,30 +20,30 @@ export interface ImageSearchTestRun {
   maxMatches: number;
 }
 
-export interface AccuracySuggestion {
+interface AccuracySuggestion {
   accuracy: number;
   reason: string;
   isNarrow: boolean;
 }
 
-export interface TestVerdict {
+interface TestVerdict {
   severity: "success" | "warn";
   text: string;
 }
 
-export const hitsOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[] =>
+const hitsOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[] =>
   image.matches.filter((x) => x.isAccepted);
 
 /** The best candidate under the bar. The search keeps one, the highest. */
-export const nearMissOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto | null =>
+const nearMissOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto | null =>
   image.matches.find((x) => !x.isAccepted && !x.refusedBy) ?? null;
 
 /** Shape and colour: the shapes over the bar whose colour or contrast refused them, best first. */
-export const refusedOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[] =>
+const refusedOf = (image: ImageSearchTestImageDto): ImageSearchTestMatchDto[] =>
   image.matches.filter((x) => !!x.refusedBy);
 
 /** Which check refused a candidate, and its number against what is allowed. */
-export function refusalOf(match: ImageSearchTestMatchDto, result: ImageSearchTestResultDto): string {
+function refusalOf(match: ImageSearchTestMatchDto, result: ImageSearchTestResultDto): string {
   if (match.refusedBy === MatchRefusalEnum.CONTRAST)
     return `contrast ${(match.contrast ?? 0).toFixed(2)}, ${result.contrastMin.toFixed(2)} to ${result.contrastMax.toFixed(2)} allowed`;
 
@@ -53,7 +51,7 @@ export function refusalOf(match: ImageSearchTestMatchDto, result: ImageSearchTes
 }
 
 /** What a Shape and colour hit was let through at, or null for a Shape one. */
-export function checksOf(match: ImageSearchTestMatchDto): string | null {
+function checksOf(match: ImageSearchTestMatchDto): string | null {
   if (match.colour == null || match.contrast == null) return null;
 
   return `colour ${Math.round(match.colour)} of ${Math.round(match.colourLimit ?? 0)} · contrast ${match.contrast.toFixed(2)}`;
@@ -79,7 +77,7 @@ function bestRefusal(result: ImageSearchTestResultDto, run: ImageSearchTestRun):
   return `${nameOf(run, result, bestIndex)} has the shape at ${best.score.toFixed(2)} but not the ${check}: ${refusalOf(best, result)}.`;
 }
 
-export const nameOf = (run: ImageSearchTestRun, result: ImageSearchTestResultDto, index: number) =>
+const nameOf = (run: ImageSearchTestRun, result: ImageSearchTestResultDto, index: number) =>
   run.images[index]?.flowTemplate.name || result.images[index]?.name || `Template ${index + 1}`;
 
 /**
@@ -87,7 +85,7 @@ export const nameOf = (run: ImageSearchTestRun, result: ImageSearchTestResultDto
  * and the answer stays the same. With no hit, a bar just under the closest place - which is only
  * right if that place is the thing, and only the person looking can tell.
  */
-export function suggestAccuracy(image: ImageSearchTestImageDto): AccuracySuggestion | null {
+function suggestAccuracy(image: ImageSearchTestImageDto): AccuracySuggestion | null {
   const nearMiss = nearMissOf(image);
   if (nearMiss === null) return null;
 
@@ -113,7 +111,7 @@ export function suggestAccuracy(image: ImageSearchTestImageDto): AccuracySuggest
 }
 
 /** The templates an execution would act on: the first that matched, or every one for Every match. */
-export function usedIndexes(result: ImageSearchTestResultDto, mode: SearchModeEnum): number[] {
+function usedIndexes(result: ImageSearchTestResultDto, mode: SearchModeEnum): number[] {
   const found = result.images.flatMap((x, index) => (x.isFound ? [index] : []));
 
   if (mode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND) return [];
@@ -123,7 +121,7 @@ export function usedIndexes(result: ImageSearchTestResultDto, mode: SearchModeEn
 }
 
 /** What an execution would do with this screenshot, in the words it would report. */
-export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTestRun): TestVerdict {
+function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTestRun): TestVerdict {
   const first = result.images.findIndex((x) => x.isFound);
   const firstText =
     first < 0
@@ -175,8 +173,8 @@ export function verdictOf(result: ImageSearchTestResultDto, run: ImageSearchTest
 }
 
 /** What one test is of the mode it was made in. */
-export function modeLineOf(run: ImageSearchTestRun): string {
-  const label = searchImageModeOf(run.searchMode)?.label ?? run.searchMode;
+function modeLineOf(run: ImageSearchTestRun): string {
+  const label = SearchModes.searchImageModeOf(run.searchMode)?.label ?? run.searchMode;
 
   switch (run.searchMode) {
     case SearchModeEnum.FIND_ALL:
@@ -197,7 +195,7 @@ export function modeLineOf(run: ImageSearchTestRun): string {
 }
 
 /** Whether the form's templates are still the ones the test was made with, in the same order. */
-export function isSameTemplates(run: ImageSearchTestRun, current: FlowStepTemplateDto[]): boolean {
+function isSameTemplates(run: ImageSearchTestRun, current: FlowStepTemplateDto[]): boolean {
   if (run.images.length !== current.length) return false;
 
   return run.images.every(
@@ -210,3 +208,17 @@ export function isSameTemplates(run: ImageSearchTestRun, current: FlowStepTempla
 function clamp(accuracy: number): number {
   return Math.min(MAX_ACCURACY, Math.max(MIN_ACCURACY, accuracy));
 }
+
+export const ImageSearchTest = {
+  hitsOf,
+  nearMissOf,
+  refusedOf,
+  refusalOf,
+  checksOf,
+  nameOf,
+  suggestAccuracy,
+  usedIndexes,
+  verdictOf,
+  modeLineOf,
+  isSameTemplates,
+};

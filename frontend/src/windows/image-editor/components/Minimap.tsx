@@ -4,8 +4,9 @@
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import type { Point, Size } from "@/windows/image-editor/types";
-import type { useViewTransform } from "@/windows/image-editor/hooks/useViewTransform";
+import type { ViewTransformHooks } from "@/windows/image-editor/hooks/useViewTransform";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Size } from "@/windows/image-editor/types/size";
 
 const MAX_WIDTH = 200;
 const MAX_HEIGHT = 140;
@@ -14,7 +15,7 @@ interface MinimapProps {
   getDocument: () => HTMLCanvasElement | null;
   imageSize: Size | null;
   revision: number;
-  view: ReturnType<typeof useViewTransform>;
+  view: ReturnType<typeof ViewTransformHooks.useViewTransform>;
   viewportSize: Size;
 }
 

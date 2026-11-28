@@ -8,8 +8,9 @@ import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
-import type { RepositoryBranchSwitchDto, RepositoryBranchSwitchFlowDto } from "@/shared/models/repository-dtos";
-import { MONO } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
+import type { RepositoryBranchSwitchFlowDto } from "@/shared/models/repository/repository-branch-switch-flow-dto";
+import type { RepositoryBranchSwitchDto } from "@/shared/models/repository/repository-branch-switch-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -31,7 +32,7 @@ export default function BranchSwitchDialogComponent({ action, branch, error, onC
   const [progress, setProgress] = useState<RepositoryBranchSwitchDto | null>(null);
 
   useEffect(() => {
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.REPOSITORY_BRANCH_SWITCH) return;
 
       setProgress(message.payload as RepositoryBranchSwitchDto);
@@ -64,7 +65,7 @@ export default function BranchSwitchDialogComponent({ action, branch, error, onC
             />
           )}
           <span>
-            {action} <span style={{ fontFamily: MONO }}>{branch}</span>
+            {action} <span style={{ fontFamily: RepositoryFormat.MONO }}>{branch}</span>
           </span>
         </span>
       }

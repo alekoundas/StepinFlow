@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 
 import AiChatMarkdownComponent from "@/features/ai/components/AiChatMarkdownComponent";
-import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
-import { MUTED } from "@/features/execution/execution-format";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import type { AiChatAnswer } from "@/features/ai/store/ai-chat-store";
 
 const COPIED_MILLISECONDS = 1500;
@@ -16,7 +16,7 @@ function Thinking() {
     <div
       role="status"
       className="flex align-items-center gap-2 text-sm"
-      style={MUTED}
+      style={ExecutionFormat.MUTED}
     >
       <i
         className="pi pi-spin pi-spinner text-xs"
@@ -39,7 +39,7 @@ function LookedAtRows({ answer }: LookedAtRowsProps) {
         <div
           key={image}
           className="flex align-items-start gap-2"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           <i
             className="pi pi-image text-xs mt-1"
@@ -53,7 +53,7 @@ function LookedAtRows({ answer }: LookedAtRowsProps) {
         <div
           key={activity.id}
           className="flex align-items-start gap-2"
-          style={activity.isDone ? MUTED : undefined}
+          style={activity.isDone ? ExecutionFormat.MUTED : undefined}
         >
           <i
             className={`pi text-xs mt-1 ${activity.isDone ? "pi-check" : "pi-spin pi-spinner"}`}
@@ -95,7 +95,7 @@ function FailedCard({ answer, onTryAgain }: FailedCardProps) {
           {answer.errorDetail ? (
             <span
               className="text-xs"
-              style={{ ...MUTED, overflowWrap: "anywhere" }}
+              style={{ ...ExecutionFormat.MUTED, overflowWrap: "anywhere" }}
             >
               {answer.errorDetail}
             </span>
@@ -133,7 +133,7 @@ interface Props {
 
 /** One answer: what it looked at as it happens, then the words, and what can be done with them. */
 export default function AiChatAnswerComponent({ conversationId, answer, isLast }: Props) {
-  const { askAgain } = useAskAi();
+  const { askAgain } = AiChatHooks.useAskAi();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -199,7 +199,7 @@ export default function AiChatAnswerComponent({ conversationId, answer, isLast }
       {answer.state === "STOPPED" ? (
         <span
           className="text-sm"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           {hasText ? "You stopped this answer here." : "You stopped this before it answered."}
         </span>
@@ -246,7 +246,7 @@ export default function AiChatAnswerComponent({ conversationId, answer, isLast }
           {answer.model && answer.endedAt ? (
             <span
               className="text-xs ml-1"
-              style={MUTED}
+              style={ExecutionFormat.MUTED}
             >
               {answer.model} · {secondsBetween(answer.startedAt, answer.endedAt)}s
             </span>

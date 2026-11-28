@@ -1,30 +1,21 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import { cursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
+import { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import type { FlowStepScriptLineDto } from "@/shared/models/flow-step-script-line-dto";
-import { getFlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import { humanizeMilliseconds } from "@/shared/utils/humanize-milliseconds";
 
-import {
-  CONDITION_LABELS,
-  isLength,
-} from "@/features/flow-step/components/forms/shared/condition-types";
-import {
-  SEARCH_TEXT_MODES,
-  searchImageModeOf,
-} from "@/features/flow-step/components/forms/shared/search-modes";
-import { CURSOR_MODES } from "@/features/flow-step/components/forms/cursor/cursor-modes";
-import { WINDOW_MODES } from "@/features/flow-step/components/forms/window/window-modes";
+import { ConditionTypes } from "@/features/flow-step/components/forms/shared/condition-types";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
+import { CursorModes } from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import { WindowModes } from "@/features/flow-step/components/forms/window/window-modes";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
-import {
-  KEY_ACTIONS,
-  KEYBOARD_MODES,
-} from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { KeyboardModes } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 
 /**
  * What a step's form says about it above and below its fields: the type and mode in the header,
@@ -32,7 +23,7 @@ import {
  * the form, so it follows every change; the names of what it points at come with its script line,
  * since the form holds only their ids.
  */
-export interface FlowStepDescription {
+interface FlowStepDescription {
   type: string;
   mode?: string;
   summary?: string;
@@ -70,9 +61,9 @@ const plural = (count: number, one: string, many: string) =>
 const forUpTo = (timeout: number) =>
   timeout > 0 ? `for up to ${humanizeMilliseconds(timeout)}` : "for as long as it takes";
 
-export const conditionPhrase = (dto: FlowStepDto): string => {
+const conditionPhrase = (dto: FlowStepDto): string => {
   const condition = dto.conditionType ?? ConditionTypeEnum.CONTAINS;
-  const label = CONDITION_LABELS[condition].toLowerCase();
+  const label = ConditionTypes.CONDITION_LABELS[condition].toLowerCase();
 
   if (condition === ConditionTypeEnum.IS_EMPTY || condition === ConditionTypeEnum.IS_NOT_EMPTY)
     return label;
@@ -80,7 +71,7 @@ export const conditionPhrase = (dto: FlowStepDto): string => {
   if (condition === ConditionTypeEnum.BETWEEN)
     return `${label} ${quoted(dto.conditionText)} and ${quoted(dto.conditionTextEnd)}`;
 
-  if (isLength(condition)) {
+  if (ConditionTypes.isLength(condition)) {
     const count = dto.conditionText || "…";
     return condition === ConditionTypeEnum.LENGTH_EQUALS
       ? `has ${count} characters`
@@ -98,7 +89,7 @@ const typeLabel = (type: FlowStepTypeEnum | undefined): string => {
   if (type && WINDOW_TYPES.includes(type)) return "Window";
   if (type === FlowStepTypeEnum.SUCCESS || type === FlowStepTypeEnum.FAILURE) return "Branch";
 
-  return getFlowStepCatalogEntry(type)?.label ?? "Step";
+  return FlowStepCatalog.getFlowStepCatalogEntry(type)?.label ?? "Step";
 };
 
 export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescription {
@@ -110,7 +101,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     case FlowStepTypeEnum.SEARCH_IMAGE: {
       const count = dto.flowStepTemplates?.length ?? 0;
       const what = count === 0 ? "its template (none yet)" : plural(count, "template", "templates");
-      const mode = searchImageModeOf(dto.searchMode)?.label;
+      const mode = SearchModes.searchImageModeOf(dto.searchMode)?.label;
       const where = names?.areaName ? ` in ${quoted(names.areaName)}` : "";
 
       if (dto.searchMode === SearchModeEnum.WAIT_UNTIL_NOT_FOUND) {
@@ -152,7 +143,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     }
 
     case FlowStepTypeEnum.SEARCH_TEXT: {
-      const mode = SEARCH_TEXT_MODES.find((x) => x.value === dto.searchMode)?.label;
+      const mode = SearchModes.SEARCH_TEXT_MODES.find((x) => x.value === dto.searchMode)?.label;
       const condition = conditionPhrase(dto);
       const kept = dto.resultExtractPattern ? `, keeps what ${quoted(dto.resultExtractPattern)} captures,` : "";
       const gives = `What it read, as {{${dto.name}}}, for a Check Value or a Type below.`;
@@ -185,20 +176,20 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     case FlowStepTypeEnum.CHECK_VALUE:
       return {
         type,
-        mode: dto.conditionType ? CONDITION_LABELS[dto.conditionType] : undefined,
+        mode: dto.conditionType ? ConditionTypes.CONDITION_LABELS[dto.conditionType] : undefined,
         summary: `Goes on to Success when what ${reference} gave ${conditionPhrase(dto)}, to Failure otherwise.`,
       };
 
     case FlowStepTypeEnum.CURSOR_CLICK: {
       const button = BUTTON_NAMES[dto.cursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON];
-      const mode = CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
+      const mode = CursorModes.CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
 
       switch (dto.cursorButtonActionType) {
-        case cursorButtonActionTypeEnum.DOUBLE_CLICK:
+        case CursorButtonActionTypeEnum.DOUBLE_CLICK:
           return { type, mode, summary: `A double ${button} click where the cursor is. The Move above it says where.` };
-        case cursorButtonActionTypeEnum.HOLD_CLICK:
+        case CursorButtonActionTypeEnum.HOLD_CLICK:
           return { type, mode, summary: `Holds the ${button} button down where the cursor is, until a Release.` };
-        case cursorButtonActionTypeEnum.RELEASE_CLICK:
+        case CursorButtonActionTypeEnum.RELEASE_CLICK:
           return { type, mode, summary: `Lets go of the ${button} button.` };
         default:
           return { type, mode, summary: `A single ${button} click where the cursor is. The Move above it says where.` };
@@ -206,7 +197,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     }
 
     case FlowStepTypeEnum.CURSOR_RELOCATE: {
-      const mode = CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
+      const mode = CursorModes.CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
 
       if (names?.pointName)
         return { type, mode, summary: `Moves the cursor to the saved location ${quoted(names.pointName)}.` };
@@ -215,7 +206,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     }
 
     case FlowStepTypeEnum.CURSOR_DRAG: {
-      const mode = CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
+      const mode = CursorModes.CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
       const button = BUTTON_NAMES[dto.cursorButtonType ?? CursorButtonTypeEnum.LEFT_BUTTON];
       const grab = names?.pointName
         ? `on ${quoted(names.pointName)}`
@@ -228,7 +219,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     }
 
     case FlowStepTypeEnum.CURSOR_SCROLL: {
-      const mode = CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
+      const mode = CursorModes.CURSOR_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label;
       const direction = (dto.cursorScrollDirectionType ?? "DOWN").toLowerCase();
 
       return { type, mode, summary: `Turns the wheel ${plural(dto.loopCount, "notch", "notches")} ${direction} where the cursor is.` };
@@ -238,13 +229,13 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
       if (dto.keyboardInputType !== KeyboardInputTypeEnum.COMBINATION) {
         return {
           type,
-          mode: KEYBOARD_MODES[0].label,
+          mode: KeyboardModes.KEYBOARD_MODES[0].label,
           summary: `Types ${quoted(dto.keyboardInputText)} into whatever has focus, one character at a time.`,
         };
       }
 
       const action = dto.keyboardKeyActionType ?? KeyboardKeyActionTypeEnum.PRESS;
-      const mode = `${KEYBOARD_MODES[1].label} · ${KEY_ACTIONS.find((x) => x.value === action)?.label}`;
+      const mode = `${KeyboardModes.KEYBOARD_MODES[1].label} · ${KeyboardModes.KEY_ACTIONS.find((x) => x.value === action)?.label}`;
       const keys = dto.keyboardInputText || "the keys";
 
       if (action === KeyboardKeyActionTypeEnum.HOLD)
@@ -324,21 +315,21 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
     case FlowStepTypeEnum.WINDOW_FOCUS:
       return {
         type,
-        mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
+        mode: WindowModes.WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
         summary: `Brings ${windowPhrase(names)} to the front.`,
       };
 
     case FlowStepTypeEnum.WINDOW_RESIZE:
       return {
         type,
-        mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
+        mode: WindowModes.WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
         summary: `Makes ${windowPhrase(names)} ${dto.windowWidth} × ${dto.windowHeight}.`,
       };
 
     case FlowStepTypeEnum.WINDOW_RELOCATE:
       return {
         type,
-        mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
+        mode: WindowModes.WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
         summary: names?.pointName
           ? `Moves ${windowPhrase(names)} so its corner lands on ${quoted(names.pointName)}.`
           : `Moves ${windowPhrase(names)} to a saved location.`,
@@ -348,7 +339,7 @@ export function describeFlowStep(dto: FlowStepDto, names: Names): FlowStepDescri
       const wait = humanizeMilliseconds(dto.timeoutMilliseconds || 5000);
       return {
         type,
-        mode: WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
+        mode: WindowModes.WINDOW_MODES.find((x) => x.flowStepType === dto.flowStepType)?.label,
         summary: dto.isCloseForced
           ? `Closes ${windowPhrase(names)}, and ends its program if it is still open after ${wait}.`
           : `Closes ${windowPhrase(names)} and waits up to ${wait} for it to go.`,

@@ -1,4 +1,4 @@
-import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 
 interface DisabledChange {
@@ -13,7 +13,7 @@ interface DisabledChange {
  * again. The tree's button and the form's both come here.
  */
 export function useSetFlowStepDisabled() {
-  const { setFlowStepDisabledMutation } = useFlowStepMutations();
+  const { setFlowStepDisabledMutation } = FlowStepHooks.useFlowStepMutations();
   const setTreeRefreshTrigger = useWorkflowStore((x) => x.setTreeRefreshTrigger);
 
   const setDisabled = ({ flowStepId, isDisabled, parentFlowStepId, flowId }: DisabledChange) => {

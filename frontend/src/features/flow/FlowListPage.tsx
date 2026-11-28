@@ -7,16 +7,16 @@ import PageComponent from "@/shared/components/PageComponent";
 import { PAGE_MAX_WIDTHS } from "@/shared/components/page-widths";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import type { FlowHealthDto } from "@/shared/models/database/flow-health-dto";
-import type { RepositoryStatusDto } from "@/shared/models/repository-dtos";
 import { FlowDataTableComponent } from "@/features/flow/components/FlowDataTableComponent";
 import FlowSearchComponent from "@/features/flow/components/FlowSearchComponent";
 import BranchMenuComponent from "@/features/repository/components/BranchMenuComponent";
 import { useFlows } from "@/features/flow/hooks/use-flows";
-import { useFlowHealth } from "@/features/flow/hooks/use-flow-health";
-import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
+import { FlowHealthHooks } from "@/features/flow/hooks/use-flow-health";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
 import { useRecordingStore } from "@/features/recording/store/recording-store";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowCreateChoiceDialogComponent } from "@/features/flow/components/FlowCreateChoiceDialogComponent";
+import type { RepositoryStatusDto } from "@/shared/models/repository/repository-status-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -57,8 +57,8 @@ export default function FlowListPage({ isSubFlow = false }: Props) {
     page: 0,
     isSubFlow,
   });
-  const health = useFlowHealth();
-  const { data: status } = useRepositoryStatus();
+  const health = FlowHealthHooks.useFlowHealth();
+  const { data: status } = RepositoryHooks.useRepositoryStatus();
 
   const filters = isSubFlow ? SUB_FLOW_FILTERS : FLOW_FILTERS;
 

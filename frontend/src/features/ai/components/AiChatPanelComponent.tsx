@@ -6,13 +6,11 @@ import { OverlayPanel } from "primereact/overlaypanel";
 
 import AiChatComposerComponent from "@/features/ai/components/AiChatComposerComponent";
 import AiChatThreadComponent from "@/features/ai/components/AiChatThreadComponent";
-import { useAiChatAvailability, useAiChatImages, useAskAi } from "@/features/ai/hooks/use-ai-chat";
-import { useAiChatPage } from "@/features/ai/hooks/use-ai-chat-page";
-import type { AiChatPage } from "@/features/ai/hooks/use-ai-chat-page";
-import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
-import type { AiChatContext, AiConversation } from "@/features/ai/store/ai-chat-store";
-import { MUTED } from "@/features/execution/execution-format";
-import { iconTile } from "@/features/home/home-format";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
+import { useAiChatPage, type AiChatPage } from "@/features/ai/hooks/use-ai-chat-page";
+import { useAiChatStore, type AiConversation, type AiChatContext } from "@/features/ai/store/ai-chat-store";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 const WIDTH = 440;
 
@@ -80,16 +78,16 @@ function OpenPanel() {
   const { close, startConversation, setActive, setDraft, setDroppedPage, setScreenshotsOn, focusInput } =
     useAiChatStore.getState();
 
-  const { ask, stop } = useAskAi();
+  const { ask, stop } = AiChatHooks.useAskAi();
   const page = useAiChatPage();
-  const { data: availability } = useAiChatAvailability(true);
+  const { data: availability } = AiChatHooks.useAiChatAvailability(true);
 
   const conversation = conversations.find((x) => x.id === activeId);
 
   const isContextOn = conversation?.droppedPageKey !== page.key;
   const executionId = isContextOn ? page.executionId : undefined;
 
-  const { data: images } = useAiChatImages(executionId, true);
+  const { data: images } = AiChatHooks.useAiChatImages(executionId, true);
 
   if (!conversation) return null;
 
@@ -151,7 +149,7 @@ function OpenPanel() {
           </span>
           <i
             className="pi pi-chevron-down text-xs"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
             aria-hidden="true"
           />
         </Button>
@@ -184,7 +182,7 @@ function OpenPanel() {
         >
           <div
             className="px-2 py-1 text-xs"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             Conversations
           </div>
@@ -224,7 +222,7 @@ function OpenPanel() {
                 ) : (
                   <span
                     className="text-xs flex-none"
-                    style={MUTED}
+                    style={ExecutionFormat.MUTED}
                   >
                     {whenOf(x.createdAt)}
                   </span>
@@ -239,7 +237,7 @@ function OpenPanel() {
         <div className="flex-1 min-h-0 flex flex-column align-items-center justify-content-center gap-3 p-5 text-center">
           <span
             className="flex align-items-center justify-content-center border-round-xl"
-            style={{ width: 44, height: 44, ...iconTile("var(--yellow-400)") }}
+            style={{ width: 44, height: 44, ...HomeFormat.iconTile("var(--yellow-400)") }}
           >
             <i
               className="pi pi-power-off text-lg"
@@ -249,7 +247,7 @@ function OpenPanel() {
           <h2 className="m-0 text-lg font-semibold">Ask AI needs a model</h2>
           <p
             className="m-0 text-sm line-height-3"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             {availability.reason}
           </p>

@@ -5,7 +5,7 @@ import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { WorkflowHeaderComponent } from "@/features/workflow/components/WorkflowHeaderComponent";
 import { WorkflowEditorComponent } from "@/features/workflow/components/WorkflowEditorComponent";
 import ExportFlowDialogComponent from "@/features/flow-script/components/ExportFlowDialogComponent";
-import { useFlow } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 
 export default function WorkflowPage() {
   const { id } = useParams<{
@@ -28,7 +28,7 @@ export default function WorkflowPage() {
     setActiveTab,
     setScriptView,
   } = useWorkflowStore();
-  const { data: flow } = useFlow(flowId ?? null);
+  const { data: flow } = FlowHooks.useFlow(flowId ?? null);
   const [isExporting, setIsExporting] = useState(false);
 
   // The selection lives in a store that outlives this page. A flow opened here, from the list or

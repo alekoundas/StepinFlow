@@ -23,7 +23,7 @@ export function useWindowOverlay(): Props {
     ): Promise<OverlayCaptureResult | null> => {
       setIsWindowOpen(true);
       try {
-        return await ElectronApiService.overlay.openCaptureWindow(
+        return await ElectronApiService.Overlay.openCaptureWindow(
           parentSearchAreaBounds,
           parentAreaName,
           withImage,

@@ -1,7 +1,7 @@
 import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { FlowStepMovePreviewDto } from "@/shared/models/flow-step-move.dto";
+import type { FlowStepMovePreviewDto } from "@/shared/models/flow-step-move-preview-dto";
 
 interface Props {
   preview: FlowStepMovePreviewDto;

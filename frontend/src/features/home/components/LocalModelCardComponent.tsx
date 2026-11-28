@@ -5,21 +5,22 @@ import { Dropdown } from "primereact/dropdown";
 import { ProgressBar } from "primereact/progressbar";
 import { Skeleton } from "primereact/skeleton";
 
-import StatusPillComponent, { type StatusPillSeverity } from "@/shared/components/StatusPillComponent";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { AiLocalModelStateEnum } from "@/shared/enums/backend/ai/ai-local-model-state-enum";
 import type { AiLocalModelStatusDto } from "@/shared/models/ai-local-model-status-dto";
-import type { AiModelDto } from "@/shared/models/ai-models-dto";
-import { gigabytes, percentOf } from "@/features/ai/ai-format";
+import { AiFormat } from "@/features/ai/ai-format";
 import AiModelOptionComponent from "@/features/ai/components/AiModelOptionComponent";
-import { aiKeys, useAiModels } from "@/features/ai/hooks/use-ai";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
 import { useAiModelDownload } from "@/features/ai/hooks/use-ai-model-download";
 import { useLocalModel } from "@/features/ai/hooks/use-local-model";
-import { useAppSettingMutations } from "@/features/settings/hooks/use-app-settings";
-import { MONO } from "@/features/repository/repository-format";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 import HomeCardComponent from "@/features/home/components/HomeCardComponent";
 import HomeLinkComponent from "@/features/home/components/HomeLinkComponent";
-import { MUTED } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
+import type { AiModelDto } from "@/shared/models/ai-model-dto";
+import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 
 const ICON = "microchip-ai";
 const TITLE = "Local model";
@@ -43,7 +44,7 @@ const noteOf = (status: AiLocalModelStatusDto): string => {
     case AiLocalModelStateEnum.NOT_IN_MEMORY:
       return "Ollama loads it the next time something asks.";
     default:
-      return `Using ${gigabytes(status.memoryBytes)} of memory.`;
+      return `Using ${AiFormat.gigabytes(status.memoryBytes)} of memory.`;
   }
 };
 
@@ -53,12 +54,12 @@ const noteOf = (status: AiLocalModelStatusDto): string => {
  */
 export default function LocalModelCardComponent() {
   const queryClient = useQueryClient();
-  const { setSettingMutation } = useAppSettingMutations();
+  const { setSettingMutation } = AppSettingHooks.useAppSettingMutations();
   const { status, isFreeing, isStillInUse, free } = useLocalModel();
   const { progress, isDownloading } = useAiModelDownload();
 
   const [hasOpenedList, setHasOpenedList] = useState(false);
-  const { data: available, isFetching } = useAiModels(hasOpenedList);
+  const { data: available, isFetching } = AiHooks.useAiModels(hasOpenedList);
 
   if (!status)
     return (
@@ -74,7 +75,7 @@ export default function LocalModelCardComponent() {
   const choose = (model: string) =>
     setSettingMutation.mutate(
       { key: AppSettingKeyEnum.AI_OLLAMA_MODEL, value: model },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: aiKeys.all }) },
+      { onSuccess: () => queryClient.invalidateQueries({ queryKey: AiHooks.keys.all }) },
     );
 
   let pill = (
@@ -127,13 +128,13 @@ export default function LocalModelCardComponent() {
         <div className="flex flex-column gap-1">
           <span
             className="text-xs"
-            style={MUTED}
+            style={HomeFormat.MUTED}
           >
             Downloading {progress.model}
-            {progress.total > 0 && ` · ${gigabytes(progress.completed)} of ${gigabytes(progress.total)}`}
+            {progress.total > 0 && ` · ${AiFormat.gigabytes(progress.completed)} of ${AiFormat.gigabytes(progress.total)}`}
           </span>
           <ProgressBar
-            value={percentOf(progress.completed, progress.total)}
+            value={AiFormat.percentOf(progress.completed, progress.total)}
             mode={progress.total > 0 ? "determinate" : "indeterminate"}
             showValue={false}
             style={{ height: 6 }}
@@ -144,7 +145,7 @@ export default function LocalModelCardComponent() {
       <div className="flex align-items-center justify-content-between flex-wrap gap-2">
         <span
           className="text-sm"
-          style={MUTED}
+          style={HomeFormat.MUTED}
         >
           {noteOf(status)}
         </span>
@@ -175,14 +176,14 @@ export default function LocalModelCardComponent() {
       {status.cloudModel && (
         <div
           className="flex align-items-center gap-2 p-2 border-round-lg text-xs"
-          style={{ background: "var(--surface-ground)", ...MUTED }}
+          style={{ background: "var(--surface-ground)", ...HomeFormat.MUTED }}
         >
           <i
             className="pi pi-cloud"
             aria-hidden="true"
           />
           <span>
-            <span style={{ fontFamily: MONO }}>{status.cloudModel}</span> answers in the cloud. This model still reads
+            <span style={{ fontFamily: RepositoryFormat.MONO }}>{status.cloudModel}</span> answers in the cloud. This model still reads
             the screens.
           </span>
         </div>

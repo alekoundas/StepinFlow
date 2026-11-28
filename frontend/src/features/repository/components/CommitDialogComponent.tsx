@@ -8,15 +8,11 @@ import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
-import type { RepositoryFileChangeDto } from "@/shared/models/repository-dtos";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import ChangeKindBadgeComponent from "@/features/repository/components/ChangeKindBadgeComponent";
-import {
-  useCommitRepository,
-  useRepositoryChanges,
-  useRepositoryStatus,
-} from "@/features/repository/hooks/use-repository";
-import { MONO, describeChanges, imageSource, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
+import type { RepositoryFileChangeDto } from "@/shared/models/repository/repository-file-change-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -30,7 +26,7 @@ interface Props {
 
 /** Every file saved since the last commit, the ones to commit ticked, and a message saying why. */
 export default function CommitDialogComponent({ visible, flowId, onHide }: Props) {
-  const { data: files, isLoading, error } = useRepositoryChanges(visible);
+  const { data: files, isLoading, error } = RepositoryHooks.useRepositoryChanges(visible);
 
   return (
     <Dialog
@@ -73,15 +69,15 @@ interface FormProps {
 }
 
 function CommitFormComponent({ files, flowId, onDone }: FormProps) {
-  const { data: status } = useRepositoryStatus();
-  const { data: settings = [] } = useAppSettings();
-  const commitMutation = useCommitRepository();
+  const { data: status } = RepositoryHooks.useRepositoryStatus();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
+  const commitMutation = RepositoryHooks.useCommitRepository();
 
   const isOwn = (file: RepositoryFileChangeDto) => flowId === undefined || file.flowId === flowId;
   const own = files.filter(isOwn);
 
   const [picked, setPicked] = useState<Set<string>>(() => new Set(own.map((x) => x.path)));
-  const [message, setMessage] = useState(() => describeChanges(own[0]?.flowName ?? "", own));
+  const [message, setMessage] = useState(() => RepositoryFormat.describeChanges(own[0]?.flowName ?? "", own));
   const [error, setError] = useState<string | null>(null);
 
   if (files.length === 0)
@@ -172,7 +168,7 @@ function CommitFormComponent({ files, flowId, onDone }: FormProps) {
             className="text-xs"
             style={MUTED}
           >
-            {picked.size} of {plural(files.length, "file")}
+            {picked.size} of {RepositoryFormat.plural(files.length, "file")}
           </span>
         </div>
 
@@ -208,7 +204,7 @@ function CommitFormComponent({ files, flowId, onDone }: FormProps) {
                     <ChangeKindBadgeComponent kind={file.kind} />
                     {file.isImage && file.image && (
                       <img
-                        src={imageSource(file.path, file.image)}
+                        src={RepositoryFormat.imageSource(file.path, file.image)}
                         alt=""
                         className="flex-none border-round-sm"
                         style={{ width: 36, height: 24, objectFit: "contain", background: "#ffffff" }}
@@ -217,7 +213,7 @@ function CommitFormComponent({ files, flowId, onDone }: FormProps) {
                     <label
                       htmlFor={inputId}
                       className="flex-1 min-w-0 white-space-nowrap overflow-hidden text-overflow-ellipsis text-sm cursor-pointer"
-                      style={{ fontFamily: MONO }}
+                      style={{ fontFamily: RepositoryFormat.MONO }}
                     >
                       <span style={MUTED}>{file.path.slice(0, slash + 1)}</span>
                       {file.path.slice(slash + 1)}
@@ -242,7 +238,7 @@ function CommitFormComponent({ files, flowId, onDone }: FormProps) {
           className="text-xs"
           style={MUTED}
         >
-          To <span style={{ fontFamily: MONO }}>{status?.branch ?? "main"}</span>
+          To <span style={{ fontFamily: RepositoryFormat.MONO }}>{status?.branch ?? "main"}</span>
           {authorName && `, as ${authorName}`}
           {authorEmail && ` · ${authorEmail}`}
         </span>
@@ -257,7 +253,7 @@ function CommitFormComponent({ files, flowId, onDone }: FormProps) {
           />
           <Button
             type="button"
-            label={`Commit ${plural(picked.size, "file")}`}
+            label={`Commit ${RepositoryFormat.plural(picked.size, "file")}`}
             icon="pi pi-check-circle"
             onClick={() => void commit()}
             loading={commitMutation.isPending}

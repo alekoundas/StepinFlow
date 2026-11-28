@@ -6,14 +6,14 @@ import { Message } from "primereact/message";
 import { classNames } from "primereact/utils";
 
 import { BroadcastTypeEnum } from "../../../../electron/shared/types";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import RecordingLiveListComponent from "@/features/recording/components/RecordingLiveListComponent";
-import { toClock } from "@/shared/utils/clock";
+import { Clock } from "@/shared/utils/clock";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 
 // The list shows the newest few, as many as fit without scrolling.
@@ -52,7 +52,7 @@ export default function RecordingBarPage() {
   const setupFlowIdParam = searchParams.get("setupFlowId");
   const setupFlowId = setupFlowIdParam ? Number(setupFlowIdParam) : undefined;
 
-  const { data: settings = [] } = useAppSettings();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
 
   const [progress, setProgress] = useState<RecordingProgressDto | null>(null);
   const [receivedAt, setReceivedAt] = useState(() => Date.now());
@@ -66,7 +66,7 @@ export default function RecordingBarPage() {
   const askedRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.RECORDING_PROGRESS) return;
 
       setProgress(message.payload as RecordingProgressDto);
@@ -83,12 +83,12 @@ export default function RecordingBarPage() {
 
     if (asking && askedRef.current !== asking.pressIndex) {
       askedRef.current = asking.pressIndex;
-      void ElectronApiService.recordingGesture.openWindow(asking.pressIndex, asking.gesture);
+      void ElectronApiService.RecordingGesture.openWindow(asking.pressIndex, asking.gesture);
     }
 
     if (!asking && askedRef.current !== null) {
       askedRef.current = null;
-      void ElectronApiService.recordingGesture.closeWindow();
+      void ElectronApiService.RecordingGesture.closeWindow();
     }
   }, [progress]);
 
@@ -103,7 +103,7 @@ export default function RecordingBarPage() {
 
     const observer = new ResizeObserver(() => {
       const bounds = root.getBoundingClientRect();
-      ElectronApiService.recordingBar.resizeWindow(bounds.width, bounds.height);
+      ElectronApiService.RecordingBar.resizeWindow(bounds.width, bounds.height);
     });
 
     observer.observe(root);
@@ -146,18 +146,18 @@ export default function RecordingBarPage() {
     }
   };
 
-  const start = () => void ask(() => backendApiService.Recording.start(flowId));
+  const start = () => void ask(() => BackendApiService.Recording.start(flowId));
 
   // Before Start there is nothing to discard: the bar closes, and StepinFlow comes back.
-  const close = () => void ElectronApiService.recordingBar.closeWindow();
+  const close = () => void ElectronApiService.RecordingBar.closeWindow();
 
   const togglePause = () =>
-    void ask(() => (isPaused ? backendApiService.Recording.resume() : backendApiService.Recording.pause()));
+    void ask(() => (isPaused ? BackendApiService.Recording.resume() : BackendApiService.Recording.pause()));
 
-  const stop = () => void ask(() => backendApiService.Recording.stop());
+  const stop = () => void ask(() => BackendApiService.Recording.stop());
 
   // The bar never takes focus, so the application keeps the keyboard and nothing is typed here.
-  const markStage = () => void ask(() => backendApiService.Recording.markStage());
+  const markStage = () => void ask(() => BackendApiService.Recording.markStage());
 
   const discard = () => {
     if (!isConfirmingDiscard) {
@@ -165,7 +165,7 @@ export default function RecordingBarPage() {
       return;
     }
 
-    void ask(() => backendApiService.Recording.discard(setupFlowId));
+    void ask(() => BackendApiService.Recording.discard(setupFlowId));
   };
 
   let accent = "var(--red-400)";
@@ -213,7 +213,7 @@ export default function RecordingBarPage() {
             className="text-sm"
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
-            {toClock(elapsed)}
+            {Clock.toClock(elapsed)}
           </span>
         </div>
 

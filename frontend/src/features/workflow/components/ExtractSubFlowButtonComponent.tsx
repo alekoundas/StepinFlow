@@ -5,7 +5,7 @@ import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
@@ -35,7 +35,7 @@ export default function ExtractSubFlowButtonComponent({
     setError(null);
 
     try {
-      const result = await backendApiService.Flow.extractSubFlow({
+      const result = await BackendApiService.Flow.extractSubFlow({
         flowStepId: node.entityId,
         name,
         sourceRootId: rootFlowId,

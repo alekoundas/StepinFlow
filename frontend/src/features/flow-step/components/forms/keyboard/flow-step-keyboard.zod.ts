@@ -1,18 +1,15 @@
 import { z } from "zod";
 
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
-import {
-  KEY_ACTION_VALUES,
-  KEYBOARD_MODE_VALUES,
-} from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { KeyboardModes } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepKeyboardSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
 
-    keyboardInputType: z.enum(KEYBOARD_MODE_VALUES),
-    keyboardKeyActionType: z.enum(KEY_ACTION_VALUES).nullish(),
+    keyboardInputType: z.enum(KeyboardModes.KEYBOARD_MODE_VALUES),
+    keyboardKeyActionType: z.enum(KeyboardModes.KEY_ACTION_VALUES).nullish(),
     keyboardInputText: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),

@@ -10,14 +10,11 @@
  */
 
 import { useCallback, useRef, useState } from "react";
-import type { Point, Rect, Size } from "@/windows/image-editor/types";
-import {
-  clampRectToImage,
-  createCanvas,
-  get2dContext,
-  polygonBounds,
-} from "@/windows/image-editor/utils/canvas-utils";
+import { CanvasUtils } from "@/windows/image-editor/utils/canvas-utils";
 import { useUndoRedo } from "@/windows/image-editor/hooks/useUndoRedo";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Rect } from "@/windows/image-editor/types/rect";
+import type { Size } from "@/windows/image-editor/types/size";
 
 export function useImageCanvas() {
   const documentRef = useRef<HTMLCanvasElement | null>(null);
@@ -45,8 +42,8 @@ export function useImageCanvas() {
 
   const loadImage = useCallback(
     (image: HTMLImageElement) => {
-      const canvas = createCanvas(image.naturalWidth, image.naturalHeight);
-      get2dContext(canvas).drawImage(image, 0, 0);
+      const canvas = CanvasUtils.createCanvas(image.naturalWidth, image.naturalHeight);
+      CanvasUtils.get2dContext(canvas).drawImage(image, 0, 0);
 
       setDocument(canvas);
       history.reset(canvas, "Original");
@@ -64,14 +61,14 @@ export function useImageCanvas() {
       const source = documentRef.current;
       if (!source) return;
 
-      const bounds = clampRectToImage(rect, {
+      const bounds = CanvasUtils.clampRectToImage(rect, {
         width: source.width,
         height: source.height,
       });
       if (bounds.width < 1 || bounds.height < 1) return;
 
-      const cropped = createCanvas(bounds.width, bounds.height);
-      get2dContext(cropped).drawImage(source, -bounds.x, -bounds.y);
+      const cropped = CanvasUtils.createCanvas(bounds.width, bounds.height);
+      CanvasUtils.get2dContext(cropped).drawImage(source, -bounds.x, -bounds.y);
 
       setDocument(cropped);
       history.push(cropped, `Crop ${bounds.width}x${bounds.height}`);
@@ -88,14 +85,14 @@ export function useImageCanvas() {
       const source = documentRef.current;
       if (!source || points.length < 3) return;
 
-      const bounds = clampRectToImage(polygonBounds(points), {
+      const bounds = CanvasUtils.clampRectToImage(CanvasUtils.polygonBounds(points), {
         width: source.width,
         height: source.height,
       });
       if (bounds.width < 1 || bounds.height < 1) return;
 
-      const cropped = createCanvas(bounds.width, bounds.height);
-      const ctx = get2dContext(cropped);
+      const cropped = CanvasUtils.createCanvas(bounds.width, bounds.height);
+      const ctx = CanvasUtils.get2dContext(cropped);
 
       ctx.beginPath();
       ctx.moveTo(points[0].x - bounds.x, points[0].y - bounds.y);
@@ -125,7 +122,7 @@ export function useImageCanvas() {
       const canvas = documentRef.current;
       if (!canvas) return;
 
-      const ctx = get2dContext(canvas);
+      const ctx = CanvasUtils.get2dContext(canvas);
       ctx.save();
       ctx.globalCompositeOperation = "destination-out";
       ctx.lineWidth = Math.max(1, brushSize);
@@ -157,8 +154,8 @@ export function useImageCanvas() {
   /** Restore a snapshot without recording a new history entry. */
   const restoreSnapshot = useCallback(
     (snapshot: HTMLCanvasElement) => {
-      const restored = createCanvas(snapshot.width, snapshot.height);
-      get2dContext(restored).drawImage(snapshot, 0, 0);
+      const restored = CanvasUtils.createCanvas(snapshot.width, snapshot.height);
+      CanvasUtils.get2dContext(restored).drawImage(snapshot, 0, 0);
       setDocument(restored);
     },
     [setDocument],

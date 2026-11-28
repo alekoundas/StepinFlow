@@ -3,9 +3,9 @@ import { validateFileName } from "@/shared/utils/file-name";
 import { z } from "zod";
 
 // Room for what a model needs to remember about the flow, not only a line for the list.
-export const DESCRIPTION_MAX_LENGTH = 5000;
+const DESCRIPTION_MAX_LENGTH = 5000;
 
-export const FlowSchema = z.object({
+const FlowSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")
@@ -16,3 +16,8 @@ export const FlowSchema = z.object({
     }),
   description: z.string().max(DESCRIPTION_MAX_LENGTH, `Keep it under ${DESCRIPTION_MAX_LENGTH} characters`),
 });
+
+export const FlowZod = {
+  DESCRIPTION_MAX_LENGTH,
+  FlowSchema,
+};

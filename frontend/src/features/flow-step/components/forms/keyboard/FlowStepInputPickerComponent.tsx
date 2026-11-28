@@ -4,9 +4,9 @@ import { useFormContext } from "react-hook-form";
 
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowInputDto } from "@/shared/models/database/flow-input-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { useFlow } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import FlowInputFormComponent from "@/features/flow-input/components/forms/FlowInputFormComponent";
 import { useFlowInputMutations } from "@/features/flow-input/hooks/use-flow-input";
 
@@ -22,7 +22,7 @@ interface Props {
 export function FlowStepInputPickerComponent({ flowId, isDisabled }: Props) {
   const { getValues, setValue } = useFormContext();
   const { openForm, closeAll } = useDialogStore();
-  const { data: flow } = useFlow(flowId ?? null);
+  const { data: flow } = FlowHooks.useFlow(flowId ?? null);
   const { createFlowInputMutation } = useFlowInputMutations();
 
   const inputs = flow?.flowInputs ?? [];
@@ -50,7 +50,7 @@ export function FlowStepInputPickerComponent({ flowId, isDisabled }: Props) {
           onSubmit={async (data) => {
             closeAll();
             const id = await createFlowInputMutation.mutateAsync({ ...data, flowId });
-            const saved = await backendApiService.Flow.get(flowId);
+            const saved = await BackendApiService.Flow.get(flowId);
             const input = saved.flowInputs.find((x) => x.id === id);
             if (input) insert(input.name);
           }}

@@ -4,19 +4,16 @@ import { Message } from "primereact/message";
 import { Panel } from "primereact/panel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import {
   BroadcastTypeEnum,
   RecordedInputTypeEnum,
   type RecordedInput,
 } from "../../../../../electron/shared/types";
-import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-key-enum";
+import { AppSettingKindEnum } from "@/shared/enums/backend/app-setting-kind-enum";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
-import {
-  useAppSettingMutations,
-  useAppSettings,
-} from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 
 // The hook's names for the keys a gesture may hold: either side of Ctrl, Alt, Shift and Win.
@@ -62,8 +59,8 @@ export default function HotkeysPanelComponent({
   description,
   keyPrefix,
 }: Props) {
-  const { data: all = [] } = useAppSettings();
-  const { setSettingMutation } = useAppSettingMutations();
+  const { data: all = [] } = AppSettingHooks.useAppSettings();
+  const { setSettingMutation } = AppSettingHooks.useAppSettingMutations();
 
   const hotkeys = all.filter(
     (x) =>
@@ -98,7 +95,7 @@ export default function HotkeysPanelComponent({
       setCapturingKey(null);
       setHeldKeys([]);
       heldRef.current = [];
-      void backendApiService.System.inputRecordHotkeyStop();
+      void BackendApiService.System.inputRecordHotkeyStop();
 
       // Two commands on one combination means one of them can never fire, so it is refused here
       // rather than silently lost.
@@ -117,7 +114,7 @@ export default function HotkeysPanelComponent({
 
     const isGesture = hotkeysRef.current.find((x) => x.key === capturingKey)?.kind === AppSettingKindEnum.GESTURE;
 
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.HOTKEY_CAPTURE_EVENT) return;
 
       const input = message.payload as RecordedInput;
@@ -160,7 +157,7 @@ export default function HotkeysPanelComponent({
     // broadcasting every key.
     return () => {
       unsubscribe?.();
-      void backendApiService.System.inputRecordHotkeyStop();
+      void BackendApiService.System.inputRecordHotkeyStop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capturingKey]);
@@ -169,13 +166,13 @@ export default function HotkeysPanelComponent({
     setError(null);
     setHeldKeys([]);
     setCapturingKey(setting.key);
-    await backendApiService.System.inputRecordHotkeyStart();
+    await BackendApiService.System.inputRecordHotkeyStart();
   };
 
   const cancel = async () => {
     setCapturingKey(null);
     setHeldKeys([]);
-    await backendApiService.System.inputRecordHotkeyStop();
+    await BackendApiService.System.inputRecordHotkeyStop();
   };
 
   const clear = (setting: AppSettingDto) =>

@@ -1,8 +1,8 @@
 import { matchPath, useLocation } from "react-router-dom";
 
-import { useExecution } from "@/features/execution/hooks/use-execution";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
-import { useFlow } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 
 export type AiChatPageKind = "execution" | "flow" | "none";
@@ -32,8 +32,8 @@ export function useAiChatPage(): AiChatPage {
   const pastExecutionId = requested ? +requested : undefined;
   const executionId = onExecution ? (pastExecutionId ?? liveExecutionId) : undefined;
 
-  const { data: flow } = useFlow(flowId ?? null);
-  const { data: pastExecution } = useExecution(pastExecutionId ?? null);
+  const { data: flow } = FlowHooks.useFlow(flowId ?? null);
+  const { data: pastExecution } = ExecutionHooks.useExecution(pastExecutionId ?? null);
 
   const flowName = flow?.name ?? "This flow";
 

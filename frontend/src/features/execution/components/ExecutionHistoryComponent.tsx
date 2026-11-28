@@ -2,10 +2,10 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 
 import StatusPillComponent from "@/shared/components/StatusPillComponent";
-import { executionStatusSeverity, executionStatusText } from "@/shared/utils/execution-status";
-import { toTook } from "@/shared/utils/clock";
+import { ExecutionStatus } from "@/shared/utils/execution-status";
+import { Clock } from "@/shared/utils/clock";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
-import { useExecutionList } from "@/features/execution/hooks/use-execution";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
 
@@ -24,7 +24,7 @@ export default function ExecutionHistoryComponent({
   currentStructureHash,
   onOpen,
 }: Props) {
-  const { data: executions, isLoading } = useExecutionList(flowId);
+  const { data: executions, isLoading } = ExecutionHooks.useExecutionList(flowId);
 
   return (
     <DataTable
@@ -51,8 +51,8 @@ export default function ExecutionHistoryComponent({
         header="Result"
         body={(execution: ExecutionDto) => (
           <StatusPillComponent
-            text={executionStatusText(execution.status)}
-            severity={executionStatusSeverity(execution.status)}
+            text={ExecutionStatus.executionStatusText(execution.status)}
+            severity={ExecutionStatus.executionStatusSeverity(execution.status)}
           />
         )}
       />
@@ -116,5 +116,5 @@ function historyLevelText(level: ExecutionHistoryLevelEnum): string {
 function duration(execution: ExecutionDto): string {
   if (!execution.completedAt) return "—";
 
-  return toTook(new Date(execution.completedAt).getTime() - new Date(execution.createdOn).getTime());
+  return Clock.toTook(new Date(execution.completedAt).getTime() - new Date(execution.createdOn).getTime());
 }

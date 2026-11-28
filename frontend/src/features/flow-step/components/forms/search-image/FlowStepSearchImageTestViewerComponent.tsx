@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent, WheelEvent } from "react";
 import { Button } from "primereact/button";
-
-import type { ImageSearchTestMatchDto } from "@/shared/models/database/image-search-test-result-dto";
+import type { ImageSearchTestMatchDto } from "@/shared/models/database/image-search-test-match-dto";
 
 interface Props {
   screenshot: string;

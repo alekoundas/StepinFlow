@@ -10,13 +10,13 @@ import { Message } from "primereact/message";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { AiCloudProviderEnum } from "@/shared/enums/backend/ai/ai-cloud-provider-enum";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
-import { aiKeys, useAiModels, useAiStatus } from "@/features/ai/hooks/use-ai";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
 import AiModelOptionComponent from "@/features/ai/components/AiModelOptionComponent";
 import OllamaModelDownloadComponent from "@/features/ai/components/OllamaModelDownloadComponent";
 import type { AppSettingDto } from "@/shared/models/database/app-setting-dto";
-import type { AiModelDto } from "@/shared/models/ai-models-dto";
+import type { AiModelDto } from "@/shared/models/ai-model-dto";
 
 /**
  * The AI settings, which are a form rather than a list: the model lists have to be fetched, and
@@ -29,10 +29,10 @@ import type { AiModelDto } from "@/shared/models/ai-models-dto";
 export default function AiSettingsPanelComponent() {
   const queryClient = useQueryClient();
 
-  const { data: settings = [] } = useAppSettings();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
   const { valueOf, edit, commit, commitNow } = useSettingEditor();
-  const { data: isConfigured } = useAiStatus();
-  const { data: available, isFetching: isFetchingModels } = useAiModels(true);
+  const { data: isConfigured } = AiHooks.useAiStatus();
+  const { data: available, isFetching: isFetchingModels } = AiHooks.useAiModels(true);
 
   const find = (key: AppSettingKeyEnum): AppSettingDto | undefined =>
     settings.find((x) => x.key === key);
@@ -52,10 +52,10 @@ export default function AiSettingsPanelComponent() {
 
   // Whether AI is on, what can be chosen and what the chat can do all move with these.
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: aiKeys.models() });
-    queryClient.invalidateQueries({ queryKey: aiKeys.status() });
-    queryClient.invalidateQueries({ queryKey: aiKeys.suggestions() });
-    queryClient.invalidateQueries({ queryKey: aiKeys.chatAvailability() });
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.models() });
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.status() });
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.suggestions() });
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.chatAvailability() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ollamaUrl, ollamaModel, cloudProvider, cloudModel]);
 

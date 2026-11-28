@@ -3,7 +3,7 @@
  */
 
 import { Button } from "primereact/button";
-import type { EditorTool } from "@/windows/image-editor/types";
+import type { EditorTool } from "@/windows/image-editor/types/editor-tool";
 
 interface ToolDefinition {
   tool: EditorTool;

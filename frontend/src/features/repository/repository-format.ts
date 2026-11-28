@@ -1,19 +1,19 @@
 import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
-import type { RepositoryFileChangeDto } from "@/shared/models/repository-dtos";
+import type { RepositoryFileChangeDto } from "@/shared/models/repository/repository-file-change-dto";
 
-export const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /** How each kind of change looks, wherever one is listed. */
-export const CHANGE_KIND: Record<GitChangeKindEnum, { letter: string; word: string; color: string }> = {
+const CHANGE_KIND: Record<GitChangeKindEnum, { letter: string; word: string; color: string }> = {
   ADDED: { letter: "A", word: "added", color: "var(--green-400)" },
   MODIFIED: { letter: "M", word: "changed", color: "var(--blue-400)" },
   DELETED: { letter: "D", word: "removed", color: "var(--red-400)" },
 };
 
 /** Saved, not committed yet. */
-export const UNCOMMITTED_COLOR = "var(--yellow-500)";
+const UNCOMMITTED_COLOR = "var(--yellow-500)";
 
-export const MONO = "ui-monospace, Consolas, monospace";
+const MONO = "ui-monospace, Consolas, monospace";
 
 const MIME: Record<string, string> = {
   png: "image/png",
@@ -27,7 +27,7 @@ const MIME: Record<string, string> = {
 };
 
 /** A template image's bytes, as the backend sends them, ready for an img. */
-export const imageSource = (name: string, base64: string): string => {
+const imageSource = (name: string, base64: string): string => {
   const extension = name.split(".").pop()?.toLowerCase() ?? "";
   return `data:${MIME[extension] ?? "image/png"};base64,${base64}`;
 };
@@ -36,7 +36,7 @@ export const imageSource = (name: string, base64: string): string => {
  * A commit message from what changed in one flow, for the person to keep or rewrite:
  * "Login: script changed; 1 template added, 2 templates removed".
  */
-export const describeChanges = (flowName: string, files: RepositoryFileChangeDto[]): string => {
+const describeChanges = (flowName: string, files: RepositoryFileChangeDto[]): string => {
   const parts: string[] = [];
 
   const script = files.find((x) => !x.isImage && x.path.toLowerCase().endsWith(".sflw"));
@@ -56,5 +56,15 @@ export const describeChanges = (flowName: string, files: RepositoryFileChangeDto
   return flowName ? `${flowName}: ${what}` : `Repository: ${what}`;
 };
 
-export const formatWhen = (value: string): string =>
+const formatWhen = (value: string): string =>
   new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+export const RepositoryFormat = {
+  plural,
+  CHANGE_KIND,
+  UNCOMMITTED_COLOR,
+  MONO,
+  imageSource,
+  describeChanges,
+  formatWhen,
+};

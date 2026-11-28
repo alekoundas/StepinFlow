@@ -1,4 +1,4 @@
-import { MUTED } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 interface Props {
   value: string | number;
@@ -23,7 +23,7 @@ export default function StatTileComponent({ value, label, dotColor }: Props) {
       </span>
       <span
         className="flex align-items-center gap-2 text-xs white-space-nowrap"
-        style={MUTED}
+        style={HomeFormat.MUTED}
       >
         {dotColor && (
           <span

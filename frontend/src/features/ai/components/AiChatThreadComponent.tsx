@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 
 import AiChatAnswerComponent from "@/features/ai/components/AiChatAnswerComponent";
-import { MUTED } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import type { AiChatPage, AiChatPageKind } from "@/features/ai/hooks/use-ai-chat-page";
 import type { AiConversation } from "@/features/ai/store/ai-chat-store";
 
@@ -83,7 +83,7 @@ export default function AiChatThreadComponent({ conversation, page, onAsk }: Pro
               <h2 className="m-0 text-lg font-semibold">What do you want to know?</h2>
               <p
                 className="m-0 text-sm"
-                style={MUTED}
+                style={ExecutionFormat.MUTED}
               >
                 {HINTS[page.kind]}
               </p>

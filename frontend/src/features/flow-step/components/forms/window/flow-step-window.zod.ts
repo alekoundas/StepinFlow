@@ -2,7 +2,7 @@ import { z } from "zod";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
-export const WINDOW_FLOW_STEP_TYPES = [
+const WINDOW_FLOW_STEP_TYPES = [
   FlowStepTypeEnum.WINDOW_FOCUS,
   FlowStepTypeEnum.WINDOW_RESIZE,
   FlowStepTypeEnum.WINDOW_RELOCATE,
@@ -11,12 +11,7 @@ export const WINDOW_FLOW_STEP_TYPES = [
 
 export type WindowFlowStepType = (typeof WINDOW_FLOW_STEP_TYPES)[number];
 
-export const isWindowFlowStepType = (
-  type: FlowStepTypeEnum | undefined,
-): type is WindowFlowStepType =>
-  WINDOW_FLOW_STEP_TYPES.includes(type as WindowFlowStepType);
-
-export const FlowStepWindowSchema = z
+const FlowStepWindowSchema = z
   .object({
     codeComment: CODE_COMMENT_SCHEMA,
     flowStepType: z.enum(WINDOW_FLOW_STEP_TYPES),
@@ -70,3 +65,8 @@ export const FlowStepWindowSchema = z
       }
     }
   });
+
+export const FlowStepWindowZod = {
+  WINDOW_FLOW_STEP_TYPES,
+  FlowStepWindowSchema,
+};

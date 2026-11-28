@@ -30,27 +30,27 @@ export interface GestureFields {
   stageName: string;
 }
 
-export interface RuleOption {
+interface RuleOption {
   label: string;
   value: ConditionTypeEnum;
 }
 
-export interface StepOption {
+interface StepOption {
   label: string;
   value: ReviewChoiceEnum;
   description: string;
   icon: string;
 }
 
-export interface WaitUnit {
+interface WaitUnit {
   label: string;
   value: number;
 }
 
-export const DEFAULT_WAIT_MILLISECONDS = 30_000;
+const DEFAULT_WAIT_MILLISECONDS = 30_000;
 
 // Read as the end of "The words read there ...".
-export const CHECK_RULES: RuleOption[] = [
+const CHECK_RULES: RuleOption[] = [
   { label: "contain", value: ConditionTypeEnum.CONTAINS },
   { label: "are exactly", value: ConditionTypeEnum.EQUALS },
   { label: "match a pattern", value: ConditionTypeEnum.MATCHES_REGEX },
@@ -60,7 +60,7 @@ export const CHECK_RULES: RuleOption[] = [
   { label: "are not empty", value: ConditionTypeEnum.IS_NOT_EMPTY },
 ];
 
-export const STEP_OPTIONS: StepOption[] = [
+const STEP_OPTIONS: StepOption[] = [
   {
     label: "Execute a command",
     value: ReviewChoiceEnum.EXECUTE_COMMAND,
@@ -99,32 +99,32 @@ export const STEP_OPTIONS: StepOption[] = [
   },
 ];
 
-export const WAIT_UNITS: WaitUnit[] = [
+const WAIT_UNITS: WaitUnit[] = [
   { label: "seconds", value: 1_000 },
   { label: "minutes", value: 60_000 },
   { label: "hours", value: 3_600_000 },
 ];
 
-export function isCheckChoice(choice: ReviewChoiceEnum): boolean {
+function isCheckChoice(choice: ReviewChoiceEnum): boolean {
   return choice === ReviewChoiceEnum.CHECK_THERE || choice === ReviewChoiceEnum.CHECK_GONE;
 }
 
-export function isStepChoice(choice: ReviewChoiceEnum): boolean {
+function isStepChoice(choice: ReviewChoiceEnum): boolean {
   return STEP_OPTIONS.some((x) => x.value === choice);
 }
 
 /** A notification that reads the words where it was marked first: the one step where the place matters. */
-export function isReadingChoice(fields: GestureFields): boolean {
+function isReadingChoice(fields: GestureFields): boolean {
   return fields.choice === ReviewChoiceEnum.NOTIFY && fields.isReadingText;
 }
 
 /** Not empty, and empty, compare nothing. */
-export function ruleNeedsWords(rule: ConditionTypeEnum): boolean {
+function ruleNeedsWords(rule: ConditionTypeEnum): boolean {
   return rule !== ConditionTypeEnum.IS_EMPTY && rule !== ConditionTypeEnum.IS_NOT_EMPTY;
 }
 
 /** As the end of "Waits until the area ...". */
-export function describeRule(rule: ConditionTypeEnum, text: string, end: string): string {
+function describeRule(rule: ConditionTypeEnum, text: string, end: string): string {
   const words = text.trim();
 
   switch (rule) {
@@ -146,14 +146,14 @@ export function describeRule(rule: ConditionTypeEnum, text: string, end: string)
 }
 
 /** A check's two notifications, as a check that waits for it to go or to be there says them. */
-export function notifyLabels(choice: ReviewChoiceEnum): { success: string; failure: string } {
+function notifyLabels(choice: ReviewChoiceEnum): { success: string; failure: string } {
   if (choice === ReviewChoiceEnum.CHECK_GONE) return { success: "When it goes", failure: "When it stays" };
 
   return { success: "When it's there", failure: "When it never comes" };
 }
 
 /** What a step marked instead of a click does, said under its form. */
-export function stepNote(fields: GestureFields): string {
+function stepNote(fields: GestureFields): string {
   switch (fields.choice) {
     case ReviewChoiceEnum.EXECUTE_COMMAND:
       return "Executes the command in cmd and waits for it to finish. Windows only, as every command is for now.";
@@ -175,12 +175,12 @@ export function stepNote(fields: GestureFields): string {
 }
 
 /** Letters, digits and underscores: what a script's input names are. */
-export function toScriptName(text: string): string {
+function toScriptName(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9_]/g, "_");
 }
 
 /** Whether what was answered can become its step: a bot to send through, something to execute. */
-export function isComplete(fields: GestureFields): boolean {
+function isComplete(fields: GestureFields): boolean {
   if (isCheckChoice(fields.choice)) {
     const isNotifying = fields.notifyOnSuccess || fields.notifyOnFailure;
     if (isNotifying && fields.discordBotId === null) return false;
@@ -210,7 +210,7 @@ export function isComplete(fields: GestureFields): boolean {
 }
 
 /** Nothing decided: a check by its picture that waits for it, telling nobody. */
-export function blankFields(choice: ReviewChoiceEnum): GestureFields {
+function blankFields(choice: ReviewChoiceEnum): GestureFields {
   return {
     choice,
     searchBy: SearchByEnum.IMAGE,
@@ -233,7 +233,7 @@ export function blankFields(choice: ReviewChoiceEnum): GestureFields {
 }
 
 /** What the fields say, as the backend keeps it: only what the choice uses. */
-export function toReviewedFields(fields: GestureFields): Omit<ReviewedActionDto, "actionIndex" | "isSecret"> {
+function toReviewedFields(fields: GestureFields): Omit<ReviewedActionDto, "actionIndex" | "isSecret"> {
   const isCheck = isCheckChoice(fields.choice);
   const isByWords = isCheck && fields.searchBy === SearchByEnum.TEXT;
   const isNotifying = isCheck && (fields.notifyOnSuccess || fields.notifyOnFailure);
@@ -265,7 +265,7 @@ export function toReviewedFields(fields: GestureFields): Omit<ReviewedActionDto,
 }
 
 /** The fields again, from what the backend kept, over what was there. */
-export function fromReviewed(reviewed: ReviewedActionDto, over: GestureFields): GestureFields {
+function fromReviewed(reviewed: ReviewedActionDto, over: GestureFields): GestureFields {
   return {
     ...over,
     choice: reviewed.choice,
@@ -287,3 +287,21 @@ export function fromReviewed(reviewed: ReviewedActionDto, over: GestureFields): 
     stageName: reviewed.stageName ?? over.stageName,
   };
 }
+
+export const Gesture = {
+  CHECK_RULES,
+  STEP_OPTIONS,
+  WAIT_UNITS,
+  isCheckChoice,
+  isStepChoice,
+  isReadingChoice,
+  ruleNeedsWords,
+  describeRule,
+  notifyLabels,
+  stepNote,
+  toScriptName,
+  isComplete,
+  blankFields,
+  toReviewedFields,
+  fromReviewed,
+};

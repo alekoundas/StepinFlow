@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { CARD_BACKGROUND, MUTED } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 const HERO: CSSProperties = {
-  background: `linear-gradient(115deg, color-mix(in srgb, var(--primary-color) 24%, var(--surface-card)) 0%, ${CARD_BACKGROUND} 65%)`,
+  background: `linear-gradient(115deg, color-mix(in srgb, var(--primary-color) 24%, var(--surface-card)) 0%, ${HomeFormat.CARD_BACKGROUND} 65%)`,
   borderColor: "color-mix(in srgb, var(--primary-color) 30%, var(--surface-border))",
 };
 
@@ -29,7 +29,7 @@ export default function HomeHeroComponent({ eyebrow, title, description, childre
       >
         <div
           className="flex align-items-center gap-2 text-sm"
-          style={MUTED}
+          style={HomeFormat.MUTED}
         >
           {eyebrow}
         </div>
@@ -42,7 +42,7 @@ export default function HomeHeroComponent({ eyebrow, title, description, childre
         {description && (
           <p
             className="m-0 text-sm"
-            style={MUTED}
+            style={HomeFormat.MUTED}
           >
             {description}
           </p>

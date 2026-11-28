@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 const DEBOUNCE_MILLISECONDS = 300;
@@ -29,7 +29,7 @@ export function useFlowStepScriptLine(dto: FlowStepDto) {
 
   return useQuery({
     queryKey: ["flowStepScriptLine", debounced],
-    queryFn: () => backendApiService.FlowStep.getScriptLine(JSON.parse(debounced) as FlowStepDto),
+    queryFn: () => BackendApiService.FlowStep.getScriptLine(JSON.parse(debounced) as FlowStepDto),
     placeholderData: keepPreviousData,
     retry: false,
   });

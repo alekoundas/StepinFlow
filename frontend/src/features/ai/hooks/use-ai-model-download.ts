@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { aiKeys } from "@/features/ai/hooks/use-ai";
+import { BackendApiService } from "@/shared/services/backend-api-service";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
 import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
 /**
@@ -21,8 +21,8 @@ export function useAiModelDownload() {
   const queryClient = useQueryClient();
 
   const { data: progress } = useQuery({
-    queryKey: aiKeys.downloadState(),
-    queryFn: () => backendApiService.Ai.getDownloadState(),
+    queryKey: AiHooks.keys.downloadState(),
+    queryFn: () => BackendApiService.Ai.getDownloadState(),
     // Only while something is running. A finished one changes when somebody presses a button.
     refetchInterval: (query) => {
       const current = query.state.data as AiModelDownloadEventDto | null | undefined;
@@ -31,20 +31,20 @@ export function useAiModelDownload() {
   });
 
   useEffect(() => {
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.AI_MODEL_DOWNLOAD_EVENT) return;
 
       const event = message.payload as AiModelDownloadEventDto;
-      queryClient.setQueryData(aiKeys.downloadState(), event);
+      queryClient.setQueryData(AiHooks.keys.downloadState(), event);
 
       // Finished, so what is installed has changed and the model list is stale. The backend
       // forgets a finished download, so asking again clears the panel rather than leaving a banner.
       if (event.isDone && !event.error) {
-        queryClient.invalidateQueries({ queryKey: aiKeys.models() });
-        queryClient.invalidateQueries({ queryKey: aiKeys.suggestions() });
-        queryClient.invalidateQueries({ queryKey: aiKeys.status() });
-        queryClient.invalidateQueries({ queryKey: aiKeys.localModel() });
-        queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
+        queryClient.invalidateQueries({ queryKey: AiHooks.keys.models() });
+        queryClient.invalidateQueries({ queryKey: AiHooks.keys.suggestions() });
+        queryClient.invalidateQueries({ queryKey: AiHooks.keys.status() });
+        queryClient.invalidateQueries({ queryKey: AiHooks.keys.localModel() });
+        queryClient.invalidateQueries({ queryKey: AiHooks.keys.downloadState() });
       }
     });
 
@@ -56,9 +56,9 @@ export function useAiModelDownload() {
 
   const download = async (model: string) => {
     try {
-      await backendApiService.Ai.downloadModel(model);
+      await BackendApiService.Ai.downloadModel(model);
     } catch (error) {
-      queryClient.setQueryData(aiKeys.downloadState(), {
+      queryClient.setQueryData(AiHooks.keys.downloadState(), {
         model: model,
         status: "",
         completed: 0,
@@ -72,14 +72,14 @@ export function useAiModelDownload() {
       return;
     }
 
-    queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.downloadState() });
   };
 
   // Only a finished one can be dismissed. Hiding a running download would be a lie - the file
   // keeps growing either way, and the backend refuses.
   const dismiss = async () => {
-    await backendApiService.Ai.clearDownloadState();
-    queryClient.invalidateQueries({ queryKey: aiKeys.downloadState() });
+    await BackendApiService.Ai.clearDownloadState();
+    queryClient.invalidateQueries({ queryKey: AiHooks.keys.downloadState() });
   };
 
   const isDownloading = !!progress && !progress.isDone;

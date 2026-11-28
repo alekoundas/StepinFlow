@@ -15,22 +15,14 @@ import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import type { RecordingGestureDto } from "@/shared/models/recording-gesture-dto";
 import type { RecordingProgressDto } from "@/shared/models/recording-progress-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import DiscordBotFormComponent from "@/features/discord-bot/components/form/DiscordBotFormComponent";
 import { useDiscordBotMutations } from "@/features/discord-bot/hooks/use-discord-bot";
 import CheckNotifyFieldsComponent from "@/features/recording/gesture/CheckNotifyFieldsComponent";
 import CheckRuleFieldsComponent from "@/features/recording/gesture/CheckRuleFieldsComponent";
 import StepFieldsComponent from "@/features/recording/gesture/StepFieldsComponent";
-import {
-  blankFields,
-  type GestureFields,
-  isComplete,
-  isReadingChoice,
-  STEP_OPTIONS,
-  stepNote,
-  toReviewedFields,
-} from "@/features/recording/gesture/gesture";
+import { Gesture, type GestureFields } from "@/features/recording/gesture/gesture";
 
 const BOT_FORM_ID = "gesture-window-discord-bot-form";
 const LAST_BOT_KEY = "stepinflow.recording.lastDiscordBotId";
@@ -69,13 +61,13 @@ export default function RecordingGesturePage() {
 
   const { data: gesture } = useQuery({
     queryKey: ["recording", "gesture", pressIndex],
-    queryFn: () => backendApiService.Recording.getGesture(),
+    queryFn: () => BackendApiService.Recording.getGesture(),
     staleTime: Infinity,
   });
 
   const [screen, setScreen] = useState<Screen>("choice");
   const [edited, setEdited] = useState<GestureFields>(() => ({
-    ...blankFields(isCheck ? ReviewChoiceEnum.CHECK_THERE : ReviewChoiceEnum.EXECUTE_COMMAND),
+    ...Gesture.blankFields(isCheck ? ReviewChoiceEnum.CHECK_THERE : ReviewChoiceEnum.EXECUTE_COMMAND),
     discordBotId: lastBot(),
   }));
   const [isWordsEdited, setIsWordsEdited] = useState(false);
@@ -95,7 +87,7 @@ export default function RecordingGesturePage() {
   };
 
   const isByWords = isCheck && fields.searchBy === SearchByEnum.TEXT;
-  const isReading = !isCheck && screen === "form" && isReadingChoice(fields);
+  const isReading = !isCheck && screen === "form" && Gesture.isReadingChoice(fields);
   const isTestable = isByWords && !!gesture?.isElementFound && !!readText;
   const rule = JSON.stringify([fields.conditionType, fields.searchText, fields.conditionTextEnd]);
   const passes = isTestable && tested?.rule === rule ? tested.passes : null;
@@ -104,7 +96,7 @@ export default function RecordingGesturePage() {
   useEffect(() => {
     const key = ["recording", "gesture", pressIndex];
 
-    const unsubscribe = ElectronApiService.backendApi.OnBroadcast((message) => {
+    const unsubscribe = ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.RECORDING_PROGRESS) return;
 
       const asking = (message.payload as RecordingProgressDto).asking;
@@ -122,7 +114,7 @@ export default function RecordingGesturePage() {
 
     const [conditionType, text, textEnd] = JSON.parse(rule) as [GestureFields["conditionType"], string, string];
     const timer = window.setTimeout(() => {
-      backendApiService.Recording.testGestureRule({ pressIndex, conditionType, text, textEnd })
+      BackendApiService.Recording.testGestureRule({ pressIndex, conditionType, text, textEnd })
         .then((result) => setTested({ rule, passes: result }))
         .catch(() => setTested(null));
     }, 250);
@@ -134,7 +126,7 @@ export default function RecordingGesturePage() {
     const root = rootRef.current;
     if (!root) return;
 
-    const observer = new ResizeObserver(() => ElectronApiService.recordingGesture.resizeWindow(root.getBoundingClientRect().height));
+    const observer = new ResizeObserver(() => ElectronApiService.RecordingGesture.resizeWindow(root.getBoundingClientRect().height));
     observer.observe(root);
 
     return () => observer.disconnect();
@@ -145,18 +137,18 @@ export default function RecordingGesturePage() {
     setError(null);
 
     try {
-      const answer = isAdding ? { ...toReviewedFields(fields), actionIndex: 0, isSecret: false } : null;
-      await backendApiService.Recording.decideGesture({ pressIndex, answer });
+      const answer = isAdding ? { ...Gesture.toReviewedFields(fields), actionIndex: 0, isSecret: false } : null;
+      await BackendApiService.Recording.decideGesture({ pressIndex, answer });
       if (isAdding && fields.discordBotId !== null) rememberBot(fields.discordBotId);
     } catch (err) {
       // No longer asked: the recording resumed or stopped meanwhile, so there is nothing to keep.
       setError(err instanceof Error ? err.message : String(err));
     }
 
-    await ElectronApiService.recordingGesture.closeWindow();
+    await ElectronApiService.RecordingGesture.closeWindow();
   };
 
-  const canAdd = screen === "form" && isComplete(fields) && !isBusy;
+  const canAdd = screen === "form" && Gesture.isComplete(fields) && !isBusy;
 
   // Enter adds and Esc leaves it for Review, inside this window only.
   useEffect(() => {
@@ -255,7 +247,7 @@ export default function RecordingGesturePage() {
 
           {screen === "choice" &&
             !isCheck &&
-            STEP_OPTIONS.map((option) => (
+            Gesture.STEP_OPTIONS.map((option) => (
               <ChoiceCardComponent
                 key={option.value}
                 icon={option.icon}
@@ -331,7 +323,7 @@ export default function RecordingGesturePage() {
                   text={readingNote(gesture, readText)}
                 />
               )}
-              <span className="text-xs text-color-secondary">{stepNote(fields)}</span>
+              <span className="text-xs text-color-secondary">{Gesture.stepNote(fields)}</span>
             </>
           )}
 
@@ -524,13 +516,13 @@ function headingOf(screen: Screen, isCheck: boolean, fields: GestureFields): { t
         "The recording is paused. The step goes after the last thing you did. Where you right clicked matters only to a notification that reads the text there.",
     };
 
-  const option = STEP_OPTIONS.find((x) => x.value === fields.choice);
+  const option = Gesture.STEP_OPTIONS.find((x) => x.value === fields.choice);
   return { title: option?.label ?? "A step", subtitle: option?.description ?? "" };
 }
 
 function captionOf(screen: Screen, fields: GestureFields): string {
   if (screen === "choice") return "What you Ctrl + clicked";
-  if (fields.searchBy === SearchByEnum.TEXT || isReadingChoice(fields)) return "Where it reads";
+  if (fields.searchBy === SearchByEnum.TEXT || Gesture.isReadingChoice(fields)) return "Where it reads";
 
   return "The template, cut from the screenshot before your click";
 }

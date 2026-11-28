@@ -4,12 +4,12 @@ import { SelectButton } from "primereact/selectbutton";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
-import { useFlowScript } from "@/features/workflow/hooks/use-flow-parts";
+import { FlowPartHooks } from "@/features/workflow/hooks/use-flow-parts";
 import { useWorkflowStore, type ScriptView } from "@/features/workflow/store/workflow-store";
 import FlowChangesComponent from "@/features/repository/components/FlowChangesComponent";
 import FlowHistoryComponent from "@/features/repository/components/FlowHistoryComponent";
-import { useBringBackFlow, useFlowRepositoryChanges, useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import { UNCOMMITTED_COLOR, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
@@ -33,9 +33,9 @@ interface Props {
 /** The Script tab: the flow's file, what changed in it since the last commit, and its commits. */
 export function WorkflowScriptComponent({ flowId }: Props) {
   const { scriptView, setScriptView } = useWorkflowStore();
-  const { data: status } = useRepositoryStatus();
-  const { data: script, isLoading, error } = useFlowScript(flowId);
-  const { data: changes } = useFlowRepositoryChanges(flowId);
+  const { data: status } = RepositoryHooks.useRepositoryStatus();
+  const { data: script, isLoading, error } = FlowPartHooks.useFlowScript(flowId);
+  const { data: changes } = RepositoryHooks.useFlowRepositoryChanges(flowId);
 
   // Against the last commit; a flow no commit holds yet is all new. Without the repository, no marks.
   let committedScript: string | undefined;
@@ -43,12 +43,12 @@ export function WorkflowScriptComponent({ flowId }: Props) {
 
   const changeCount = status?.flows.find((x) => x.flowId === flowId)?.changeCount ?? 0;
 
-  const { discard } = useBringBackFlow(flowId);
+  const { discard } = RepositoryHooks.useBringBackFlow(flowId);
   const { openConfirm } = useDialogStore();
 
   const askToDiscard = () =>
     openConfirm("flow-discard", {
-      headerText: `Discard ${plural(changeCount, "change")}?`,
+      headerText: `Discard ${RepositoryFormat.plural(changeCount, "change")}?`,
       confirmLabel: "Discard changes",
       confirmIcon: "pi pi-undo",
       confirmSeverity: "danger",
@@ -62,7 +62,7 @@ export function WorkflowScriptComponent({ flowId }: Props) {
       {option.value === "changes" && changeCount > 0 && (
         <span
           className="inline-flex align-items-center justify-content-center border-round-2xl text-xs font-bold px-2"
-          style={{ minWidth: 20, height: 20, color: UNCOMMITTED_COLOR, background: "color-mix(in srgb, var(--yellow-500) 16%, transparent)" }}
+          style={{ minWidth: 20, height: 20, color: RepositoryFormat.UNCOMMITTED_COLOR, background: "color-mix(in srgb, var(--yellow-500) 16%, transparent)" }}
         >
           {changeCount}
         </span>

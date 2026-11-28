@@ -2,20 +2,19 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
-import { useExecutionMutations } from "@/features/execution/hooks/use-execution";
-import { dayOf, stepsText, timeOf } from "@/features/execution/components/executions/executions-format";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 
 /**
- * The two deletes on the executions page, each asked first. The dialog stays until the backend
- * has deleted the rows and handed their space back, which for an execution left on for days is
- * a few seconds.
+ * The two deletes on the executions page, each asked first. The backend hides what it deletes at
+ * once, however big; the rows and screenshots wait for the cleanup on Home.
  */
 export function useDeleteExecutions() {
   const { openConfirm } = useDialogStore();
-  const { deleteExecutionMutation, deleteFlowExecutionsMutation } = useExecutionMutations();
+  const { deleteExecutionMutation, deleteFlowExecutionsMutation } = ExecutionHooks.useExecutionMutations();
 
   const deleteOne = (execution: ExecutionFeedItemDto) => {
-    const when = `${dayOf(execution.createdOn)} at ${timeOf(execution.createdOn)}`;
+    const when = `${ExecutionsFormat.dayOf(execution.createdOn)} at ${ExecutionsFormat.timeOf(execution.createdOn)}`;
 
     openConfirm("execution-delete", {
       headerText: `Delete execution #${execution.id}?`,
@@ -24,7 +23,7 @@ export function useDeleteExecutions() {
       confirmSeverity: "danger",
       children: (
         <LabelComponent
-          text={`${execution.flowName}, ${when}, ${stepsText(execution.stepCount)}. Its steps and screenshots go with it. This cannot be undone.`}
+          text={`${execution.flowName}, ${when}, ${ExecutionsFormat.stepsText(execution.stepCount)}. Its steps and screenshots go with it. This cannot be undone.`}
         />
       ),
       onConfirm: () => deleteExecutionMutation.mutateAsync(execution.id),

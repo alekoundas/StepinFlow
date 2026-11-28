@@ -2,11 +2,11 @@ import { Button } from "primereact/button";
 import { ListBox } from "primereact/listbox";
 
 import IconComponent from "@/shared/components/IconComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import type { FlowValidationIssueDto } from "@/shared/models/database/flow-validation-result-dto";
-import { flowHealthOf, severityLookOf, severityRank } from "@/features/flow/hooks/use-flow-validation";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { FlowValidation } from "@/features/flow/flow-validation";
+import type { FlowValidationIssueDto } from "@/shared/models/database/flow-validation-issue-dto";
 
 export type WorkflowPartTab = "areas" | "locations" | "inputs";
 
@@ -46,7 +46,7 @@ export function WorkflowIssueListComponent({ flowId, flow, issues, onOpenPart }:
   const openStep = async (row: IssueRow) => {
     const parentId = row.parentFlowStepIds.length > 0 ? row.parentFlowStepIds[row.parentFlowStepIds.length - 1] : null;
 
-    const siblings = await backendApiService.FlowStep.getTreeNodes({
+    const siblings = await BackendApiService.FlowStep.getTreeNodes({
       id: parentId ?? flowId,
       isFlow: parentId === null,
     });
@@ -66,7 +66,7 @@ export function WorkflowIssueListComponent({ flowId, flow, issues, onOpenPart }:
       return;
     }
 
-    const [flowNode] = await backendApiService.Flow.getTreeNodes(flowId);
+    const [flowNode] = await BackendApiService.Flow.getTreeNodes(flowId);
     if (!flowNode) return;
 
     setSelectedFlowStepTypeToAdd(undefined);
@@ -79,7 +79,7 @@ export function WorkflowIssueListComponent({ flowId, flow, issues, onOpenPart }:
   };
 
   const itemTemplate = (row: IssueRow) => {
-    const worst = severityLookOf(worstOf(row).severity);
+    const worst = FlowValidation.severityLookOf(worstOf(row).severity);
 
     return (
       <div className="flex align-items-start gap-3 w-full min-w-0">
@@ -107,9 +107,9 @@ export function WorkflowIssueListComponent({ flowId, flow, issues, onOpenPart }:
               key={`${issue.code}-${index}`}
               className="flex align-items-start gap-2 text-sm white-space-normal"
             >
-              <span style={{ color: severityLookOf(issue.severity).color }}>
+              <span style={{ color: FlowValidation.severityLookOf(issue.severity).color }}>
                 <IconComponent
-                  name={severityLookOf(issue.severity).icon}
+                  name={FlowValidation.severityLookOf(issue.severity).icon}
                   size="xs"
                 />
               </span>
@@ -142,7 +142,7 @@ export function WorkflowIssueListComponent({ flowId, flow, issues, onOpenPart }:
       <span className="text-sm text-color-secondary px-3 pt-3 pb-2">
         {rows.length === 0
           ? "Nothing to fix: the flow is ready to execute."
-          : `${flowHealthOf(issues).text}. Pick one to fix it on the right.`}
+          : `${FlowValidation.flowHealthOf(issues).text}. Pick one to fix it on the right.`}
       </span>
 
       <ListBox
@@ -198,11 +198,11 @@ function rowsOf(issues: FlowValidationIssueDto[]): IssueRow[] {
     row.issues.push(issue);
   });
 
-  return rows.sort((a, b) => severityRank(worstOf(a).severity) - severityRank(worstOf(b).severity));
+  return rows.sort((a, b) => FlowValidation.severityRank(worstOf(a).severity) - FlowValidation.severityRank(worstOf(b).severity));
 }
 
 function worstOf(row: IssueRow): FlowValidationIssueDto {
-  return row.issues.reduce((worst, x) => (severityRank(x.severity) < severityRank(worst.severity) ? x : worst));
+  return row.issues.reduce((worst, x) => (FlowValidation.severityRank(x.severity) < FlowValidation.severityRank(worst.severity) ? x : worst));
 }
 
 // Names are compared as the backend does: trimmed, and in any case.

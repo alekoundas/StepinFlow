@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 
-import { toTook } from "@/shared/utils/clock";
+import { Clock } from "@/shared/utils/clock";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
-import { MUTED } from "@/features/execution/execution-format";
-import { stepsText, timeOf } from "@/features/execution/components/executions/executions-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
 
 const LIVE_COLOR = "var(--blue-400)";
@@ -29,9 +29,9 @@ export default function LiveExecutionBannerComponent({ flowName, executionId, st
   }, []);
 
   const facts: string[] = [];
-  if (execution) facts.push(`Started ${timeOf(execution.createdOn)}`);
-  if (execution) facts.push(toTook(now - new Date(execution.createdOn).getTime()));
-  facts.push(`${stepsText(stepCount)} so far`);
+  if (execution) facts.push(`Started ${ExecutionsFormat.timeOf(execution.createdOn)}`);
+  if (execution) facts.push(Clock.toTook(now - new Date(execution.createdOn).getTime()));
+  facts.push(`${ExecutionsFormat.stepsText(stepCount)} so far`);
 
   return (
     <section
@@ -59,14 +59,14 @@ export default function LiveExecutionBannerComponent({ flowName, executionId, st
           </span>
           <span
             className="text-xs"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             #{executionId}
           </span>
         </span>
         <span
           className="flex align-items-center flex-wrap gap-2 text-sm"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           {facts.join(" · ")}
           {execution && (

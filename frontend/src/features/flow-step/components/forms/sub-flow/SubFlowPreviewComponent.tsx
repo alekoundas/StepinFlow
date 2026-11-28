@@ -5,7 +5,7 @@ import type { TreeExpandedKeysType } from "primereact/tree";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import ReadOnlyFlowTreeComponent from "@/shared/components/data-tree/ReadOnlyFlowTreeComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { getFlowStepForm } from "@/features/flow-step/components/forms/flow-step-form-registry";
@@ -35,7 +35,7 @@ export default function SubFlowPreviewComponent({ flowId }: Props) {
   // the real tree uses as a wrapper to expand. A preview wants the steps.
   const { data, isLoading } = useQuery({
     queryKey: ["flow", "rootSteps", flowId],
-    queryFn: () => backendApiService.FlowStep.getTreeNodes({ id: flowId, isFlow: true }),
+    queryFn: () => BackendApiService.FlowStep.getTreeNodes({ id: flowId, isFlow: true }),
     enabled: flowId > 0,
   });
 
@@ -54,7 +54,7 @@ export default function SubFlowPreviewComponent({ flowId }: Props) {
 
     // isFlow decides which column the id is matched against. Hardcoding it asks for steps whose
     // parent happens to share the id, which silently returns another flow's steps.
-    const children = await backendApiService.FlowStep.getTreeNodes({
+    const children = await BackendApiService.FlowStep.getTreeNodes({
       id: node.entityId,
       isFlow: node.isFlow,
     });
@@ -65,7 +65,7 @@ export default function SubFlowPreviewComponent({ flowId }: Props) {
   const handleSelect = async (node: TreeNodeDto) => {
     if (node.isFlow || node.isNew) return;
 
-    const step = await backendApiService.FlowStep.get(node.entityId);
+    const step = await BackendApiService.FlowStep.get(node.entityId);
     const form = getFlowStepForm(step.flowStepType);
     if (!form) return;
 

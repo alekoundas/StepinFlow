@@ -2,9 +2,9 @@ import { useState, type ReactNode } from "react";
 import { Skeleton } from "primereact/skeleton";
 
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
-import { MUTED } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import OutcomeStripComponent from "@/features/execution/components/executions/OutcomeStripComponent";
-import { SURFACE, completedPercentOf, outcomeLookOf } from "@/features/execution/components/executions/executions-format";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 
 interface Props {
   summaries: FlowExecutionSummaryDto[] | undefined;
@@ -34,11 +34,11 @@ export default function ExecutionFlowListComponent({
     <nav
       aria-label="Flows"
       className="flex flex-column gap-1 p-2 border-1 border-round-xl"
-      style={{ ...SURFACE, position: "sticky", top: 16 }}
+      style={{ ...ExecutionsFormat.SURFACE, position: "sticky", top: 16 }}
     >
       <span
         className="px-2 pt-1 pb-2 text-xs font-semibold uppercase"
-        style={{ ...MUTED, letterSpacing: "0.08em" }}
+        style={{ ...ExecutionFormat.MUTED, letterSpacing: "0.08em" }}
       >
         Flows
       </span>
@@ -78,7 +78,7 @@ export default function ExecutionFlowListComponent({
             <OutcomeStripComponent outcomes={flow.recentOutcomes} />
             <span
               className="text-xs white-space-nowrap"
-              style={MUTED}
+              style={ExecutionFormat.MUTED}
             >
               {rateText(flow)}
             </span>
@@ -88,7 +88,7 @@ export default function ExecutionFlowListComponent({
 
       <span
         className="px-2 pt-2 pb-1 text-xs line-height-3"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         Sub-flows execute inside the flow that calls them, so one is listed only once it has executions of its own.
       </span>
@@ -100,13 +100,13 @@ const dotColorOf = (flow: FlowExecutionSummaryDto, executingFlowId: number | nul
   if (flow.flowId === executingFlowId) return "var(--blue-400)";
   if (!flow.lastStatus) return "var(--surface-400)";
 
-  return outcomeLookOf(flow.lastStatus).color;
+  return ExecutionsFormat.outcomeLookOf(flow.lastStatus).color;
 };
 
 const rateText = (flow: FlowExecutionSummaryDto): string => {
   if (flow.runCount === 0) return "Not executed yet";
 
-  const percent = completedPercentOf(flow.completedCount, flow.failedCount);
+  const percent = ExecutionsFormat.completedPercentOf(flow.completedCount, flow.failedCount);
   if (percent === null) return "no verdict";
 
   return `${percent}% completed`;
@@ -154,7 +154,7 @@ function FlowRowComponent({ isSelected, onClick, dot, name, count, children }: F
         {count !== undefined && (
           <span
             className="text-xs"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             {count.toLocaleString()}
           </span>

@@ -6,7 +6,7 @@ import { Splitter, SplitterPanel } from "primereact/splitter";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
 import { DataTreeComponent } from "@/shared/components/data-tree/DataTreeComponent";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { useFlowStepUses, useFlowTemplates } from "@/features/workflow/hooks/use-flow-parts";
+import { FlowPartHooks } from "@/features/workflow/hooks/use-flow-parts";
 import { WorkflowTabsComponent } from "@/features/workflow/components/WorkflowTabsComponent";
 import { WorkflowTreeExpansionComponent } from "@/features/workflow/components/WorkflowTreeExpansionComponent";
 import { WorkflowTreeZoomComponent } from "@/features/workflow/components/WorkflowTreeZoomComponent";
@@ -15,18 +15,16 @@ import { CopiedStepBarComponent } from "@/features/workflow/components/CopiedSte
 import { WorkflowTemplateGridComponent } from "@/features/workflow/components/WorkflowTemplateGridComponent";
 import { WorkflowTemplatePanelComponent } from "@/features/workflow/components/WorkflowTemplatePanelComponent";
 import { WorkflowScriptComponent } from "@/features/workflow/components/WorkflowScriptComponent";
-import type { WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
 import { FlowAreaListComponent } from "@/features/flow-area/components/FlowAreaListComponent";
 import { FlowAreaPanelComponent } from "@/features/flow-area/components/FlowAreaPanelComponent";
 import { FlowPointListComponent } from "@/features/flow-point/components/FlowPointListComponent";
 import { FlowPointPanelComponent } from "@/features/flow-point/components/FlowPointPanelComponent";
 import { FlowInputListComponent } from "@/features/flow-input/components/FlowInputListComponent";
 import { FlowInputPanelComponent } from "@/features/flow-input/components/FlowInputPanelComponent";
-import {
-  WorkflowIssueListComponent,
-  type WorkflowPartTab,
-} from "@/features/workflow/components/WorkflowIssueListComponent";
-import { flowHealthOf, useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { WorkflowIssueListComponent, type WorkflowPartTab } from "@/features/workflow/components/WorkflowIssueListComponent";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { FlowValidation } from "@/features/flow/flow-validation";
+import type { WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
 
 interface Props {
   flowId: number;
@@ -45,8 +43,8 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
   const activeTab = useWorkflowStore((x) => x.activeTab);
   const setActiveTab = useWorkflowStore((x) => x.setActiveTab);
   const treeZoom = useWorkflowStore((x) => x.treeZoom);
-  const { data: uses } = useFlowStepUses(flowId);
-  const { data: templates } = useFlowTemplates(flowId);
+  const { data: uses } = FlowPartHooks.useFlowStepUses(flowId);
+  const { data: templates } = FlowPartHooks.useFlowTemplates(flowId);
   const { data: validation } = useFlowValidation(flowId);
   const issues = validation?.issues ?? [];
 
@@ -77,7 +75,7 @@ export function WorkflowEditorComponent({ flowId, flow }: Props) {
         inputCount={flow?.flowInputs.length}
         templateCount={templates?.length}
         issueCount={issues.length > 0 ? issues.length : undefined}
-        issueColor={flowHealthOf(issues).color}
+        issueColor={FlowValidation.flowHealthOf(issues).color}
       />
 
       <div className="flex-1 min-h-0">

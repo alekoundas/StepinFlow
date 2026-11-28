@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { toElapsed } from "@/shared/utils/clock";
-import {
-  CARD,
-  FATAL_COLOR,
-  FOUND_COLOR,
-  HANDLED_COLOR,
-  MUTED,
-} from "@/features/execution/execution-format";
+import { Clock } from "@/shared/utils/clock";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import type { ExecutionOverview } from "@/features/execution/execution-overview";
 
 interface Props {
@@ -37,7 +31,7 @@ export default function ExecutionTilesComponent({ overview, isLive }: Props) {
   const tiles: Tile[] = [
     {
       label: "Elapsed",
-      value: toElapsed(elapsed),
+      value: Clock.toElapsed(elapsed),
       note: isLive ? "and counting" : "from first step to last",
     },
     {
@@ -61,22 +55,22 @@ export default function ExecutionTilesComponent({ overview, isLive }: Props) {
       note: loop.lastPassThatFound
         ? `${overview.foundCount.toLocaleString()} found, last in pass ${loop.lastPassThatFound.toLocaleString()}`
         : "nothing yet",
-      color: FOUND_COLOR,
+      color: ExecutionFormat.FOUND_COLOR,
     });
   else
     tiles.push({
       label: "Found something",
       value: overview.foundCount.toLocaleString(),
       note: "checks that succeeded",
-      color: FOUND_COLOR,
+      color: ExecutionFormat.FOUND_COLOR,
     });
 
   tiles.push({
     label: "Handled failures",
     value: overview.handledCount.toLocaleString(),
     note: overview.fatalSequence !== undefined ? "and 1 ended the execution" : "checks that found nothing and went on",
-    color: HANDLED_COLOR,
-    noteColor: overview.fatalSequence !== undefined ? FATAL_COLOR : undefined,
+    color: ExecutionFormat.HANDLED_COLOR,
+    noteColor: overview.fatalSequence !== undefined ? ExecutionFormat.FATAL_COLOR : undefined,
   });
 
   return (
@@ -88,11 +82,11 @@ export default function ExecutionTilesComponent({ overview, isLive }: Props) {
         <div
           key={tile.label}
           className="flex flex-column gap-1 px-3 py-2 border-1 border-round-xl min-w-0"
-          style={CARD}
+          style={ExecutionFormat.CARD}
         >
           <span
             className="text-xs"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             {tile.label}
           </span>

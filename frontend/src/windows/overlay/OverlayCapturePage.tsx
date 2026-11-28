@@ -103,7 +103,7 @@ function physicalToLogicalRect(
 }
 
 function sendResult(rect: Rectangle | null) {
-  ElectronApiService.overlay.signalCloseWindow(rect);
+  ElectronApiService.Overlay.signalCloseWindow(rect);
 }
 
 function base64ToBlob(
@@ -150,7 +150,7 @@ export default function OverlayCapturePage() {
   // Signal ready
   // ============================================================================
   useLayoutEffect(() => {
-    ElectronApiService.overlay
+    ElectronApiService.Overlay
       .signalReady()
       .then((res: SignalReadyResponse | null) => {
         if (!res) return;
@@ -175,7 +175,7 @@ export default function OverlayCapturePage() {
   // Broadcast listener  -  single source of truth for all state
   // ============================================================================
   useEffect(() => {
-    const unsub = ElectronApiService.backendApi.OnBroadcast(
+    const unsub = ElectronApiService.BackendApi.onBroadcast(
       (event: IpcBroadcastMessage<RecordedInput>) => {
         // Point capture broadcasts on the same channel, so only react to our own events.
         if (event.type !== "OVERLAY_MOUSE_EVENT") return;

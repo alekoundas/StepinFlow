@@ -6,13 +6,11 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { centreClickOffset } from "@/shared/utils/image-size";
 import { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
-import {
-  isImageEditorPoint,
-  useWindowImageEditor,
-} from "@/windows/image-editor/hooks/use-window-image-editor";
-import { useUpdateFlowTemplate } from "@/features/workflow/hooks/use-flow-parts";
+import { useWindowImageEditor } from "@/windows/image-editor/hooks/use-window-image-editor";
+import { FlowPartHooks } from "@/features/workflow/hooks/use-flow-parts";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import { WorkflowUsedByComponent } from "@/features/workflow/components/WorkflowUsedByComponent";
+import { isImageEditorPoint } from "@/windows/image-editor/utils/is-image-editor-point";
 
 interface Props {
   template: FlowTemplateDto | undefined;
@@ -25,7 +23,7 @@ interface Props {
  */
 export function WorkflowTemplatePanelComponent({ template, uses }: Props) {
   const { openImageEditor } = useWindowImageEditor();
-  const updateTemplate = useUpdateFlowTemplate();
+  const updateTemplate = FlowPartHooks.useUpdateFlowTemplate();
   const setTreeRefreshTrigger = useWorkflowStore((x) => x.setTreeRefreshTrigger);
 
   const [draft, setDraft] = useState<FlowTemplateDto | null>(null);

@@ -8,15 +8,15 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 // import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
 // import { useSettingEditor } from "@/features/settings/hooks/use-setting-editor";
-import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
 // import RepositoryRemoteComponent from "@/features/repository/components/RepositoryRemoteComponent";
-import { MONO, UNCOMMITTED_COLOR, formatWhen, plural } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
 /** Where the flows are kept as files. The folder is the app's own and made at first launch. */
 export default function RepositoryPanelComponent() {
-  const { data: status, isError } = useRepositoryStatus();
+  const { data: status, isError } = RepositoryHooks.useRepositoryStatus();
   // Hidden with who commits, below.
   // const { data: settings = [] } = useAppSettings();
   // const { valueOf, edit, commit } = useSettingEditor();
@@ -27,7 +27,7 @@ export default function RepositoryPanelComponent() {
     if (!status) return;
 
     const separator = status.folderPath.includes("\\") ? "\\" : "/";
-    void ElectronApiService.files.showInFolder(`${status.folderPath}${separator}.gitattributes`);
+    void ElectronApiService.Files.showInFolder(`${status.folderPath}${separator}.gitattributes`);
   };
 
   /* Hidden for now: who commits.
@@ -85,7 +85,7 @@ export default function RepositoryPanelComponent() {
                   value={status.folderPath}
                   readOnly
                   className="flex-1 min-w-0"
-                  style={{ fontFamily: MONO }}
+                  style={{ fontFamily: RepositoryFormat.MONO }}
                 />
                 <Button
                   type="button"
@@ -101,7 +101,7 @@ export default function RepositoryPanelComponent() {
             <div className="flex flex-wrap gap-4 text-sm">
               <span>
                 <span style={MUTED}>Branch </span>
-                <span style={{ fontFamily: MONO }}>{status.branch}</span>
+                <span style={{ fontFamily: RepositoryFormat.MONO }}>{status.branch}</span>
               </span>
               <span>
                 <span style={MUTED}>Commits </span>
@@ -110,12 +110,12 @@ export default function RepositoryPanelComponent() {
               {status.lastCommitAt && (
                 <span>
                   <span style={MUTED}>Last commit </span>
-                  {formatWhen(status.lastCommitAt)}
+                  {RepositoryFormat.formatWhen(status.lastCommitAt)}
                 </span>
               )}
-              <span style={{ color: status.flows.length > 0 ? UNCOMMITTED_COLOR : undefined }}>
+              <span style={{ color: status.flows.length > 0 ? RepositoryFormat.UNCOMMITTED_COLOR : undefined }}>
                 <span style={MUTED}>Not committed </span>
-                {status.flows.length > 0 ? plural(status.flows.length, "flow") : "nothing"}
+                {status.flows.length > 0 ? RepositoryFormat.plural(status.flows.length, "flow") : "nothing"}
               </span>
             </div>
           </>

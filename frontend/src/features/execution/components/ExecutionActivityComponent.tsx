@@ -1,8 +1,8 @@
 import { memo } from "react";
 
-import { toElapsed } from "@/shared/utils/clock";
-import { tint } from "@/shared/models/flow-step-catalog";
-import { CARD, FATAL_COLOR, FOUND_COLOR, MONO, MUTED } from "@/features/execution/execution-format";
+import { Clock } from "@/shared/utils/clock";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import type { Activity } from "@/features/execution/execution-overview";
 
 const BARS_HEIGHT = 52;
@@ -31,7 +31,7 @@ function ExecutionActivityComponent({ activity, isLive }: Props) {
   const hasFatal = bars.some((x) => x.hasFatal);
 
   const label =
-    `Steps ${per(barMilliseconds)} over ${toElapsed(span)}. ` +
+    `Steps ${per(barMilliseconds)} over ${Clock.toElapsed(span)}. ` +
     `${barsThatFound} of ${bars.length} found something` +
     (hasFatal ? ", and the execution ended on a failure." : ".");
 
@@ -39,24 +39,24 @@ function ExecutionActivityComponent({ activity, isLive }: Props) {
     <section
       aria-labelledby="execution-activity"
       className="flex flex-column gap-2 px-3 pt-2 pb-2 border-1 border-round-xl"
-      style={CARD}
+      style={ExecutionFormat.CARD}
     >
       <div className="flex flex-wrap align-items-baseline justify-content-between gap-2">
         <h2
           id="execution-activity"
           className="m-0 text-sm font-semibold"
         >
-          Activity <span className="font-normal" style={MUTED}>· steps {per(barMilliseconds)}</span>
+          Activity <span className="font-normal" style={ExecutionFormat.MUTED}>· steps {per(barMilliseconds)}</span>
         </h2>
 
-        <span className="flex align-items-center gap-3 text-xs" style={MUTED}>
+        <span className="flex align-items-center gap-3 text-xs" style={ExecutionFormat.MUTED}>
           <span className="flex align-items-center gap-1">
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: FOUND_COLOR }} />
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: ExecutionFormat.FOUND_COLOR }} />
             found something
           </span>
           {hasFatal ? (
             <span className="flex align-items-center gap-1">
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: FATAL_COLOR }} />
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: ExecutionFormat.FATAL_COLOR }} />
               ended the execution
             </span>
           ) : null}
@@ -72,8 +72,8 @@ function ExecutionActivityComponent({ activity, isLive }: Props) {
         {bars.map((bar, i) => {
           const isNow = isLive && i === bars.length - 1;
           let mark = "transparent";
-          if (bar.hasFatal) mark = FATAL_COLOR;
-          else if (bar.found > 0) mark = FOUND_COLOR;
+          if (bar.hasFatal) mark = ExecutionFormat.FATAL_COLOR;
+          else if (bar.found > 0) mark = ExecutionFormat.FOUND_COLOR;
 
           return (
             <span
@@ -90,7 +90,7 @@ function ExecutionActivityComponent({ activity, isLive }: Props) {
                   width: "100%",
                   height: bar.steps > 0 ? Math.max(2, Math.round((bar.steps / most) * TALLEST_BAR)) : 0,
                   borderRadius: 2,
-                  background: isNow ? FOUND_COLOR : tint(FOUND_COLOR, 30),
+                  background: isNow ? ExecutionFormat.FOUND_COLOR : FlowStepCatalog.tint(ExecutionFormat.FOUND_COLOR, 30),
                 }}
               />
             </span>
@@ -101,13 +101,13 @@ function ExecutionActivityComponent({ activity, isLive }: Props) {
       <div
         aria-hidden="true"
         className="flex justify-content-between text-xs"
-        style={{ ...MUTED, fontFamily: MONO }}
+        style={{ ...ExecutionFormat.MUTED, fontFamily: ExecutionFormat.MONO }}
       >
         {[0, 0.25, 0.5, 0.75].map((x) => (
-          <span key={x}>{toElapsed(span * x)}</span>
+          <span key={x}>{Clock.toElapsed(span * x)}</span>
         ))}
-        <span style={isLive ? { color: FOUND_COLOR } : undefined}>
-          {isLive ? `now ${toElapsed(span)}` : toElapsed(span)}
+        <span style={isLive ? { color: ExecutionFormat.FOUND_COLOR } : undefined}>
+          {isLive ? `now ${Clock.toElapsed(span)}` : Clock.toElapsed(span)}
         </span>
       </div>
     </section>
@@ -127,7 +127,7 @@ function per(milliseconds: number): string {
 }
 
 function barTitle(steps: number, found: number, hasFatal: boolean, from: number): string {
-  let title = `${toElapsed(from)} · ${steps.toLocaleString()} steps`;
+  let title = `${Clock.toElapsed(from)} · ${steps.toLocaleString()} steps`;
   if (found > 0) title += `, ${found.toLocaleString()} found`;
   if (hasFatal) title += ", ended the execution";
   return title;

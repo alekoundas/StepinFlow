@@ -1,7 +1,7 @@
 import type { RecordingStateEnum } from "@/shared/enums/backend/recording-state-enum";
 import type { RecordingStageEnum } from "@/shared/enums/backend/recording-stage-enum";
 import type { RecordingLiveActionDto } from "@/shared/models/recording-live-action-dto";
-import type { RecordingGestureAskDto } from "@/shared/models/recording-gesture-dto";
+import type { RecordingGestureAskDto } from "@/shared/models/recording-gesture-ask-dto";
 
 /**
  * Where a recording is, from the first click to the review being ready. Sent whole on every

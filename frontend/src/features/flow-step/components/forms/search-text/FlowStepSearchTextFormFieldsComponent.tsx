@@ -6,21 +6,12 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
-import {
-  conditionOptions,
-  isLength,
-  needsSecondValue,
-  needsValue,
-  SEARCH_TEXT_CONDITION_TYPES,
-} from "@/features/flow-step/components/forms/shared/condition-types";
-import {
-  isWaitingMode,
-  SEARCH_TEXT_MODES,
-} from "@/features/flow-step/components/forms/shared/search-modes";
+import { ConditionTypes } from "@/features/flow-step/components/forms/shared/condition-types";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
 import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 import { FlowStepSearchTextSchema } from "@/features/flow-step/components/forms/search-text/flow-step-search-text.zod";
-import { useOcrLanguages } from "@/features/settings/hooks/use-ocr-languages";
+import { OcrLanguageHooks } from "@/features/settings/hooks/use-ocr-languages";
 
 type SearchTextForm = z.infer<typeof FlowStepSearchTextSchema>;
 
@@ -42,16 +33,16 @@ export default function FlowStepSearchTextFormFieldsComponent({
   const mode = useWatch({ control, name: "searchMode" });
   const conditionType = useWatch({ control, name: "conditionType" });
   const ocrLanguage = useWatch({ control, name: "ocrLanguage" });
-  const { data: languages = [] } = useOcrLanguages();
+  const { data: languages = [] } = OcrLanguageHooks.useOcrLanguages();
 
-  const isWaiting = isWaitingMode(mode);
+  const isWaiting = SearchModes.isWaitingMode(mode);
   let valueLabel = "Text to compare";
   let valuePlaceholder = "Done";
   if (conditionType === ConditionTypeEnum.MATCHES_REGEX) {
     valueLabel = "Pattern to match";
     valuePlaceholder = "total: ([0-9]+)";
   }
-  if (isLength(conditionType)) {
+  if (ConditionTypes.isLength(conditionType)) {
     valueLabel = "Characters";
     valuePlaceholder = "6";
   }
@@ -77,13 +68,13 @@ export default function FlowStepSearchTextFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={SEARCH_TEXT_MODES.map((x) => ({
+        options={SearchModes.SEARCH_TEXT_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={SEARCH_TEXT_MODES.find((x) => x.value === mode)?.description}
+        hintText={SearchModes.SEARCH_TEXT_MODES.find((x) => x.value === mode)?.description}
       />
 
       <FlowStepAreaFieldComponent
@@ -118,7 +109,7 @@ export default function FlowStepSearchTextFormFieldsComponent({
           fieldName="conditionType"
           labelText="Condition"
           mode="local"
-          options={conditionOptions(SEARCH_TEXT_CONDITION_TYPES)}
+          options={ConditionTypes.conditionOptions(ConditionTypes.SEARCH_TEXT_CONDITION_TYPES)}
           optionLabel="label"
           optionValue="value"
           isRequired={true}
@@ -126,19 +117,19 @@ export default function FlowStepSearchTextFormFieldsComponent({
           classNameContainer="flex-1"
         />
 
-        {needsValue(conditionType) && (
+        {ConditionTypes.needsValue(conditionType) && (
           <FormInputTextComponent
             fieldName="conditionText"
             label={valueLabel}
             placeholderText={valuePlaceholder}
-            hintText={isLength(conditionType) ? "Counted on what Keep only left, without the spaces at either end." : undefined}
+            hintText={ConditionTypes.isLength(conditionType) ? "Counted on what Keep only left, without the spaces at either end." : undefined}
             isRequired={true}
             isDisabled={isDisabled}
             className="flex-1"
           />
         )}
 
-        {needsSecondValue(conditionType) && (
+        {ConditionTypes.needsSecondValue(conditionType) && (
           <FormInputTextComponent
             fieldName="conditionTextEnd"
             label="And"

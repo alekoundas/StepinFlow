@@ -2,21 +2,20 @@ import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "primereact/button";
 
-import StatusPillComponent, {
-  type StatusPillSeverity,
-} from "@/shared/components/StatusPillComponent";
+import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import ExecutionToolbarComponent from "@/features/execution/components/ExecutionToolbarComponent";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
-import { useAiStatus } from "@/features/ai/hooks/use-ai";
-import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
-import { MONO, MUTED } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
-import { executionStatusSeverity, executionStatusText } from "@/shared/utils/execution-status";
+import { ExecutionStatus } from "@/shared/utils/execution-status";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
+import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 
 const KEEPS_TEXT: Record<ExecutionHistoryLevelEnum, string> = {
   [ExecutionHistoryLevelEnum.STEPS_AND_IMAGES]: "Keeps steps and images",
@@ -64,7 +63,7 @@ function ExecutionHeaderComponent({
         <nav
           aria-label="Breadcrumb"
           className="flex align-items-center gap-2 text-sm"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           <Link
             to="/executions"
@@ -81,7 +80,7 @@ function ExecutionHeaderComponent({
 
         <div
           className="flex flex-wrap align-items-center gap-2 text-xs"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           {keeps ? <span>{KEEPS_TEXT[keeps]}</span> : null}
           {execution ? (
@@ -108,7 +107,7 @@ function ExecutionHeaderComponent({
           {executionId ? (
             <span
               className="text-sm"
-              style={{ ...MUTED, fontFamily: MONO }}
+              style={{ ...ExecutionFormat.MUTED, fontFamily: ExecutionFormat.MONO }}
             >
               Execution {executionId}
             </span>
@@ -139,8 +138,8 @@ interface Pill {
 
 function statusPill(status: ExecutionStatusEnum): Pill {
   return {
-    text: executionStatusText(status),
-    severity: executionStatusSeverity(status),
+    text: ExecutionStatus.executionStatusText(status),
+    severity: ExecutionStatus.executionStatusSeverity(status),
     pulse: status === ExecutionStatusEnum.RUNNING,
   };
 }
@@ -173,8 +172,8 @@ interface AskAiButtonsProps {
  * "what else could it be" and "has it always done this", and only a conversation takes those.
  */
 function AskAiButtons({ execution }: AskAiButtonsProps) {
-  const { data: isConfigured } = useAiStatus();
-  const { askInNewConversation } = useAskAi();
+  const { data: isConfigured } = AiHooks.useAiStatus();
+  const { askInNewConversation } = AiChatHooks.useAskAi();
 
   if (!isConfigured) return null;
 

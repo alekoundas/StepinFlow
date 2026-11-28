@@ -11,20 +11,7 @@ import type { ImageSearchTestResultDto } from "@/shared/models/database/image-se
 import { FlowStepSearchImageTestRowComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestRowComponent";
 import { FlowStepSearchImageTestViewerComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestViewerComponent";
 import { FlowStepSearchImageTestPatchComponent } from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestPatchComponent";
-import {
-  checksOf,
-  hitsOf,
-  isSameTemplates,
-  modeLineOf,
-  nameOf,
-  nearMissOf,
-  refusalOf,
-  refusedOf,
-  suggestAccuracy,
-  usedIndexes,
-  verdictOf,
-  type ImageSearchTestRun,
-} from "@/features/flow-step/components/forms/search-image/image-search-test";
+import { ImageSearchTest, type ImageSearchTestRun } from "@/features/flow-step/components/forms/search-image/image-search-test";
 
 interface Props {
   isVisible: boolean;
@@ -59,9 +46,9 @@ export default function FlowStepSearchImageTestDialogComponent({
 }: Props) {
   const [picked, setPicked] = useState<number | null>(null);
 
-  const used = usedIndexes(result, run.searchMode);
+  const used = ImageSearchTest.usedIndexes(result, run.searchMode);
   const selected = Math.min(picked ?? used[0] ?? 0, result.images.length - 1);
-  const isCurrent = isSameTemplates(run, images);
+  const isCurrent = ImageSearchTest.isSameTemplates(run, images);
 
   const accuracyOf = (index: number) =>
     isCurrent ? images[index].accuracy : run.images[index].accuracy;
@@ -133,7 +120,7 @@ export default function FlowStepSearchImageTestDialogComponent({
               {result.images.map((image, index) => (
                 <FlowStepSearchImageTestRowComponent
                   key={`${image.flowStepTemplateId}-${index}`}
-                  name={nameOf(run, result, index)}
+                  name={ImageSearchTest.nameOf(run, result, index)}
                   image={image}
                   tested={run.images[index]}
                   accuracy={accuracyOf(index)}
@@ -152,9 +139,9 @@ export default function FlowStepSearchImageTestDialogComponent({
                 screenshot={result.screenshot}
                 width={result.searchAreaWidth}
                 height={result.searchAreaHeight}
-                hits={hitsOf(result.images[selected])}
-                nearMiss={nearMissOf(result.images[selected])}
-                refused={refusedOf(result.images[selected])}
+                hits={ImageSearchTest.hitsOf(result.images[selected])}
+                nearMiss={ImageSearchTest.nearMissOf(result.images[selected])}
+                refused={ImageSearchTest.refusedOf(result.images[selected])}
               />
 
               <Detail
@@ -194,7 +181,7 @@ interface VerdictProps {
 }
 
 function Verdict({ result, run, action }: VerdictProps) {
-  const verdict = verdictOf(result, run);
+  const verdict = ImageSearchTest.verdictOf(result, run);
   const isSuccess = verdict.severity === "success";
 
   return (
@@ -208,7 +195,7 @@ function Verdict({ result, run, action }: VerdictProps) {
           {verdict.text}
         </span>
         <LabelComponent
-          text={modeLineOf(run)}
+          text={ImageSearchTest.modeLineOf(run)}
           size="xs"
           color="secondary"
         />
@@ -230,12 +217,12 @@ interface DetailProps {
 function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy }: DetailProps) {
   const image = result.images[index];
   const tested = run.images[index];
-  const hits = hitsOf(image);
-  const nearMiss = nearMissOf(image);
-  const refused = refusedOf(image);
-  const suggestion = suggestAccuracy(image);
+  const hits = ImageSearchTest.hitsOf(image);
+  const nearMiss = ImageSearchTest.nearMissOf(image);
+  const refused = ImageSearchTest.refusedOf(image);
+  const suggestion = ImageSearchTest.suggestAccuracy(image);
   const screenshot = result.screenshot ?? "";
-  const hitChecks = hits.length > 0 ? checksOf(hits[0]) : null;
+  const hitChecks = hits.length > 0 ? ImageSearchTest.checksOf(hits[0]) : null;
 
   let advice = "Nothing on the screenshot resembles it.";
   if (hits.length > 0)
@@ -243,7 +230,7 @@ function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy
 
   return (
     <div className="flex flex-column gap-2 p-3 border-1 surface-border border-round">
-      <span className="text-sm font-semibold">{nameOf(run, result, index)}</span>
+      <span className="text-sm font-semibold">{ImageSearchTest.nameOf(run, result, index)}</span>
 
       <div className="flex gap-4 flex-wrap align-items-end">
         {tested.flowTemplate.templateImage && (
@@ -262,7 +249,7 @@ function Detail({ result, run, index, accuracy, useBlockedBecause, onUseAccuracy
         )}
         {refused.length > 0 && (
           <FlowStepSearchImageTestPatchComponent
-            label={`Refused · ${refused[0].score.toFixed(2)} · ${refusalOf(refused[0], result)}`}
+            label={`Refused · ${refused[0].score.toFixed(2)} · ${ImageSearchTest.refusalOf(refused[0], result)}`}
             outline="2px dotted var(--red-400)"
             source={{ screenshot, box: refused[0] }}
           />

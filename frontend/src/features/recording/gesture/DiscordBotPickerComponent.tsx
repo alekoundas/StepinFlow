@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { classNames } from "primereact/utils";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
 interface BotOption {
   label: string;
@@ -24,7 +24,7 @@ export default function DiscordBotPickerComponent({ inputId, value, onChange, on
   const { data: bots = [] } = useQuery({
     queryKey: ["lookup", "discordBot", "gesture"],
     queryFn: () =>
-      backendApiService.Lookup.discordBot({ searchText: "" }).then((res) =>
+      BackendApiService.Lookup.discordBot({ searchText: "" }).then((res) =>
         res.data.map((item): BotOption => ({ label: item.label, value: Number(item.value) })),
       ),
   });

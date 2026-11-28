@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
@@ -43,7 +43,7 @@ export default function FlowStepAreaFieldComponent({
   const { createFlowAreaMutation } = useFlowAreaMutations();
 
   const loadAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
+    BackendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
       res.data
         // The lookup says each area's type as its description.
         .filter((item) => !flowAreaTypes || flowAreaTypes.includes(item.description as FlowAreaTypeEnum))
@@ -58,7 +58,7 @@ export default function FlowStepAreaFieldComponent({
   const { data: parentOptions = [] } = useQuery({
     queryKey: ["lookup", "flowArea", "parents", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowArea({ flowId, onlyRoots: true }).then((res) =>
+      BackendApiService.Lookup.flowArea({ flowId, onlyRoots: true }).then((res) =>
         res.data.map(
           (item) =>
             new FlowAreaDto({

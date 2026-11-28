@@ -23,21 +23,15 @@ import FlowStepStageMarkerFormComponent from "@/features/flow-step/components/fo
 import FlowStepBreakFormComponent from "@/features/flow-step/components/forms/break/FlowStepBreakFormComponent";
 import FlowStepBranchFormComponent from "@/features/flow-step/components/forms/branch/FlowStepBranchFormComponent";
 
-import {
-  CURSOR_FLOW_STEP_TYPES,
-  type CursorFlowStepType,
-} from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
-import { CURSOR_STEP_DEFAULTS } from "@/features/flow-step/components/forms/cursor/cursor-modes";
-import {
-  WINDOW_FLOW_STEP_TYPES,
-  type WindowFlowStepType,
-} from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import { windowStepName } from "@/features/flow-step/components/forms/window/window-modes";
+import { FlowStepCursorZod, type CursorFlowStepType } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
+import { CursorModes } from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import { FlowStepWindowZod, type WindowFlowStepType } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import { WindowModes } from "@/features/flow-step/components/forms/window/window-modes";
 import { SYSTEM_ACTIONS } from "@/features/flow-step/components/forms/system-action/system-actions";
-import { KEYBOARD_MODES } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
+import { KeyboardModes } from "@/features/flow-step/components/forms/keyboard/keyboard-modes";
 
 /** Every step form takes the same props, which is what lets one caller render all of them. */
-export interface FlowStepFormProps {
+interface FlowStepFormProps {
   formMode: FormMode;
   defaultValues: FlowStepDto;
   onSubmit: (formValues: FlowStepDto) => void;
@@ -45,7 +39,7 @@ export interface FlowStepFormProps {
   onEdit: () => void;
 }
 
-export interface FlowStepFormEntry {
+interface FlowStepFormEntry {
   component: ComponentType<FlowStepFormProps>;
 
   /**
@@ -71,15 +65,15 @@ const forTypes = (
  */
 const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   // All four cursor types share one form, the mode buttons switch flowStepType.
-  ...forTypes(CURSOR_FLOW_STEP_TYPES, {
+  ...forTypes(FlowStepCursorZod.CURSOR_FLOW_STEP_TYPES, {
     component: FlowStepCursorFormComponent,
-    newStepValues: (type) => ({ ...CURSOR_STEP_DEFAULTS[type as CursorFlowStepType] }),
+    newStepValues: (type) => ({ ...CursorModes.CURSOR_STEP_DEFAULTS[type as CursorFlowStepType] }),
   }),
 
   // The three window types share one form too.
-  ...forTypes(WINDOW_FLOW_STEP_TYPES, {
+  ...forTypes(FlowStepWindowZod.WINDOW_FLOW_STEP_TYPES, {
     component: FlowStepWindowFormComponent,
-    newStepValues: (type) => ({ name: windowStepName(type as WindowFlowStepType, 0, 0, false) }),
+    newStepValues: (type) => ({ name: WindowModes.windowStepName(type as WindowFlowStepType, 0, 0, false) }),
   }),
 
   [FlowStepTypeEnum.WAIT]: {
@@ -149,7 +143,7 @@ const FLOW_STEP_FORMS: Partial<Record<FlowStepTypeEnum, FlowStepFormEntry>> = {
   [FlowStepTypeEnum.KEYBOARD_INPUT]: {
     component: FlowStepKeyboardFormComponent,
     newStepValues: () => ({
-      keyboardInputType: KEYBOARD_MODES[0].value,
+      keyboardInputType: KeyboardModes.KEYBOARD_MODES[0].value,
       keyboardInputText: "",
     }),
   },

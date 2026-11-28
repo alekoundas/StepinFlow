@@ -2,10 +2,7 @@ import { AreaSizingModeEnum } from "@/shared/enums/backend/area/area-sizing-mode
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
-import {
-  WorkflowPartListComponent,
-  type WorkflowPartSelection,
-} from "@/features/workflow/components/WorkflowPartListComponent";
+import { WorkflowPartListComponent, type WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
 
 interface Props {
   points: FlowPointDto[];

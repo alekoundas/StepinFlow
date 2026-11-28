@@ -9,11 +9,12 @@ import { Tag } from "primereact/tag";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import type { RepositoryPullDto, RepositoryStatusDto } from "@/shared/models/repository-dtos";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import BranchSwitchDialogComponent from "@/features/repository/components/BranchSwitchDialogComponent";
-import { useConnectRemote, usePreviewPull, usePull, usePush } from "@/features/repository/hooks/use-repository";
-import { MONO, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
+import type { RepositoryStatusDto } from "@/shared/models/repository/repository-status-dto";
+import type { RepositoryPullDto } from "@/shared/models/repository/repository-pull-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -26,7 +27,7 @@ interface Props {
  * Pull act on the branch checked out, against the remote's branch of the same name.
  */
 export default function RepositoryRemoteComponent({ status }: Props) {
-  const { data: settings = [] } = useAppSettings();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
   const { openConfirm } = useDialogStore();
 
   const [url, setUrl] = useState(status.remoteUrl ?? "");
@@ -34,10 +35,10 @@ export default function RepositoryRemoteComponent({ status }: Props) {
   const [note, setNote] = useState<string | null>(null);
   const [pullingBranch, setPullingBranch] = useState<string | null>(null);
 
-  const connect = useConnectRemote();
-  const preview = usePreviewPull();
-  const pull = usePull();
-  const push = usePush();
+  const connect = RepositoryHooks.useConnectRemote();
+  const preview = RepositoryHooks.usePreviewPull();
+  const pull = RepositoryHooks.usePull();
+  const push = RepositoryHooks.usePush();
 
   const isConnected = status.remoteUrl !== null;
   const isTokenSet = settings.find((x) => x.key === AppSettingKeyEnum.GIT_REMOTE_TOKEN)?.isSet ?? false;
@@ -98,7 +99,7 @@ export default function RepositoryRemoteComponent({ status }: Props) {
         setNote(
           result.commitCount === 0
             ? "Nothing to push: the remote has every commit."
-            : `Sent ${plural(result.commitCount, "commit")} to ${result.branch} on the remote.`,
+            : `Sent ${RepositoryFormat.plural(result.commitCount, "commit")} to ${result.branch} on the remote.`,
         ),
     });
   };
@@ -137,7 +138,7 @@ export default function RepositoryRemoteComponent({ status }: Props) {
           value={url}
           placeholder="https://github.com/you/flows.git"
           onChange={(e) => setUrl(e.target.value)}
-          style={{ fontFamily: MONO }}
+          style={{ fontFamily: RepositoryFormat.MONO }}
         />
         <span
           className="text-xs"
@@ -251,11 +252,11 @@ export default function RepositoryRemoteComponent({ status }: Props) {
 const whereOf = (status: RepositoryStatusDto): string => {
   const subject = `Push and Pull act on ${status.branch}, the branch checked out`;
 
-  if (status.changeCount > 0) return `${subject}. Commit or discard the ${plural(status.changeCount, "change")} to pull.`;
+  if (status.changeCount > 0) return `${subject}. Commit or discard the ${RepositoryFormat.plural(status.changeCount, "change")} to pull.`;
   if (!status.isBranchOnRemote) return `${subject}. The remote does not have it yet: Push sends it.`;
   if (status.aheadCount === 0 && status.behindCount === 0) return `${subject}. It matches the remote, as of the last fetch.`;
 
-  return `${subject}: ${plural(status.aheadCount, "commit")} to push, ${status.behindCount} to pull, as of the last fetch.`;
+  return `${subject}: ${RepositoryFormat.plural(status.aheadCount, "commit")} to push, ${status.behindCount} to pull, as of the last fetch.`;
 };
 
 function PullSummaryComponent({ pull }: { pull: RepositoryPullDto }) {
@@ -263,7 +264,7 @@ function PullSummaryComponent({ pull }: { pull: RepositoryPullDto }) {
     <div className="flex flex-column gap-3">
       <span>
         {pull.incoming.length > 0
-          ? `${plural(pull.incoming.length, "commit")} arrive from the remote, and every flow is brought to its version.`
+          ? `${RepositoryFormat.plural(pull.incoming.length, "commit")} arrive from the remote, and every flow is brought to its version.`
           : "Nothing arrives from the remote; the branch only goes back to what the remote has."}
       </span>
 
@@ -279,7 +280,7 @@ function PullSummaryComponent({ pull }: { pull: RepositoryPullDto }) {
                 key={commit.sha}
                 className="flex gap-3 text-sm"
               >
-                <span style={{ ...MUTED, fontFamily: MONO }}>{commit.shortSha}</span>
+                <span style={{ ...MUTED, fontFamily: RepositoryFormat.MONO }}>{commit.shortSha}</span>
                 <span>{commit.message.split("\n")[0]}</span>
               </li>
             ))}

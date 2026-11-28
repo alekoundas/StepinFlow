@@ -8,7 +8,7 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormInputFloatComponent } from "@/shared/components/form/FormInputFloatComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useCapturePoint } from "@/features/flow-point/hooks/use-capture-point";
 import type { FlowPointDto } from "@/shared/models/database/flow-point-dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
@@ -100,7 +100,7 @@ export default function FlowPointFormFieldsComponent({
     }
 
     const preview =
-      await backendApiService.FlowArea.getPreview(flowAreaId);
+      await BackendApiService.FlowArea.getPreview(flowAreaId);
 
     // Writing the raw screen point as if it were an offset would look like it worked and place
     // the click somewhere else entirely, so refuse instead.
@@ -134,8 +134,8 @@ export default function FlowPointFormFieldsComponent({
     setPointError(null);
 
     try {
-      const point = await backendApiService.FlowPoint.resolve(getValues() as FlowPointDto);
-      await backendApiService.System.moveCursor(point);
+      const point = await BackendApiService.FlowPoint.resolve(getValues() as FlowPointDto);
+      await BackendApiService.System.moveCursor(point);
     } catch (err) {
       setPointError(err instanceof Error ? err.message : "The location could not be worked out.");
     }

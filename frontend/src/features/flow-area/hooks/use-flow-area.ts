@@ -1,10 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
-
-export const flowAreaKeys = {
-  lookup: (flowId: number) => ["lookup", "flowArea", flowId] as const,
-} as const;
 
 // Mutation CRUD
 export function useFlowAreaMutations() {
@@ -22,18 +18,18 @@ export function useFlowAreaMutations() {
 
   const createFlowAreaMutation = useMutation({
     mutationFn: (dto: FlowAreaDto) =>
-      backendApiService.FlowArea.create(dto),
+      BackendApiService.FlowArea.create(dto),
     onSuccess: invalidate,
   });
 
   const updateFlowAreaMutation = useMutation({
     mutationFn: (dto: FlowAreaDto) =>
-      backendApiService.FlowArea.update(dto),
+      BackendApiService.FlowArea.update(dto),
     onSuccess: invalidate,
   });
 
   const deleteFlowAreaMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.FlowArea.delete(id),
+    mutationFn: (id: number) => BackendApiService.FlowArea.delete(id),
     onSuccess: invalidate,
   });
 

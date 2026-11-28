@@ -5,7 +5,7 @@
  * and four of "IHDR", then the two dimensions as big-endian 32-bit numbers. Reading those 24 bytes
  * beats decoding the image, and beats asking the image editor to start reporting a size.
  */
-export const readPngSize = (
+const readPngSize = (
   base64: string,
 ): { width: number; height: number } => {
   try {

@@ -5,17 +5,7 @@ import { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-k
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
-import {
-  type ActionReview,
-  elementOf,
-  groupOf,
-  isOutside,
-  isPointed,
-  listedActions,
-  startsPage,
-  subtitleOf,
-  titleOf,
-} from "@/features/recording/review/review";
+import { Review, type ActionReview } from "@/features/recording/review/review";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -29,7 +19,7 @@ interface Props {
 
 /** Every action, numbered, kept or left out with its checkbox, and the one shown beside it marked. */
 export default function ReviewActionListComponent({ result, reviews, selectedIndex, onSelect, onToggle }: Props) {
-  const listed = listedActions(result);
+  const listed = Review.listedActions(result);
   const leftOut = listed.filter((x) => reviews[x.index]?.choice === ReviewChoiceEnum.LEAVE_OUT).length;
 
   return (
@@ -59,8 +49,8 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
       <ol className="list-none m-0 p-2 flex flex-column gap-1">
         {listed.map((action, position) => {
           const review = reviews[action.index];
-          const element = elementOf(result, action);
-          const group = groupOf(result, action);
+          const element = Review.elementOf(result, action);
+          const group = Review.groupOf(result, action);
           const isKept = review.choice !== ReviewChoiceEnum.LEAVE_OUT;
           const isSelected = action.index === selectedIndex;
           const stage = action.kind === RecordedActionKindEnum.STAGE ? "" : review.stageName.trim();
@@ -105,13 +95,13 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
                 </span>
                 <span className="flex flex-column flex-1 min-w-0">
                   <span className="text-sm font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis">
-                    {titleOf(action, element)}
+                    {Review.titleOf(action, element)}
                   </span>
                   <span
                     className="text-xs white-space-nowrap overflow-hidden text-overflow-ellipsis"
                     style={MUTED}
                   >
-                    {subtitleOf(action, review)}
+                    {Review.subtitleOf(action, review)}
                   </span>
                 </span>
                 {stage && (
@@ -122,7 +112,7 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
                     ## {stage}
                   </span>
                 )}
-                {!stage && action.kind !== RecordedActionKindEnum.STAGE && startsPage(result, action) && (
+                {!stage && action.kind !== RecordedActionKindEnum.STAGE && Review.startsPage(result, action) && (
                   <span
                     className="text-xs border-1 white-space-nowrap flex-none px-2"
                     style={{ ...MUTED, borderColor: "var(--surface-border)", borderRadius: 999 }}
@@ -156,7 +146,7 @@ export default function ReviewActionListComponent({ result, reviews, selectedInd
 }
 
 function iconOf(action: RecordedActionDto): string {
-  if (isOutside(action)) return "pi pi-ban";
+  if (Review.isOutside(action)) return "pi pi-ban";
 
   switch (action.kind) {
     case RecordedActionKindEnum.CLICK:
@@ -179,8 +169,8 @@ function iconOf(action: RecordedActionDto): string {
 }
 
 function tintOf(action: RecordedActionDto): string {
-  if (isOutside(action)) return "var(--text-color-secondary)";
-  if (isPointed(action)) return "var(--primary-color)";
+  if (Review.isOutside(action)) return "var(--text-color-secondary)";
+  if (Review.isPointed(action)) return "var(--primary-color)";
 
   return "var(--purple-300)";
 }

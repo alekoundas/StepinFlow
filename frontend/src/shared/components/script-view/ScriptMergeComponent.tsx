@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MergeView } from "@codemirror/merge";
 
-import { scriptViewSetup } from "@/shared/components/script-view/script-view-setup";
+import { ScriptViewSetup } from "@/shared/components/script-view/script-view-setup";
 
 interface Props {
   original: string;
@@ -25,8 +25,8 @@ export default function ScriptMergeComponent({ original, script, originalLabel, 
 
     // Each side grows with its script; the element around them scrolls.
     const view = new MergeView({
-      a: { doc: original, extensions: scriptViewSetup(null) },
-      b: { doc: script, extensions: scriptViewSetup(null) },
+      a: { doc: original, extensions: ScriptViewSetup.scriptViewSetup(null) },
+      b: { doc: script, extensions: ScriptViewSetup.scriptViewSetup(null) },
       parent: parent.current,
       gutter: true,
       collapseUnchanged: { margin: 2, minSize: 4 },

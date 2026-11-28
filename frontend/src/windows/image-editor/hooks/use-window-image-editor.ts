@@ -1,11 +1,7 @@
 import { useCallback, useState } from "react";
 
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import type {
-  ImageEditorModeEnum,
-  ImageEditorPoint,
-  ImageEditorResult,
-} from "../../../../../electron/shared/types";
+import type { ImageEditorModeEnum, ImageEditorResult } from "../../../../../electron/shared/types";
 
 interface Props {
   // EDIT resolves to the edited PNG, PICK_POINT to a point in template pixels.
@@ -26,7 +22,7 @@ export function useWindowImageEditor(): Props {
     ): Promise<ImageEditorResult> => {
       setIsWindowOpen(true);
       try {
-        return await ElectronApiService.imageEditor.openWindow({
+        return await ElectronApiService.ImageEditor.openWindow({
           imageBase64,
           mode,
         });
@@ -42,8 +38,3 @@ export function useWindowImageEditor(): Props {
 
   return { openImageEditor, isWindowOpen };
 }
-
-export const isImageEditorPoint = (
-  result: ImageEditorResult,
-): result is ImageEditorPoint =>
-  result !== null && typeof result === "object" && "x" in result;

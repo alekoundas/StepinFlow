@@ -9,20 +9,14 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
 import type { FlowAreaPreviewDto } from "@/shared/models/database/flow-area-preview-dto";
-import type {
-  ImageSearchTestImageDto,
-  ImageSearchTestResultDto,
-} from "@/shared/models/database/image-search-test-result-dto";
+import type { ImageSearchTestResultDto } from "@/shared/models/database/image-search-test-result-dto";
 import { useWindowOverlay } from "@/windows/overlay/hooks/use-window-overlay";
-import {
-  isImageEditorPoint,
-  useWindowImageEditor,
-} from "@/windows/image-editor/hooks/use-window-image-editor";
+import { useWindowImageEditor } from "@/windows/image-editor/hooks/use-window-image-editor";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
 import { FlowStepSearchImageSchema } from "@/features/flow-step/components/forms/search-image/flow-step-search-image.zod";
 import FlowStepSearchImageFormFieldsComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageFormFieldsComponent";
@@ -30,9 +24,12 @@ import { FlowStepTemplateListComponent } from "@/features/flow-step/components/f
 import FlowStepSearchImageTestDialogComponent from "@/features/flow-step/components/forms/search-image/FlowStepSearchImageTestDialogComponent";
 import { FlowTemplateAddDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateAddDialogComponent";
 import { FlowTemplateSharedDialogComponent } from "@/features/flow-step/components/forms/search-image/FlowTemplateSharedDialogComponent";
-import { DEFAULT_ACCURACY } from "@/features/flow-step/components/forms/shared/match-modes";
+import { MatchModes } from "@/features/flow-step/components/forms/shared/match-modes";
+import { FlowPartHooks } from "@/features/workflow/hooks/use-flow-parts";
+import { FlowParts } from "@/features/workflow/flow-parts";
+import { isImageEditorPoint } from "@/windows/image-editor/utils/is-image-editor-point";
+import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-image-dto";
 import type { ImageSearchTestRun } from "@/features/flow-step/components/forms/search-image/image-search-test";
-import { stepsSearchingFor, useFlowStepUses } from "@/features/workflow/hooks/use-flow-parts";
 
 const ADD_TEMPLATE_ID = "image-search-add-template";
 const SHARED_TEMPLATE_ID = "image-search-shared-template";
@@ -105,9 +102,9 @@ export default function FlowStepSearchImageFormComponent({
   const { openCustom } = useDialogStore();
 
   // Which other steps link to each picture, as the flow was last saved.
-  const { data: uses } = useFlowStepUses(defaultValues.rootId || null);
+  const { data: uses } = FlowPartHooks.useFlowStepUses(defaultValues.rootId || null);
   const sharedWith = images.map((x) =>
-    x.flowTemplateId > 0 ? stepsSearchingFor(uses, x.flowTemplate.name, defaultValues.id) : [],
+    x.flowTemplateId > 0 ? FlowParts.stepsSearchingFor(uses, x.flowTemplate.name, defaultValues.id) : [],
   );
 
   useEffect(() => {
@@ -165,7 +162,7 @@ export default function FlowStepSearchImageFormComponent({
     }
 
     try {
-      const area = await backendApiService.FlowArea.getPreview(areaId);
+      const area = await BackendApiService.FlowArea.getPreview(areaId);
       if (!area.isResolved) {
         setTemplateError(
           area.errorMessage ??
@@ -207,7 +204,7 @@ export default function FlowStepSearchImageFormComponent({
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({
-        accuracy: DEFAULT_ACCURACY,
+        accuracy: MatchModes.DEFAULT_ACCURACY,
         flowTemplate: new FlowTemplateDto({
           name: `Template ${previous.length + 1}`,
           templateImage: screenshot,
@@ -225,7 +222,7 @@ export default function FlowStepSearchImageFormComponent({
     applyImages((previous) => [
       ...previous,
       new FlowStepTemplateDto({
-        accuracy: DEFAULT_ACCURACY,
+        accuracy: MatchModes.DEFAULT_ACCURACY,
         flowTemplateId: template.id,
         flowTemplate: new FlowTemplateDto(template),
       }),
@@ -316,7 +313,7 @@ export default function FlowStepSearchImageFormComponent({
     setIsTesting(true);
     try {
       const dto = buildDto();
-      const result = await backendApiService.FlowStep.testImageSearch(dto);
+      const result = await BackendApiService.FlowStep.testImageSearch(dto);
 
       setTestResult(result);
       setTestRun({

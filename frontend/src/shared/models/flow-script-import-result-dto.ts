@@ -1,14 +1,5 @@
 import type { FlowValidationResultDto } from "@/shared/models/database/flow-validation-result-dto";
-
-export interface FlowScriptErrorDto {
-  line: number;
-  column: number;
-  message: string;
-
-  /** The message is for reading; these are for deciding what to do about it. */
-  code: string;
-  severity: string;
-}
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 /**
  * What an import did, or why it did nothing. A failed import leaves the flow exactly as it was, so

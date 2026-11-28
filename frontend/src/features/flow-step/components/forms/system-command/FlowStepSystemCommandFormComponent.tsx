@@ -9,7 +9,7 @@ import { Button } from "primereact/button";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { ShellCommandResultDto } from "@/shared/models/database/shell-command-result-dto";
 import { useShellCommandModes } from "@/features/flow-step/hooks/use-shell-command-modes";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
@@ -79,7 +79,7 @@ export default function FlowStepSystemCommandFormComponent({
         ...values,
         flowAreaId: values.flowAreaId ?? undefined,
       });
-      setTestResult(await backendApiService.FlowStep.testShellCommand(dto));
+      setTestResult(await BackendApiService.FlowStep.testShellCommand(dto));
     } catch (err) {
       console.error(err);
     } finally {

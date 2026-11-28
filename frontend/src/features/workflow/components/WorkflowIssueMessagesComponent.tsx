@@ -1,10 +1,8 @@
 import { Message } from "primereact/message";
 
-import { severityRank } from "@/features/flow/hooks/use-flow-validation";
-import {
-  ValidationSeverityEnum,
-  type FlowValidationIssueDto,
-} from "@/shared/models/database/flow-validation-result-dto";
+import { ValidationSeverityEnum } from "@/shared/enums/backend/validation-severity-enum";
+import { FlowValidation } from "@/features/flow/flow-validation";
+import type { FlowValidationIssueDto } from "@/shared/models/database/flow-validation-issue-dto";
 
 interface Props {
   issues: FlowValidationIssueDto[];
@@ -20,7 +18,7 @@ const MESSAGE_SEVERITY = {
 export function WorkflowIssueMessagesComponent({ issues }: Props) {
   if (issues.length === 0) return null;
 
-  const sorted = [...issues].sort((a, b) => severityRank(a.severity) - severityRank(b.severity));
+  const sorted = [...issues].sort((a, b) => FlowValidation.severityRank(a.severity) - FlowValidation.severityRank(b.severity));
 
   return (
     <div className="flex flex-column gap-2 mb-3">

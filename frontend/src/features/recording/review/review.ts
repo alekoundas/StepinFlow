@@ -8,15 +8,7 @@ import type { ClickGroupDto } from "@/shared/models/click-group-dto";
 import type { PressedElementDto } from "@/shared/models/pressed-element-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
 import type { ReviewedRecordingDto } from "@/shared/models/reviewed-recording-dto";
-import {
-  blankFields,
-  describeRule,
-  fromReviewed,
-  type GestureFields,
-  isCheckChoice,
-  ruleNeedsWords,
-  toReviewedFields,
-} from "@/features/recording/gesture/gesture";
+import { Gesture, type GestureFields } from "@/features/recording/gesture/gesture";
 
 // A wait is three times what the tester waited, and never under 10 s, because the machine a flow
 // executes on is often slower than the one it was recorded on; never over 60 s either.
@@ -45,18 +37,18 @@ export interface ActionReview extends GestureFields {
   isSecret: boolean;
 }
 
-export interface ReviewOption {
+interface ReviewOption {
   label: string;
   value: ReviewChoiceEnum;
 }
 
 /** What Review lists: everything the tester did. A pause is a wait, not something they did. */
-export function listedActions(result: RecordingResultDto): RecordedActionDto[] {
+function listedActions(result: RecordingResultDto): RecordedActionDto[] {
   return result.actions.filter((x) => x.kind !== RecordedActionKindEnum.PAUSE);
 }
 
 /** Where it was pressed matters: a click, a drag, a check. */
-export function isPointed(action: RecordedActionDto): boolean {
+function isPointed(action: RecordedActionDto): boolean {
   return (
     action.kind === RecordedActionKindEnum.CLICK ||
     action.kind === RecordedActionKindEnum.DRAG ||
@@ -65,7 +57,7 @@ export function isPointed(action: RecordedActionDto): boolean {
 }
 
 /** Searches for the template Review's rectangle cuts. */
-export function isTemplateChoice(choice: ReviewChoiceEnum): boolean {
+function isTemplateChoice(choice: ReviewChoiceEnum): boolean {
   return (
     choice === ReviewChoiceEnum.WAIT_AND_CLICK ||
     choice === ReviewChoiceEnum.CHECK_THERE ||
@@ -73,21 +65,21 @@ export function isTemplateChoice(choice: ReviewChoiceEnum): boolean {
   );
 }
 
-export function isOutside(action: RecordedActionDto): boolean {
+function isOutside(action: RecordedActionDto): boolean {
   return action.window === RecordedWindowEnum.OTHER;
 }
 
-export function elementOf(result: RecordingResultDto, action: RecordedActionDto): ClickedElementDto | undefined {
+function elementOf(result: RecordingResultDto, action: RecordedActionDto): ClickedElementDto | undefined {
   return result.clickedElements.find((x) => x.actionIndex === action.index);
 }
 
 /** What the press landed on, as its application told Windows. None for a game. */
-export function pressedOf(result: RecordingResultDto, action: RecordedActionDto): PressedElementDto | undefined {
+function pressedOf(result: RecordingResultDto, action: RecordedActionDto): PressedElementDto | undefined {
   return result.pressedElements.find((x) => x.actionIndex === action.index);
 }
 
 /** As Windows has it: button “Add to cart”, not enabled. */
-export function describePressed(pressed: PressedElementDto): string {
+function describePressed(pressed: PressedElementDto): string {
   const parts = [pressed.name.length > 0 ? `${pressed.role} “${pressed.name}”` : pressed.role];
   if (pressed.isPassword) parts.push("a password field");
   if (!pressed.isEnabled) parts.push("not enabled");
@@ -98,16 +90,16 @@ export function describePressed(pressed: PressedElementDto): string {
 }
 
 /** Where a new page began, by its words or by the window's title: where a stage may begin. */
-export function startsPage(result: RecordingResultDto, action: RecordedActionDto): boolean {
+function startsPage(result: RecordingResultDto, action: RecordedActionDto): boolean {
   return result.screenChanges.some((x) => x.nextActionIndex === action.index && (x.isNewScreen || x.isNewTitle));
 }
 
-export function groupOf(result: RecordingResultDto, action: RecordedActionDto): ClickGroupDto | undefined {
+function groupOf(result: RecordingResultDto, action: RecordedActionDto): ClickGroupDto | undefined {
   return result.clickGroups.find((x) => x.actionIndexes.includes(action.index));
 }
 
 /** A QA test can also type a value wrong on purpose, to prove the application rejects it. */
-export function optionsFor(
+function optionsFor(
   action: RecordedActionDto,
   element: ClickedElementDto | undefined,
   isQaTest: boolean,
@@ -181,7 +173,7 @@ export function optionsFor(
  * Each action's first option, with typed text named from the field it went into, and a gesture as
  * the tester answered it while recording.
  */
-export function initialReviews(result: RecordingResultDto): Record<number, ActionReview> {
+function initialReviews(result: RecordingResultDto): Record<number, ActionReview> {
   const reviews: Record<number, ActionReview> = {};
   const usedNames = new Set<string>();
 
@@ -193,7 +185,7 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
     if (action.kind === RecordedActionKindEnum.TYPING) inputName = uniqueName(toInputName(label), usedNames);
 
     // The first option is the same in either kind of flow.
-    const fields = blankFields(optionsFor(action, element, false)[0].value);
+    const fields = Gesture.blankFields(optionsFor(action, element, false)[0].value);
 
     const review: ActionReview = {
       ...fields,
@@ -204,7 +196,7 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
     };
 
     const answer = result.gestureAnswers?.find((x) => x.actionIndex === action.index);
-    reviews[action.index] = answer ? { ...review, ...fromReviewed(answer, review) } : review;
+    reviews[action.index] = answer ? { ...review, ...Gesture.fromReviewed(answer, review) } : review;
   }
 
   return reviews;
@@ -215,7 +207,7 @@ export function initialReviews(result: RecordingResultDto): Record<number, Actio
  * application told Windows, which is the field's label, else the text read on it, which may be
  * its placeholder or what it already held.
  */
-export function fieldLabelBefore(result: RecordingResultDto, action: RecordedActionDto): string | null {
+function fieldLabelBefore(result: RecordingResultDto, action: RecordedActionDto): string | null {
   const last = fieldBefore(result, action);
   if (!last) return null;
 
@@ -253,16 +245,16 @@ function uniqueName(name: string, used: Set<string>): string {
   return unique;
 }
 
-export function waitFor(waitedMilliseconds: number): number {
+function waitFor(waitedMilliseconds: number): number {
   const scaled = waitedMilliseconds * WAIT_FACTOR;
   return Math.min(MAXIMUM_WAIT_MILLISECONDS, Math.max(MINIMUM_WAIT_MILLISECONDS, scaled));
 }
 
-export function toSeconds(milliseconds: number): string {
+function toSeconds(milliseconds: number): string {
   return `${(milliseconds / 1000).toFixed(1)} s`;
 }
 
-export function titleOf(action: RecordedActionDto, element: ClickedElementDto | undefined): string {
+function titleOf(action: RecordedActionDto, element: ClickedElementDto | undefined): string {
   const text = element?.text ?? "";
 
   if (action.kind === RecordedActionKindEnum.CLICK && text.length > 0) return `Clicked “${text}”`;
@@ -280,7 +272,7 @@ export function titleOf(action: RecordedActionDto, element: ClickedElementDto | 
   return action.summary;
 }
 
-export function subtitleOf(action: RecordedActionDto, review: ActionReview): string {
+function subtitleOf(action: RecordedActionDto, review: ActionReview): string {
   if (review.choice === ReviewChoiceEnum.LEAVE_OUT && isOutside(action)) return "outside the window you picked";
   if (review.choice === ReviewChoiceEnum.LEAVE_OUT) return "left out";
 
@@ -323,18 +315,18 @@ export function subtitleOf(action: RecordedActionDto, review: ActionReview): str
  * Whether a search goes by the words, which an empty field does not, unless a check's rule
  * compares none. A click's search always waits for words it contains.
  */
-export function isByWords(review: ActionReview): boolean {
+function isByWords(review: ActionReview): boolean {
   if (review.searchBy !== SearchByEnum.TEXT) return false;
-  if (isCheckChoice(review.choice) && !ruleNeedsWords(review.conditionType)) return true;
+  if (Gesture.isCheckChoice(review.choice) && !Gesture.ruleNeedsWords(review.conditionType)) return true;
 
   return review.searchText.trim().length > 0;
 }
 
 function byWords(review: ActionReview): string {
   if (!isByWords(review)) return "";
-  if (!isCheckChoice(review.choice)) return ` · reads “${review.searchText.trim()}”`;
+  if (!Gesture.isCheckChoice(review.choice)) return ` · reads “${review.searchText.trim()}”`;
 
-  return ` · ${describeRule(review.conditionType, review.searchText, review.conditionTextEnd)}`;
+  return ` · ${Gesture.describeRule(review.conditionType, review.searchText, review.conditionTextEnd)}`;
 }
 
 function tellsDiscord(review: ActionReview): string {
@@ -345,16 +337,16 @@ function tellsDiscord(review: ActionReview): string {
 }
 
 /** The first option that keeps it, for a checkbox ticked back on. */
-export function keepingChoice(options: ReviewOption[]): ReviewChoiceEnum {
+function keepingChoice(options: ReviewOption[]): ReviewChoiceEnum {
   return options.find((x) => x.value !== ReviewChoiceEnum.LEAVE_OUT)?.value ?? ReviewChoiceEnum.KEEP;
 }
 
-export function toReviewed(result: RecordingResultDto, reviews: Record<number, ActionReview>): ReviewedRecordingDto {
+function toReviewed(result: RecordingResultDto, reviews: Record<number, ActionReview>): ReviewedRecordingDto {
   return {
     actions: listedActions(result).map((action) => {
       const review = reviews[action.index];
       const isInput = review.choice === ReviewChoiceEnum.INPUT;
-      const fields = toReviewedFields(review);
+      const fields = Gesture.toReviewedFields(review);
 
       return {
         ...fields,
@@ -369,3 +361,25 @@ export function toReviewed(result: RecordingResultDto, reviews: Record<number, A
     }),
   };
 }
+
+export const Review = {
+  listedActions,
+  isPointed,
+  isTemplateChoice,
+  isOutside,
+  elementOf,
+  pressedOf,
+  describePressed,
+  startsPage,
+  groupOf,
+  optionsFor,
+  initialReviews,
+  fieldLabelBefore,
+  waitFor,
+  toSeconds,
+  titleOf,
+  subtitleOf,
+  isByWords,
+  keepingChoice,
+  toReviewed,
+};

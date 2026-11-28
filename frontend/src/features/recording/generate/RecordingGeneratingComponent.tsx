@@ -7,13 +7,14 @@ import { Message } from "primereact/message";
 import { FlowGenerationStageEnum } from "@/shared/enums/backend/flow-generation-stage-enum";
 import { FlowGenerationStateEnum } from "@/shared/enums/backend/flow-generation-state-enum";
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
-import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
 import type { FlowGenerationProgressDto } from "@/shared/models/flow-generation-progress-dto";
 import type { FlowGenerationResultDto } from "@/shared/models/flow-generation-result-dto";
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { type ActionReview, listedActions } from "@/features/recording/review/review";
+import { BackendApiService } from "@/shared/services/backend-api-service";
+import { Review, type ActionReview } from "@/features/recording/review/review";
+import { RefusedComponent } from "@/features/recording/generate/RefusedComponent";
+import { ValidationSeverityEnum } from "@/shared/enums/backend/validation-severity-enum";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 // The theme's own variables: PrimeFlex 4's surface and text-color classes read tokens this theme
 // does not define.
@@ -276,19 +277,6 @@ function StageComponent({ stage, status }: { stage: Stage; status: StageStatus }
   );
 }
 
-// Each line as the scanner said it, which is also what went back to the model.
-export function RefusedComponent({ refused, note }: { refused: FlowScriptErrorDto[]; note?: string }) {
-  return (
-    <span
-      className="block mt-2 px-3 py-2 border-1 border-round-lg text-xs"
-      style={{ ...MONO, ...MUTED, background: "var(--surface-ground)", borderColor: "var(--surface-border)", whiteSpace: "pre-wrap" }}
-    >
-      {refused.map((x) => `line ${x.line}, column ${x.column} · ${x.code}\n${x.message}`).join("\n")}
-      {note && `\n${note}`}
-    </span>
-  );
-}
-
 // The request line by line, with the lines that hold text read off the screen marked.
 function RequestComponent({ request, screenLines, maxHeight }: { request: string; screenLines: number[]; maxHeight: number }) {
   const marked = new Set(screenLines);
@@ -338,10 +326,10 @@ function SentComponent({
   // The same query Review reads the description through, so it is already there.
   const { data: flow } = useQuery({
     queryKey: ["flows", "recording-description", flowId],
-    queryFn: () => backendApiService.Flow.get(flowId),
+    queryFn: () => BackendApiService.Flow.get(flowId),
   });
 
-  const listed = listedActions(recording);
+  const listed = Review.listedActions(recording);
   const choiceOf = (index: number) => reviews[index]?.choice;
 
   const labels = recording.clickedElements.filter((x) => x.text.trim().length > 0).length;
@@ -454,7 +442,7 @@ function stagesOf(
   progress: FlowGenerationProgressDto,
   result: FlowGenerationResultDto | null,
 ): Stage[] {
-  const listed = listedActions(recording);
+  const listed = Review.listedActions(recording);
   const choiceOf = (index: number) => reviews[index]?.choice;
 
   const leftOut = listed.filter((x) => choiceOf(x.index) === ReviewChoiceEnum.LEAVE_OUT).length;

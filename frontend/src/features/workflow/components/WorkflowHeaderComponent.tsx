@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "primereact/button";
 
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import { flowHealthOf, useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
+import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
 import RepositoryChipComponent from "@/features/repository/components/RepositoryChipComponent";
+import { FlowValidation } from "@/features/flow/flow-validation";
 
 interface Props {
   flow: FlowDto | undefined;
@@ -25,7 +26,7 @@ export function WorkflowHeaderComponent({ flow, onExport, onExecute }: Props) {
     setScriptView("changes");
   };
 
-  const health = flowHealthOf(validation?.issues ?? []);
+  const health = FlowValidation.flowHealthOf(validation?.issues ?? []);
 
   return (
     <header className="flex align-items-center justify-content-between flex-wrap gap-3 px-4 py-3 border-bottom-1 surface-border">

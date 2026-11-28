@@ -1,4 +1,4 @@
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { Rectangle } from "electron";
 import type {
   ImageEditorOpenRequest,
@@ -9,13 +9,13 @@ import type {
 // window.electronApi is declared once in shared/services/electron-api.service.ts, against the same
 // ElectronApi interface the preload implements. This stays a thin pass-through.
 export const ElectronApiService = {
-  backendApi: backendApiService,
+  BackendApi: BackendApiService,
 
-  electronProcess: {
+  ElectronProcess: {
     relaunch: () => window.electronApi.electronProcess.relaunch(),
   },
 
-  autoUpdater: {
+  AutoUpdater: {
     getStatus: () => window.electronApi.autoUpdater.getStatus(),
     onStatusChange: (callback: (status: AutoUpdaterStatus) => void) =>
       window.electronApi.autoUpdater.onStatusChange(callback),
@@ -23,7 +23,7 @@ export const ElectronApiService = {
     restart: () => window.electronApi.autoUpdater.restart(),
   },
 
-  overlay: {
+  Overlay: {
     openCaptureWindow: (
       parentSearchAreaBounds?: Rectangle | null,
       parentAreaName?: string | null,
@@ -39,7 +39,7 @@ export const ElectronApiService = {
       window.electronApi.overlay.signalCloseWindow(rect),
   },
 
-  imageEditor: {
+  ImageEditor: {
     openWindow: (request: ImageEditorOpenRequest): Promise<ImageEditorResult> =>
       window.electronApi.imageEditor.openWindow(request),
     signalReady: () => window.electronApi.imageEditor.signalReady(),
@@ -47,7 +47,7 @@ export const ElectronApiService = {
       window.electronApi.imageEditor.signalCloseWindow(result),
   },
 
-  recordingBar: {
+  RecordingBar: {
     openWindow: (flowId: number, setupFlowId?: number) =>
       window.electronApi.recordingBar.openWindow(flowId, setupFlowId ?? null),
     closeWindow: () => window.electronApi.recordingBar.closeWindow(),
@@ -55,7 +55,7 @@ export const ElectronApiService = {
       window.electronApi.recordingBar.resizeWindow(width, height),
   },
 
-  recordingGesture: {
+  RecordingGesture: {
     openWindow: (pressIndex: number, gesture: string) =>
       window.electronApi.recordingGesture.openWindow(pressIndex, gesture),
     closeWindow: () => window.electronApi.recordingGesture.closeWindow(),
@@ -63,7 +63,7 @@ export const ElectronApiService = {
   },
 
   // A cancelled dialog answers null.
-  files: {
+  Files: {
     chooseFolder: (defaultPath?: string) => window.electronApi.files.chooseFolder(defaultPath ?? null),
     chooseScript: (defaultPath?: string) => window.electronApi.files.chooseScript(defaultPath ?? null),
     showInFolder: (path: string) => window.electronApi.files.showInFolder(path),

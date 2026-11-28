@@ -5,16 +5,11 @@ import { Button } from "primereact/button";
 import LabelComponent from "@/shared/components/LabelComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import type { RepositoryCommitDto } from "@/shared/models/repository-dtos";
 import TemplateImageChangesComponent from "@/features/repository/components/TemplateImageChangesComponent";
-import {
-  useBringBackFlow,
-  useFlowRepositoryCommit,
-  useFlowRepositoryHistory,
-  useRepositoryStatus,
-} from "@/features/repository/hooks/use-repository";
-import { MONO, formatWhen, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import type { RepositoryCommitDto } from "@/shared/models/repository/repository-commit-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -24,7 +19,7 @@ interface Props {
 
 /** The commits that changed the flow, newest first, and what the picked one changed. */
 export default function FlowHistoryComponent({ flowId }: Props) {
-  const { data: commits, isLoading, error } = useFlowRepositoryHistory(flowId);
+  const { data: commits, isLoading, error } = RepositoryHooks.useFlowRepositoryHistory(flowId);
   const [picked, setPicked] = useState<string | null>(null);
 
   if (isLoading)
@@ -113,12 +108,12 @@ function CommitRowComponent({ commit, isPicked, onPick }: RowProps) {
           className="text-xs"
           style={MUTED}
         >
-          {commit.authorName} · {formatWhen(commit.when)}
+          {commit.authorName} · {RepositoryFormat.formatWhen(commit.when)}
         </span>
       </span>
       <span
         className="text-xs flex-none"
-        style={{ ...MUTED, fontFamily: MONO }}
+        style={{ ...MUTED, fontFamily: RepositoryFormat.MONO }}
       >
         {commit.shortSha}
       </span>
@@ -132,9 +127,9 @@ interface DetailProps {
 }
 
 function CommitDetailComponent({ flowId, sha }: DetailProps) {
-  const { data: detail, isLoading, error } = useFlowRepositoryCommit(flowId, sha);
-  const { data: status } = useRepositoryStatus();
-  const { restore } = useBringBackFlow(flowId);
+  const { data: detail, isLoading, error } = RepositoryHooks.useFlowRepositoryCommit(flowId, sha);
+  const { data: status } = RepositoryHooks.useRepositoryStatus();
+  const { restore } = RepositoryHooks.useBringBackFlow(flowId);
   const { openConfirm } = useDialogStore();
   const { setScriptView } = useWorkflowStore();
 
@@ -155,7 +150,7 @@ function CommitDetailComponent({ flowId, sha }: DetailProps) {
       confirmLabel: "Restore this version",
       confirmIcon: "pi pi-undo",
       confirmSeverity: "warning",
-      children: <LabelComponent text={`It replaces the flow as it is now, and its ${plural(changeCount, "change")} not committed yet are lost.`} />,
+      children: <LabelComponent text={`It replaces the flow as it is now, and its ${RepositoryFormat.plural(changeCount, "change")} not committed yet are lost.`} />,
       onConfirm: restoreNow,
     });
   };
@@ -190,8 +185,8 @@ function CommitDetailComponent({ flowId, sha }: DetailProps) {
             className="text-xs"
             style={MUTED}
           >
-            {detail.commit.authorName} · {formatWhen(detail.commit.when)} ·{" "}
-            <span style={{ fontFamily: MONO }}>{detail.commit.shortSha}</span>
+            {detail.commit.authorName} · {RepositoryFormat.formatWhen(detail.commit.when)} ·{" "}
+            <span style={{ fontFamily: RepositoryFormat.MONO }}>{detail.commit.shortSha}</span>
           </span>
         </div>
 

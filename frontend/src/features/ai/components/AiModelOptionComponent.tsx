@@ -1,5 +1,5 @@
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { AiModelDto } from "@/shared/models/ai-models-dto";
+import type { AiModelDto } from "@/shared/models/ai-model-dto";
 
 interface Props {
   model: AiModelDto;

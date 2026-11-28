@@ -10,38 +10,14 @@ import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
 import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import ElementRectangleEditorComponent from "@/features/recording/review/ElementRectangleEditorComponent";
 import CheckNotifyFieldsComponent from "@/features/recording/gesture/CheckNotifyFieldsComponent";
 import CheckRuleFieldsComponent from "@/features/recording/gesture/CheckRuleFieldsComponent";
 import StepFieldsComponent from "@/features/recording/gesture/StepFieldsComponent";
-import {
-  describeRule,
-  isCheckChoice,
-  isReadingChoice,
-  isStepChoice,
-  stepNote,
-  toScriptName,
-} from "@/features/recording/gesture/gesture";
+import { Gesture } from "@/features/recording/gesture/gesture";
 import { useNewDiscordBotDialog } from "@/features/recording/gesture/use-new-discord-bot-dialog";
-import {
-  type ActionReview,
-  describePressed,
-  elementOf,
-  fieldLabelBefore,
-  groupOf,
-  isByWords,
-  isOutside,
-  isPointed,
-  isTemplateChoice,
-  listedActions,
-  optionsFor,
-  pressedOf,
-  startsPage,
-  titleOf,
-  toSeconds,
-  waitFor,
-} from "@/features/recording/review/review";
+import { Review, type ActionReview } from "@/features/recording/review/review";
 
 const CARD: CSSProperties = { background: "var(--surface-card)", borderColor: "var(--surface-border)" };
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
@@ -67,29 +43,29 @@ interface Props {
  * what is known about it, and what it becomes.
  */
 export default function ReviewActionDetailComponent({ result, action, review, onChange, recordingKey, isQaTest }: Props) {
-  const element = elementOf(result, action);
-  const options = optionsFor(action, element, isQaTest);
-  const position = listedActions(result).findIndex((x) => x.index === action.index) + 1;
+  const element = Review.elementOf(result, action);
+  const options = Review.optionsFor(action, element, isQaTest);
+  const position = Review.listedActions(result).findIndex((x) => x.index === action.index) + 1;
   const openNewBot = useNewDiscordBotDialog();
   const newBot = () => openNewBot((discordBotId) => onChange({ ...review, discordBotId }));
 
-  const isCheck = action.kind === RecordedActionKindEnum.CHECK && isCheckChoice(review.choice);
-  const isStep = action.kind === RecordedActionKindEnum.SUBSTITUTE && isStepChoice(review.choice);
-  const isReading = isStep && isReadingChoice(review);
+  const isCheck = action.kind === RecordedActionKindEnum.CHECK && Gesture.isCheckChoice(review.choice);
+  const isStep = action.kind === RecordedActionKindEnum.SUBSTITUTE && Gesture.isStepChoice(review.choice);
+  const isReading = isStep && Gesture.isReadingChoice(review);
 
   const { data: screen } = useQuery({
     queryKey: ["recording", "screen", recordingKey, action.index],
-    queryFn: () => backendApiService.Recording.getScreen(action.index),
+    queryFn: () => BackendApiService.Recording.getScreen(action.index),
     staleTime: Infinity,
   });
 
   const isOwnScreen = screen?.actionIndex === action.index;
 
   let click: { x: number; y: number } | null = null;
-  if (screen && isOwnScreen && (isPointed(action) || isReading))
+  if (screen && isOwnScreen && (Review.isPointed(action) || isReading))
     click = { x: action.locationX - screen.x, y: action.locationY - screen.y };
 
-  const isTemplate = isTemplateChoice(review.choice);
+  const isTemplate = Review.isTemplateChoice(review.choice);
   const isAreaEditable = (isTemplate || isReading) && isOwnScreen;
 
   return (
@@ -107,7 +83,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
             id="review-detail-heading"
             className="m-0 text-sm font-semibold"
           >
-            {position} · {titleOf(action, element)}
+            {position} · {Review.titleOf(action, element)}
           </h2>
           <span
             className="text-xs"
@@ -149,7 +125,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           </span>
           <span className="flex align-items-center gap-2">
             <span style={{ width: 14, height: 10, border: "2px dashed #4F63E6" }} />
-            {isByWords(review) || isReading
+            {Review.isByWords(review) || isReading
               ? "The area it reads the words in. Drag a corner to change it."
               : "The template it searches for. Drag a corner to change it."}
           </span>
@@ -258,7 +234,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
           />
         )}
 
-        {action.kind !== RecordedActionKindEnum.STAGE && review.choice !== ReviewChoiceEnum.BEGIN_STAGE && startsPage(result, action) && (
+        {action.kind !== RecordedActionKindEnum.STAGE && review.choice !== ReviewChoiceEnum.BEGIN_STAGE && Review.startsPage(result, action) && (
           <StageNameComponent
             label="A new page begins here. Begin a stage too?"
             value={review.stageName}
@@ -278,7 +254,7 @@ export default function ReviewActionDetailComponent({ result, action, review, on
               <InputText
                 id="review-input-name"
                 value={review.inputName}
-                onChange={(e) => onChange({ ...review, inputName: toScriptName(e.target.value) })}
+                onChange={(e) => onChange({ ...review, inputName: Gesture.toScriptName(e.target.value) })}
                 style={{ width: 200, fontFamily: "ui-monospace, Consolas, monospace" }}
               />
             </div>
@@ -343,25 +319,25 @@ function FactComponent({ name, value }: { name: string; value: string }) {
 
 function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: ActionReview): { name: string; value: string }[] {
   const facts: { name: string; value: string }[] = [];
-  const element = elementOf(result, action);
+  const element = Review.elementOf(result, action);
 
-  if (isPointed(action)) {
+  if (Review.isPointed(action)) {
     let read = "No text: an icon";
     if (!element) read = "Nothing: it was outside the window you picked";
     else if (element.text.length > 0) read = `“${element.text}”`;
     facts.push({ name: "Read under the click", value: read });
 
-    const pressed = pressedOf(result, action);
-    if (pressed) facts.push({ name: "Windows says", value: describePressed(pressed) });
+    const pressed = Review.pressedOf(result, action);
+    if (pressed) facts.push({ name: "Windows says", value: Review.describePressed(pressed) });
 
     const waited = action.waitedMilliseconds;
-    facts.push({ name: "Waited before", value: `${toSeconds(waited)}, so it waits up to ${toSeconds(waitFor(waited))}` });
+    facts.push({ name: "Waited before", value: `${Review.toSeconds(waited)}, so it waits up to ${Review.toSeconds(Review.waitFor(waited))}` });
 
-    const group = groupOf(result, action);
+    const group = Review.groupOf(result, action);
     if (group) facts.push({ name: "Same picture as", value: describeGroup(result, group.actionIndexes, group.isMoving) });
   }
 
-  if (action.kind === RecordedActionKindEnum.SUBSTITUTE && isReadingChoice(review)) {
+  if (action.kind === RecordedActionKindEnum.SUBSTITUTE && Gesture.isReadingChoice(review)) {
     let read = "Nothing yet";
     if (!element) read = "Nothing: it was outside the window you picked";
     else if (element.text.length > 0) read = `“${element.text}”`;
@@ -374,7 +350,7 @@ function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: 
     const isHidden = review.choice === ReviewChoiceEnum.INPUT && review.isSecret;
     facts.push({ name: "Typed", value: isHidden ? "•".repeat([...text].length) : text });
 
-    const label = fieldLabelBefore(result, action);
+    const label = Review.fieldLabelBefore(result, action);
     facts.push({ name: "Into", value: label ? `The field read as “${label}”` : "The field clicked before it" });
   }
 
@@ -384,7 +360,7 @@ function factsOf(result: RecordingResultDto, action: RecordedActionDto, review: 
 }
 
 function describeGroup(result: RecordingResultDto, actionIndexes: number[], isMoving: boolean): string {
-  const listed = listedActions(result);
+  const listed = Review.listedActions(result);
   const positions = actionIndexes.map((index) => listed.findIndex((x) => x.index === index) + 1);
 
   let named = `Actions ${positions.slice(0, -1).join(", ")} and ${positions[positions.length - 1]}`;
@@ -395,11 +371,11 @@ function describeGroup(result: RecordingResultDto, actionIndexes: number[], isMo
 }
 
 function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: string | null | undefined): string {
-  const waitsUpTo = toSeconds(waitFor(action.waitedMilliseconds));
+  const waitsUpTo = Review.toSeconds(Review.waitFor(action.waitedMilliseconds));
   const words = review.searchText.trim();
-  const rule = describeRule(review.conditionType, review.searchText, review.conditionTextEnd);
+  const rule = Gesture.describeRule(review.conditionType, review.searchText, review.conditionTextEnd);
 
-  if (isByWords(review)) {
+  if (Review.isByWords(review)) {
     switch (review.choice) {
       case ReviewChoiceEnum.WAIT_AND_CLICK:
         return `Becomes three steps: a wait until the area reads “${words}”, a move to the middle of the area, and a click there - so keep the area on what you clicked.`;
@@ -410,9 +386,9 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
     }
   }
 
-  if (isReadingChoice(review) && !review.element)
+  if (Gesture.isReadingChoice(review) && !review.element)
     return "Nothing to read: you right clicked outside the window you picked, so it becomes a notification without the text.";
-  if (isStepChoice(review.choice)) return stepNote(review);
+  if (Gesture.isStepChoice(review.choice)) return Gesture.stepNote(review);
 
   switch (review.choice) {
     case ReviewChoiceEnum.WAIT_AND_CLICK:
@@ -432,7 +408,7 @@ function noteOf(action: RecordedActionDto, review: ActionReview, fallbackNote: s
     case ReviewChoiceEnum.CHECK_GONE:
       return `Waits until it has gone, up to ${waitsUpTo}, and the execution fails if it is still there. What you did next goes after it.`;
     case ReviewChoiceEnum.LEAVE_OUT:
-      if (isOutside(action)) return "Outside the window you picked, so it is left out. Keep it only if the flow really needs it.";
+      if (Review.isOutside(action)) return "Outside the window you picked, so it is left out. Keep it only if the flow really needs it.";
       return "Left out of the flow.";
     default:
       if (action.kind === RecordedActionKindEnum.STAGE)

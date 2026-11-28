@@ -5,7 +5,7 @@ import {
 } from "primereact/selectbutton";
 import IconComponent from "@/shared/components/IconComponent";
 
-export interface SelectButtonItem {
+interface SelectButtonItem {
   label?: string;
   value: string;
   size?: "sm" | "base" | "lg";

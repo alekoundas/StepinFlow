@@ -5,11 +5,11 @@ import { Tooltip } from "primereact/tooltip";
 
 import AutoUpdaterRailBlockComponent from "@/features/auto-updater/components/AutoUpdaterRailBlockComponent";
 import AiChatPanelComponent from "@/features/ai/components/AiChatPanelComponent";
-import { useAiChatEvents } from "@/features/ai/hooks/use-ai-chat";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
 import { useAiChatStore } from "@/features/ai/store/ai-chat-store";
-import { useAiStatus } from "@/features/ai/hooks/use-ai";
-import { useRepositoryEvents } from "@/features/repository/hooks/use-repository";
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { AiCloudProviderEnum } from "@/shared/enums/backend/ai/ai-cloud-provider-enum";
 
@@ -30,8 +30,8 @@ export default function AppLayout() {
   const { pathname } = useLocation();
   const isAiChatOpen = useAiChatStore((state) => state.isOpen);
   const toggleAiChat = useAiChatStore((state) => state.toggle);
-  useRepositoryEvents();
-  useAiChatEvents();
+  RepositoryHooks.useRepositoryEvents();
+  AiChatHooks.useAiChatEvents();
 
   const isNarrow = NARROW_PATHS.some((x) => pathname.startsWith(x));
 
@@ -196,8 +196,8 @@ function NavItemComponent({ to, icon, label, isNarrow }: { to: string; icon: str
 
 // The model every AI feature uses, and where it runs; Settings is where it changes.
 function AiModelComponent({ isNarrow }: { isNarrow: boolean }) {
-  const { data: settings } = useAppSettings();
-  const { data: isConfigured } = useAiStatus();
+  const { data: settings } = AppSettingHooks.useAppSettings();
+  const { data: isConfigured } = AiHooks.useAiStatus();
 
   const settingOf = (key: AppSettingKeyEnum) => settings?.find((x) => x.key === key);
   const ollamaModel = settingOf(AppSettingKeyEnum.AI_OLLAMA_MODEL)?.value ?? "";

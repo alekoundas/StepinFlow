@@ -8,6 +8,7 @@ export interface IDialogFormComponentProps {
   onClose?: () => void;
   // onSubmit?: () => void;
 }
+
 export function DialogFormComponent({
   headerText,
   children,

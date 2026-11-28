@@ -2,15 +2,13 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import { TREE_ZOOM } from "@/features/workflow/tree-zoom";
 
 /** The editor's tabs: the flow's steps and the parts they use, what is wrong with them, then the script they make. */
 export type WorkflowTab = "flow" | "areas" | "locations" | "inputs" | "templates" | "issues" | "script";
 
 /** The Script tab: the flow's file, what changed in it since the last commit, and its commits. */
 export type ScriptView = "script" | "changes" | "history";
-
-/** How large the tree is drawn, in percent. The user's own, kept on this machine like the splitter's place. */
-export const TREE_ZOOM = { min: 70, max: 130, step: 10, initial: 100 };
 
 const TREE_ZOOM_KEY = "workflow-tree-zoom";
 
@@ -22,7 +20,7 @@ const savedTreeZoom = (): number => {
 export type TreeExpansion = "expand" | "collapse";
 
 /** The step Copy took. One at a time, kept after a paste, and only for the flow it came from. */
-export interface CopiedStep {
+interface CopiedStep {
   id: number;
   name: string;
   flowStepType?: FlowStepTypeEnum;

@@ -1,8 +1,8 @@
-import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
+import type { StatusPillSeverity } from "@/shared/components/StatusPillComponent";
 
 /** An execution's state as a pill reads it, the same wherever an execution is listed. */
-export function executionStatusSeverity(
+function executionStatusSeverity(
   status: ExecutionStatusEnum,
 ): StatusPillSeverity {
   switch (status) {
@@ -21,7 +21,7 @@ export function executionStatusSeverity(
   }
 }
 
-export function executionStatusText(status: ExecutionStatusEnum): string {
+function executionStatusText(status: ExecutionStatusEnum): string {
   switch (status) {
     case ExecutionStatusEnum.RUNNING:
       return "Executing";
@@ -39,3 +39,8 @@ export function executionStatusText(status: ExecutionStatusEnum): string {
       return "Abandoned";
   }
 }
+
+export const ExecutionStatus = {
+  executionStatusSeverity,
+  executionStatusText,
+};

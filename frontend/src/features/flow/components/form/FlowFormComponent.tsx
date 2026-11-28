@@ -5,7 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlowFormFieldsComponent } from "@/features/flow/components/form/FlowFormFieldsComponent";
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import { FlowSchema } from "@/features/flow/components/form/flow.zod";
+import { FlowZod } from "@/features/flow/components/form/flow.zod";
 import { FormFooterComponent } from "@/shared/components/form/FormFooterComponent";
 import { FormHeaderComponent } from "@/shared/components/form/FormHeaderComponent";
 import FlowSubFlowPanelComponent from "@/features/flow/components/form/FlowSubFlowPanelComponent";
@@ -26,8 +26,8 @@ export function FlowFormComponent({
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowSchema>>({
-    resolver: zodResolver(FlowSchema),
+  const form = useForm<z.infer<typeof FlowZod.FlowSchema>>({
+    resolver: zodResolver(FlowZod.FlowSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues },
   });

@@ -1,23 +1,5 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-
-/**
- * Steps grouped by what they do to the machine, which is what the tree colours by. Control is
- * deliberately neutral: WAIT and LOOP are the most common steps in any flow, and colouring them
- * would drown out the steps that actually act.
- *
- * The one list of step types: the tree, the forms and the "add a step" picker all read it.
- */
-export const FlowStepGroupEnum = {
-  CONTROL: "CONTROL",
-  INPUT: "INPUT",
-  WINDOW: "WINDOW",
-  PERCEPTION: "PERCEPTION",
-  SYSTEM: "SYSTEM",
-  BRANCH: "BRANCH",
-} as const;
-
-export type FlowStepGroupEnum =
-  (typeof FlowStepGroupEnum)[keyof typeof FlowStepGroupEnum];
+import { FlowStepGroupEnum } from "@/shared/enums/flow-step-group-enum";
 
 export interface FlowStepCatalogEntry {
   flowStepType: FlowStepTypeEnum;
@@ -33,7 +15,7 @@ export interface FlowStepCatalogEntry {
 }
 
 /** In the picker's order: by group, the most used first. */
-export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
+const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
   // ── Perception ──
   {
     flowStepType: FlowStepTypeEnum.SEARCH_IMAGE,
@@ -231,7 +213,7 @@ export const FLOW_STEP_CATALOG: FlowStepCatalogEntry[] = [
   },
 ];
 
-export const getFlowStepCatalogEntry = (
+const getFlowStepCatalogEntry = (
   flowStepType: FlowStepTypeEnum | undefined,
 ): FlowStepCatalogEntry | undefined =>
   FLOW_STEP_CATALOG.find((x) => x.flowStepType === flowStepType);
@@ -261,11 +243,11 @@ const TYPE_ACCENTS: Partial<Record<FlowStepTypeEnum, string>> = {
   [FlowStepTypeEnum.FAILURE]: "var(--red-400)",
 };
 
-export const flowStepAccent = (flowStepType: FlowStepTypeEnum | undefined): string =>
+const flowStepAccent = (flowStepType: FlowStepTypeEnum | undefined): string =>
   (flowStepType && TYPE_ACCENTS[flowStepType]) ??
   GROUP_ACCENTS[getFlowStepCatalogEntry(flowStepType)?.group ?? FlowStepGroupEnum.CONTROL];
 
-export const tint = (accent: string, percent: number): string =>
+const tint = (accent: string, percent: number): string =>
   `color-mix(in srgb, ${accent} ${percent}%, transparent)`;
 
 /**
@@ -283,5 +265,13 @@ const BRANCH_STEP_TYPES: FlowStepTypeEnum[] = [
   FlowStepTypeEnum.WINDOW_CLOSE,
 ];
 
-export const hasBranches = (flowStepType: FlowStepTypeEnum | undefined): boolean =>
+const hasBranches = (flowStepType: FlowStepTypeEnum | undefined): boolean =>
   !!flowStepType && BRANCH_STEP_TYPES.includes(flowStepType);
+
+export const FlowStepCatalog = {
+  FLOW_STEP_CATALOG,
+  getFlowStepCatalogEntry,
+  flowStepAccent,
+  tint,
+  hasBranches,
+};

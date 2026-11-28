@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { CARD_BACKGROUND, iconTile } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 interface Props {
   icon: string;
@@ -17,7 +17,7 @@ export default function HomeCardComponent({ icon, title, action, children }: Pro
     <section
       aria-label={title}
       className="flex flex-column gap-3 p-4 border-1 border-round-2xl fadein animation-duration-300"
-      style={{ background: CARD_BACKGROUND, borderColor: "var(--surface-border)" }}
+      style={{ background: HomeFormat.CARD_BACKGROUND, borderColor: "var(--surface-border)" }}
     >
       <header
         className="flex align-items-center justify-content-between gap-3"
@@ -26,7 +26,7 @@ export default function HomeCardComponent({ icon, title, action, children }: Pro
         <div className="flex align-items-center gap-2 min-w-0">
           <span
             className="flex align-items-center justify-content-center flex-none border-round-lg"
-            style={{ width: 30, height: 30, ...iconTile("var(--primary-color)") }}
+            style={{ width: 30, height: 30, ...HomeFormat.iconTile("var(--primary-color)") }}
           >
             <i
               className={`pi pi-${icon} text-sm`}

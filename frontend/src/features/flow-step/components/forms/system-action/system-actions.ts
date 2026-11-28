@@ -1,6 +1,6 @@
 import { SystemActionTypeEnum } from "@/shared/enums/backend/system-action-type-enum";
 
-export interface SystemAction {
+interface SystemAction {
   systemActionType: SystemActionTypeEnum;
   label: string;
   description: string;

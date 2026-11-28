@@ -1,6 +1,6 @@
 import { Button } from "primereact/button";
 
-import { INSET, MUTED } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 
 interface Props {
   passes: number;
@@ -37,7 +37,7 @@ export default function ExecutionFoldRowComponent({
     <div
       className="flex align-items-center gap-2 border-round-lg text-sm"
       style={{
-        ...INSET,
+        ...ExecutionFormat.INSET,
         height,
         boxSizing: "border-box",
         padding: "0 6px 0 10px",
@@ -48,12 +48,12 @@ export default function ExecutionFoldRowComponent({
 
       <i
         className="pi pi-sort"
-        style={{ ...MUTED, fontSize: "0.75rem", width: 14, flex: "none" }}
+        style={{ ...ExecutionFormat.MUTED, fontSize: "0.75rem", width: 14, flex: "none" }}
       />
 
       <span className="min-w-0 overflow-hidden text-overflow-ellipsis">
         {passes.toLocaleString()} passes that found nothing{" "}
-        <span style={MUTED}>
+        <span style={ExecutionFormat.MUTED}>
           · {firstPass.toLocaleString()}–{lastPass.toLocaleString()} · {stepCount.toLocaleString()} steps
         </span>
       </span>

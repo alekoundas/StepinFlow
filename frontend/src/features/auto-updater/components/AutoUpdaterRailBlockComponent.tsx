@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { ProgressBar } from "primereact/progressbar";
 import { Tooltip } from "primereact/tooltip";
 
-import { percentOf } from "@/features/ai/ai-format";
+import { AiFormat } from "@/features/ai/ai-format";
 import { downloadedOf } from "@/features/auto-updater/auto-updater-format";
 import { useAutoUpdaterStatus } from "@/features/auto-updater/hooks/use-auto-updater-status";
 import { useIsExecuting } from "@/features/execution/hooks/use-is-executing";
@@ -15,8 +15,8 @@ const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 const RING_RADIUS = 9;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
-const check = () => void ElectronApiService.autoUpdater.check();
-const restart = () => void ElectronApiService.autoUpdater.restart();
+const check = () => void ElectronApiService.AutoUpdater.check();
+const restart = () => void ElectronApiService.AutoUpdater.restart();
 
 /**
  * The auto-updater in the rail, shown only when there is something to say. On the narrow rail of the flow
@@ -80,7 +80,7 @@ function DownloadingComponent({ status, isNarrow }: { status: AutoUpdaterStatus;
   const title = `Downloading ${status.version}`;
   const isSizeKnown = status.totalBytes > 0;
   const amount = downloadedOf(status);
-  const percent = percentOf(status.transferredBytes, status.totalBytes);
+  const percent = AiFormat.percentOf(status.transferredBytes, status.totalBytes);
 
   if (isNarrow)
     return (
@@ -205,7 +205,7 @@ function FailedComponent({ status, isNarrow }: { status: AutoUpdaterStatus; isNa
           severity="secondary"
           text
           className="flex-1 px-2 py-2 white-space-nowrap"
-          onClick={() => void ElectronApiService.files.showInFolder(status.logPath)}
+          onClick={() => void ElectronApiService.Files.showInFolder(status.logPath)}
         />
       </div>
     </CardComponent>

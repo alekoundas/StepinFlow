@@ -1,8 +1,5 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import {
-  cursorButtonActionTypeEnum,
-  type CursorButtonActionTypeEnum,
-} from "@/shared/enums/backend/cursor-button-action-type-enum";
+import { CursorButtonActionTypeEnum } from "@/shared/enums/backend/cursor-button-action-type-enum";
 import { CursorButtonTypeEnum } from "@/shared/enums/backend/cursor-button-type-enum";
 import type { CursorFlowStepType } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
 
@@ -24,7 +21,7 @@ const NO_BUTTON: CursorModeDefaults = { cursorButtonActionType: undefined, curso
 
 // The four cursor modes are separate FlowStepTypes so the tree, the icons and the executor keep a
 // flat dispatch. Only the form merges them, and the mode buttons rewrite flowStepType.
-export const CURSOR_MODES: CursorMode[] = [
+const CURSOR_MODES: CursorMode[] = [
   {
     flowStepType: FlowStepTypeEnum.CURSOR_CLICK,
     label: "Click",
@@ -32,7 +29,7 @@ export const CURSOR_MODES: CursorMode[] = [
     description:
       "Press a mouse button where the cursor is. Single, double, hold or release. A Move above it says where.",
     defaults: {
-      cursorButtonActionType: cursorButtonActionTypeEnum.SINGLE_CLICK,
+      cursorButtonActionType: CursorButtonActionTypeEnum.SINGLE_CLICK,
       cursorButtonType: CursorButtonTypeEnum.LEFT_BUTTON,
     },
   },
@@ -60,6 +57,11 @@ export const CURSOR_MODES: CursorMode[] = [
   },
 ];
 
-export const CURSOR_STEP_DEFAULTS = Object.fromEntries(
+const CURSOR_STEP_DEFAULTS = Object.fromEntries(
   CURSOR_MODES.map((x) => [x.flowStepType, x.defaults]),
 ) as Record<CursorFlowStepType, CursorModeDefaults>;
+
+export const CursorModes = {
+  CURSOR_MODES,
+  CURSOR_STEP_DEFAULTS,
+};

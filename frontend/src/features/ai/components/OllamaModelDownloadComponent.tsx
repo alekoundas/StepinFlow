@@ -2,9 +2,9 @@ import { Button } from "primereact/button";
 import { ProgressBar } from "primereact/progressbar";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { useAiModelSuggestions } from "@/features/ai/hooks/use-ai";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
 import { useAiModelDownload } from "@/features/ai/hooks/use-ai-model-download";
-import { gigabytes, percentOf } from "@/features/ai/ai-format";
+import { AiFormat } from "@/features/ai/ai-format";
 import type { AiModelSuggestionDto } from "@/shared/models/ai-model-suggestion-dto";
 import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-event-dto";
 
@@ -16,7 +16,7 @@ import type { AiModelDownloadEventDto } from "@/shared/models/ai-model-download-
  * goes rather than spinning.
  */
 export default function OllamaModelDownloadComponent() {
-  const { data: suggestions = [], isLoading } = useAiModelSuggestions(true);
+  const { data: suggestions = [], isLoading } = AiHooks.useAiModelSuggestions(true);
   const { progress, isDownloading, download, dismiss } = useAiModelDownload();
 
   return (
@@ -68,7 +68,7 @@ export default function OllamaModelDownloadComponent() {
 
           {!progress.error && (
             <ProgressBar
-              value={percentOf(progress.completed, progress.total)}
+              value={AiFormat.percentOf(progress.completed, progress.total)}
               // Ollama reports no total while it fetches the manifest, and a bar sitting at zero
               // reads as stuck rather than as starting.
               mode={progress.total > 0 ? "determinate" : "indeterminate"}
@@ -162,7 +162,7 @@ function statusText(progress: AiModelDownloadEventDto): string {
   if (progress.error) return progress.error;
 
   if (progress.total > 0)
-    return `${progress.model} — ${progress.status} · ${gigabytes(progress.completed)} of ${gigabytes(progress.total)}`;
+    return `${progress.model} — ${progress.status} · ${AiFormat.gigabytes(progress.completed)} of ${AiFormat.gigabytes(progress.total)}`;
 
   return `${progress.model} — ${progress.status}`;
 }

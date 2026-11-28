@@ -1,18 +1,10 @@
 import { classNames } from "primereact/utils";
 
 import IconComponent from "@/shared/components/IconComponent";
-import {
-  flowStepAccent,
-  getFlowStepCatalogEntry,
-  tint,
-} from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
-import {
-  issuesBelowText,
-  type IssuesBelow,
-  type StepIssues,
-} from "@/features/flow/hooks/use-flow-validation";
 import { buildFlowStepTreeDetail } from "@/features/flow-step/components/templates/data-tree/flow-step-tree-detail";
+import { FlowValidation, type IssuesBelow, type StepIssues } from "@/features/flow/flow-validation";
 
 interface Props {
   treeNode: TreeNodeDto;
@@ -28,9 +20,9 @@ interface Props {
 const THUMBNAIL_BOX = { width: "2.5rem", height: "2rem" };
 
 export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnderDisabled = false }: Props) {
-  const entry = getFlowStepCatalogEntry(treeNode.flowStepType);
+  const entry = FlowStepCatalog.getFlowStepCatalogEntry(treeNode.flowStepType);
   const detail = buildFlowStepTreeDetail(treeNode);
-  const accent = flowStepAccent(treeNode.flowStepType);
+  const accent = FlowStepCatalog.flowStepAccent(treeNode.flowStepType);
   const thumbnail = treeNode.detail?.thumbnail;
   const moreTemplates = (treeNode.detail?.templateCount ?? 0) - 1;
   const badge = issues ? badgeOf(issues) : null;
@@ -42,7 +34,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
       className={classNames("flex align-items-center gap-2 w-full min-w-0 py-1 pl-2 border-round-sm", {
         "opacity-60": treeNode.isDisabled || isUnderDisabled,
       })}
-      style={{ borderLeft: `3px solid ${accent}`, background: tint(accent, 10) }}
+      style={{ borderLeft: `3px solid ${accent}`, background: FlowStepCatalog.tint(accent, 10) }}
     >
       {/* A template says more about what the step looks for than any icon can. The others stack
           behind it, and the step's icon stays on its corner. */}
@@ -74,7 +66,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
               height: 14,
               color: accent,
               background: "var(--surface-card)",
-              boxShadow: `0 0 0 1px ${tint(accent, 40)}`,
+              boxShadow: `0 0 0 1px ${FlowStepCatalog.tint(accent, 40)}`,
             }}
           >
             <IconComponent
@@ -104,7 +96,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
       ) : (
         <span
           className="flex align-items-center justify-content-center flex-shrink-0 w-2rem h-2rem border-round-sm"
-          style={{ color: accent, background: tint(accent, 18) }}
+          style={{ color: accent, background: FlowStepCatalog.tint(accent, 18) }}
         >
           <IconComponent
             name={entry?.iconName ?? "circle"}
@@ -133,8 +125,8 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
           {issuesBelow && (
             <span
               role="img"
-              aria-label={issuesBelowText(issuesBelow)}
-              title={issuesBelowText(issuesBelow)}
+              aria-label={FlowValidation.issuesBelowText(issuesBelow)}
+              title={FlowValidation.issuesBelowText(issuesBelow)}
               className="border-circle flex-shrink-0 mx-1"
               style={{
                 width: 8,
@@ -147,7 +139,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
           {issues && badge && (
             <span
               className="flex align-items-center gap-1 text-xs px-2 py-1 border-round-sm white-space-nowrap"
-              style={{ color: badge.color, background: tint(badge.color, 15) }}
+              style={{ color: badge.color, background: FlowStepCatalog.tint(badge.color, 15) }}
               title={issues.messages.join("\n")}
             >
               <IconComponent
@@ -168,7 +160,7 @@ export function FlowStepTreeNodeComponent({ treeNode, issues, issuesBelow, isUnd
               style={
                 chip.isMuted
                   ? undefined
-                  : { color: accent, background: tint(accent, 15) }
+                  : { color: accent, background: FlowStepCatalog.tint(accent, 15) }
               }
             >
               {chip.text}

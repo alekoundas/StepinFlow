@@ -1,7 +1,7 @@
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
-import { isCheckStep, isSameLoop } from "@/features/execution/execution-overview";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+import { ExecutionStepKind } from "@/features/execution/execution-step-kind";
 
 // A lone pass folded is one row in place of a dozen, but it hides the pass beside the ones that
 // found something, which is the context they are read in.
@@ -63,7 +63,7 @@ export type ExecutionListFilter = "all" | "found" | "failed";
  * Only passes of a loop no other loop holds, and only ones another quiet pass of that loop sits
  * beside, so what is let go of is always inside a fold.
  */
-export function releaseQuietPasses(kept: KeptRows, keepNewest: number): ReleasedPasses {
+function releaseQuietPasses(kept: KeptRows, keepNewest: number): ReleasedPasses {
   const rows = kept.executionSteps;
   const cut = rows.length - keepNewest;
   if (cut <= 0) return { kept, rowsByRun: new Map() };
@@ -75,7 +75,7 @@ export function releaseQuietPasses(kept: KeptRows, keepNewest: number): Released
   const runs = kept.quietRuns.map((x) => ({ ...x }));
   const runByNextSequence = new Map(runs.map((x) => [x.lastSequence + 1, x]));
   const isBeside = (earlier: Pass, later: Pass) =>
-    earlier.end === later.index && follows(rows, later.index) && isSameLoop(rows[earlier.index], rows[later.index]);
+    earlier.end === later.index && follows(rows, later.index) && ExecutionStepKind.isSameLoop(rows[earlier.index], rows[later.index]);
 
   const released: Pass[] = [];
   for (let p = 0; p < passes.length; p++) {
@@ -90,7 +90,7 @@ export function releaseQuietPasses(kept: KeptRows, keepNewest: number): Released
     if (
       (previous?.isQuiet && isBeside(previous, pass)) ||
       (next?.isQuiet && isBeside(pass, next)) ||
-      (run && isSameLoop(run.loop, rows[pass.index]))
+      (run && ExecutionStepKind.isSameLoop(run.loop, rows[pass.index]))
     )
       released.push(pass);
   }
@@ -106,7 +106,7 @@ export function releaseQuietPasses(kept: KeptRows, keepNewest: number): Released
     isReleased.fill(1, pass.index, pass.end);
 
     let run = runByNextSequence.get(loop.sequence);
-    if (run && !isSameLoop(run.loop, loop)) run = undefined;
+    if (run && !ExecutionStepKind.isSameLoop(run.loop, loop)) run = undefined;
 
     if (run) {
       runByNextSequence.delete(run.lastSequence + 1);
@@ -149,7 +149,7 @@ export function releaseQuietPasses(kept: KeptRows, keepNewest: number): Released
  * under it, so this does not come round again on the next batch. Cut where a pass starts when one
  * is near, so the oldest row left is not halfway through one.
  */
-export function releaseOldestRows(kept: KeptRows, maxKept: number): KeptRows {
+function releaseOldestRows(kept: KeptRows, maxKept: number): KeptRows {
   const rows = kept.executionSteps;
   if (rows.length <= maxKept) return kept;
 
@@ -177,7 +177,7 @@ export function releaseOldestRows(kept: KeptRows, maxKept: number): KeptRows {
  * The rows newest first, each run of quiet passes of one loop as a single row. An open fold keeps
  * its row, above the passes it holds.
  */
-export function foldQuietPasses(
+function foldQuietPasses(
   kept: KeptRows,
   openFolds: ReadonlySet<number>,
   foldRows: ReadonlyMap<number, ExecutionStepDto[]>,
@@ -199,7 +199,7 @@ export function foldQuietPasses(
 
     for (
       let next = quietPassEnds.get(end);
-      next !== undefined && isSameLoop(loop, rows[end]) && follows(rows, end);
+      next !== undefined && ExecutionStepKind.isSameLoop(loop, rows[end]) && follows(rows, end);
       next = quietPassEnds.get(end)
     ) {
       lastPassIndex = end;
@@ -227,7 +227,7 @@ export function foldQuietPasses(
         i < rows.length &&
         quietPassEnds.has(i) &&
         rows[i].sequence === run.lastSequence + 1 &&
-        isSameLoop(run.loop, rows[i]);
+        ExecutionStepKind.isSameLoop(run.loop, rows[i]);
       const chain = carriesOn ? chainFrom(i, run.loop) : { end: i, passes: 0, lastPassIndex: i };
 
       const isOpen = openFolds.has(run.firstSequence);
@@ -285,7 +285,7 @@ export function foldQuietPasses(
 }
 
 /** The rows a filter or a search keeps, newest first. Nothing folds: what is asked for is shown. */
-export function filterSteps(
+function filterSteps(
   executionSteps: ExecutionStepDto[],
   filter: ExecutionListFilter,
   query: string,
@@ -297,7 +297,7 @@ export function filterSteps(
   for (let i = executionSteps.length - 1; i >= 0; i--) {
     const step = executionSteps[i];
 
-    if (filter === "found" && !(isCheckStep(step) && step.outcome === StepOutcomeEnum.SUCCESS))
+    if (filter === "found" && !(ExecutionStepKind.isCheckStep(step) && step.outcome === StepOutcomeEnum.SUCCESS))
       continue;
     if (filter === "failed" && step.outcome !== StepOutcomeEnum.FAILURE) continue;
     if (text && step.sequence !== sequence && !step.name.toLowerCase().includes(text)) continue;
@@ -312,7 +312,7 @@ export function filterSteps(
  * A row by its sequence. Sequences count up from zero, so with every row kept it is at its own
  * number; with some let go of, the rows are still in order.
  */
-export function findStep(
+function findStep(
   executionSteps: ExecutionStepDto[],
   sequence: number,
 ): ExecutionStepDto | undefined {
@@ -358,7 +358,7 @@ function findPasses(
   const checksBefore = new Int32Array(count + 1);
   const foundBefore = new Int32Array(count + 1);
   for (let i = 0; i < count; i++) {
-    const isCheck = isCheckStep(rows[i]);
+    const isCheck = ExecutionStepKind.isCheckStep(rows[i]);
     checksBefore[i + 1] = checksBefore[i] + (isCheck ? 1 : 0);
     foundBefore[i + 1] = foundBefore[i] + (isCheck && rows[i].outcome === StepOutcomeEnum.SUCCESS ? 1 : 0);
   }
@@ -407,3 +407,27 @@ interface ReleasedPasses {
   /** The rows each run took in, for a fold already open on it. */
   rowsByRun: Map<QuietRun, ExecutionStepDto[]>;
 }
+
+/** A row kept, or one read back for an open fold. */
+function findKeptStep(
+  state: { executionSteps: ExecutionStepDto[]; foldRows: ReadonlyMap<number, ExecutionStepDto[]> },
+  sequence: number,
+): ExecutionStepDto | undefined {
+  const kept = findStep(state.executionSteps, sequence);
+  if (kept) return kept;
+
+  for (const rows of state.foldRows.values()) {
+    const step = findStep(rows, sequence);
+    if (step) return step;
+  }
+
+  return undefined;
+}
+
+export const ExecutionList = {
+  releaseQuietPasses,
+  releaseOldestRows,
+  foldQuietPasses,
+  filterSteps,
+  findKeptStep,
+};

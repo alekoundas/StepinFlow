@@ -4,30 +4,28 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import type {
-  FlowStepDisabledDto,
-  FlowStepMoveDto,
-  FlowStepPasteDto,
-} from "@/shared/models/flow-step-move.dto";
+import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
+import type { FlowStepPasteDto } from "@/shared/models/flow-step-paste-dto";
+import type { FlowStepDisabledDto } from "@/shared/models/flow-step-disabled-dto";
 
-export const flowStepKeys = {
+const flowStepKeys = {
   detail: (id: number) => ["flowStep", "detail", id] as const,
 } as const;
 
 // ── Query: fetch a single FlowStepDto (cached automatically) ──
-export function useFlowStep(id: number | null) {
+function useFlowStep(id: number | null) {
   return useQuery({
     queryKey: id ? flowStepKeys.detail(id) : ["flowStep", "detail", "disabled"],
-    queryFn: () => backendApiService.FlowStep.get(id!),
+    queryFn: () => BackendApiService.FlowStep.get(id!),
     enabled: !!id, // only run when we have a real ID
     // staleTime: 5 * 60 * 1000,         // override from global if needed
   });
 }
 
 // Mutation CRUD
-export function useFlowStepMutations() {
+function useFlowStepMutations() {
   const queryClient = useQueryClient();
 
   // Anything that changes a step can change what is broken about the flow around it, so the
@@ -40,7 +38,7 @@ export function useFlowStepMutations() {
     ]);
 
   const createFlowStepMutation = useMutation({
-    mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.create(dto),
+    mutationFn: (dto: FlowStepDto) => BackendApiService.FlowStep.create(dto),
     onSuccess: invalidate,
     // onError: (err) => {
     //   console.error("Failed to create FlowStep", err);
@@ -48,14 +46,14 @@ export function useFlowStepMutations() {
   });
 
   const updateFlowStepMutation = useMutation({
-    mutationFn: (dto: FlowStepDto) => backendApiService.FlowStep.update(dto),
+    mutationFn: (dto: FlowStepDto) => BackendApiService.FlowStep.update(dto),
     onSuccess: invalidate,
   });
 
   // The deleted step stays on screen until the caller lets go of it, so it is left out of the
   // refetch: asking for it again fails, and the retries held the delete up for seven seconds.
   const deleteFlowStepMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.FlowStep.delete(id),
+    mutationFn: (id: number) => BackendApiService.FlowStep.delete(id),
     onSuccess: (_, id) => {
       const deleted = hashKey(flowStepKeys.detail(id));
 
@@ -72,19 +70,19 @@ export function useFlowStepMutations() {
   // A move rewrites more than the step it moved: reparenting clears the search results that
   // steps below it can no longer reach, so the cached details of the whole flow are suspect.
   const moveFlowStepMutation = useMutation({
-    mutationFn: (dto: FlowStepMoveDto) => backendApiService.FlowStep.move(dto),
+    mutationFn: (dto: FlowStepMoveDto) => BackendApiService.FlowStep.move(dto),
     onSuccess: invalidate,
   });
 
   // A copy can carry references to steps outside it that its new place cannot reach.
   const pasteFlowStepMutation = useMutation({
-    mutationFn: (dto: FlowStepPasteDto) => backendApiService.FlowStep.paste(dto),
+    mutationFn: (dto: FlowStepPasteDto) => BackendApiService.FlowStep.paste(dto),
     onSuccess: invalidate,
   });
 
   // What is wrong with a disabled step stops counting, and comes back with it.
   const setFlowStepDisabledMutation = useMutation({
-    mutationFn: (dto: FlowStepDisabledDto) => backendApiService.FlowStep.setDisabled(dto),
+    mutationFn: (dto: FlowStepDisabledDto) => BackendApiService.FlowStep.setDisabled(dto),
     onSuccess: invalidate,
   });
 
@@ -97,3 +95,8 @@ export function useFlowStepMutations() {
     setFlowStepDisabledMutation,
   };
 }
+
+export const FlowStepHooks = {
+  useFlowStep,
+  useFlowStepMutations,
+};

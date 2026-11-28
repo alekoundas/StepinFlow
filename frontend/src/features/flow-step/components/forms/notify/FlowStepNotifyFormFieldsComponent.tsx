@@ -7,7 +7,7 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import DiscordBotFormComponent from "@/features/discord-bot/components/form/DiscordBotFormComponent";
@@ -51,7 +51,7 @@ export default function FlowStepNotifyFormFieldsComponent({
   const referenceId = useWatch({ control, name: "flowStepReferenceId" }) as number | null | undefined;
 
   const loadBots = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.discordBot({ searchText: filter }).then((res) =>
+    BackendApiService.Lookup.discordBot({ searchText: filter }).then((res) =>
       res.data.map((item) => ({
         label: item.label,
         value: Number(item.value),
@@ -64,7 +64,7 @@ export default function FlowStepNotifyFormFieldsComponent({
   const { data: reportedSteps = [] } = useQuery({
     queryKey: ["lookup", "reportedStep", parentFlowStepId],
     queryFn: () =>
-      backendApiService.Lookup.reportedStep({ flowStepId: parentFlowStepId }).then((res) =>
+      BackendApiService.Lookup.reportedStep({ flowStepId: parentFlowStepId }).then((res) =>
         res.data.map((item) => ({
           label: item.label,
           value: Number(item.value),

@@ -1,5 +1,5 @@
-import type { Phase } from "@/windows/overlay/OverlayCapturePage";
 import type { Rectangle } from "electron";
+import type { Phase } from "@/windows/overlay/OverlayCapturePage";
 
 interface Props {
   logicalSelectionRect: Rectangle;

@@ -7,7 +7,9 @@
  *  - rectangle + polygon math
  */
 
-import type { Point, Rect, Size } from "@/windows/image-editor/types";
+import type { Point } from "@/windows/image-editor/types/point";
+import type { Rect } from "@/windows/image-editor/types/rect";
+import type { Size } from "@/windows/image-editor/types/size";
 
 // ============================================================================
 // Encoding helpers
@@ -17,7 +19,7 @@ import type { Point, Rect, Size } from "@/windows/image-editor/types";
  * Decode base64 into a Blob without building one giant JS string.
  * A full desktop screenshot can be several MB, so decode in slices.
  */
-export function base64ToBlob(base64: string, mimeType = "image/png"): Blob {
+function base64ToBlob(base64: string, mimeType = "image/png"): Blob {
   const sliceSize = 512 * 1024;
   const binary = atob(base64);
   const parts: Uint8Array[] = [];
@@ -33,7 +35,7 @@ export function base64ToBlob(base64: string, mimeType = "image/png"): Blob {
 }
 
 /** Encode a Blob as raw base64 (no `data:` prefix) — this is what .Net expects. */
-export async function blobToBase64(blob: Blob): Promise<string> {
+async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = new Uint8Array(await blob.arrayBuffer());
   const chunkSize = 32 * 1024;
   let binary = "";
@@ -48,7 +50,7 @@ export async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 /** Accepts raw base64 or a `data:` URL and resolves a decoded bitmap. */
-export function loadImage(source: string): Promise<HTMLImageElement> {
+function loadImage(source: string): Promise<HTMLImageElement> {
   const url = source.startsWith("data:")
     ? source
     : URL.createObjectURL(base64ToBlob(source));
@@ -68,7 +70,7 @@ export function loadImage(source: string): Promise<HTMLImageElement> {
 }
 
 /** PNG encode a canvas and return raw base64 (transparency preserved). */
-export function canvasToPngBase64(canvas: HTMLCanvasElement): Promise<string> {
+function canvasToPngBase64(canvas: HTMLCanvasElement): Promise<string> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
@@ -84,7 +86,7 @@ export function canvasToPngBase64(canvas: HTMLCanvasElement): Promise<string> {
 // Canvas helpers
 // ============================================================================
 
-export function createCanvas(width: number, height: number): HTMLCanvasElement {
+function createCanvas(width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(width));
   canvas.height = Math.max(1, Math.round(height));
@@ -92,7 +94,7 @@ export function createCanvas(width: number, height: number): HTMLCanvasElement {
 }
 
 /** 2D context with the settings the editor always wants (no smoothing, readable). */
-export function get2dContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+function get2dContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const ctx = canvas.getContext("2d", {
     willReadFrequently: true,
   }) as CanvasRenderingContext2D;
@@ -100,7 +102,7 @@ export function get2dContext(canvas: HTMLCanvasElement): CanvasRenderingContext2
   return ctx;
 }
 
-export function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
   const copy = createCanvas(source.width, source.height);
   const ctx = get2dContext(copy);
   ctx.drawImage(source, 0, 0);
@@ -108,7 +110,7 @@ export function cloneCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
 }
 
 /** Downscaled PNG data URL used by the history list. */
-export function canvasToThumbnail(
+function canvasToThumbnail(
   source: HTMLCanvasElement,
   maxWidth = 72,
   maxHeight = 48,
@@ -131,7 +133,7 @@ export function canvasToThumbnail(
 }
 
 /** Approximate memory cost of a snapshot (RGBA). */
-export function canvasByteSize(canvas: HTMLCanvasElement): number {
+function canvasByteSize(canvas: HTMLCanvasElement): number {
   return canvas.width * canvas.height * 4;
 }
 
@@ -140,7 +142,7 @@ export function canvasByteSize(canvas: HTMLCanvasElement): number {
 // ============================================================================
 
 /** Build a positive-size rect from two arbitrary corners. */
-export function rectFromPoints(a: Point, b: Point): Rect {
+function rectFromPoints(a: Point, b: Point): Rect {
   return {
     x: Math.min(a.x, b.x),
     y: Math.min(a.y, b.y),
@@ -150,7 +152,7 @@ export function rectFromPoints(a: Point, b: Point): Rect {
 }
 
 /** Snap to whole pixels and clip against the image bounds. */
-export function clampRectToImage(rect: Rect, size: Size): Rect {
+function clampRectToImage(rect: Rect, size: Size): Rect {
   const left = Math.max(0, Math.floor(rect.x));
   const top = Math.max(0, Math.floor(rect.y));
   const right = Math.min(size.width, Math.ceil(rect.x + rect.width));
@@ -164,7 +166,7 @@ export function clampRectToImage(rect: Rect, size: Size): Rect {
   };
 }
 
-export function polygonBounds(points: Point[]): Rect {
+function polygonBounds(points: Point[]): Rect {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -180,10 +182,25 @@ export function polygonBounds(points: Point[]): Rect {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
-export function distance(a: Point, b: Point): number {
+function distance(a: Point, b: Point): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-export function clamp(value: number, min: number, max: number): number {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
+
+export const CanvasUtils = {
+  loadImage,
+  canvasToPngBase64,
+  createCanvas,
+  get2dContext,
+  cloneCanvas,
+  canvasToThumbnail,
+  canvasByteSize,
+  rectFromPoints,
+  clampRectToImage,
+  polygonBounds,
+  distance,
+  clamp,
+};

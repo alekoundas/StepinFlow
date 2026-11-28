@@ -6,12 +6,10 @@
 import { Button } from "primereact/button";
 import { InputSwitch } from "primereact/inputswitch";
 import { Slider } from "primereact/slider";
-import type {
-  EditorTool,
-  GridOptions,
-  PendingSelection,
-} from "@/windows/image-editor/types";
-import { MAX_SCALE, MIN_SCALE } from "@/windows/image-editor/hooks/useViewTransform";
+import { ViewTransformHooks } from "@/windows/image-editor/hooks/useViewTransform";
+import type { EditorTool } from "@/windows/image-editor/types/editor-tool";
+import type { PendingSelection } from "@/windows/image-editor/types/pending-selection";
+import type { GridOptions } from "@/windows/image-editor/types/grid-options";
 
 interface OptionsPanelProps {
   tool: EditorTool;
@@ -29,8 +27,8 @@ interface OptionsPanelProps {
 }
 
 /** The zoom slider is logarithmic so the low end stays usable. */
-const MIN_EXPONENT = Math.log2(MIN_SCALE);
-const MAX_EXPONENT = Math.log2(MAX_SCALE);
+const MIN_EXPONENT = Math.log2(ViewTransformHooks.MIN_SCALE);
+const MAX_EXPONENT = Math.log2(ViewTransformHooks.MAX_SCALE);
 
 const TITLE_CLASS =
   "flex align-items-center justify-content-between mb-2 text-xs font-semibold uppercase text-color-secondary";

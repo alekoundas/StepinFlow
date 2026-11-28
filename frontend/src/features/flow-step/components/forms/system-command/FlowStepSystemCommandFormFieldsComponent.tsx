@@ -13,7 +13,7 @@ import { ShellResultSourceEnum } from "@/shared/enums/backend/shell/shell-result
 import type { ShellCommandModeDto } from "@/shared/models/database/shell-command-mode-dto";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import FlowStepResultExtractFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepResultExtractFieldComponent";
 import { FlowStepSystemCommandSchema } from "@/features/flow-step/components/forms/system-command/flow-step-system-command.zod";
 
@@ -61,7 +61,7 @@ export default function FlowStepSystemCommandFormFieldsComponent({
   const isLaunch = mode === ShellCommandModeEnum.LAUNCH_APP;
 
   const loadWindowAreas = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
+    BackendApiService.Lookup.flowArea({ searchText: filter, flowId }).then((res) =>
       res.data
         .filter((item) => WINDOW_AREA_TYPES.includes(item.description ?? ""))
         .map((item) => ({ label: item.label, value: Number(item.value) })),

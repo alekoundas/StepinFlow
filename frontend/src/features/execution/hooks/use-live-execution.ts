@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BroadcastTypeEnum } from "../../../../../electron/shared/types";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
 import { ExecutionEventTypeEnum } from "@/shared/enums/backend/execution/execution-event-type-enum";
 import type { ExecutionEventDto } from "@/shared/models/execution-event-dto";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
-import { executionKeys, useExecutionState, useLiveExecutionState } from "@/features/execution/hooks/use-execution";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
 import { useIsExecuting } from "@/features/execution/hooks/use-is-executing";
 
 interface LiveExecution {
@@ -26,30 +26,30 @@ interface LiveExecution {
 export function useLiveExecution(): LiveExecution | null {
   const queryClient = useQueryClient();
   const isExecuting = useIsExecuting();
-  const { data: engine } = useExecutionState();
-  const { data: live } = useLiveExecutionState(isExecuting);
+  const { data: engine } = ExecutionHooks.useExecutionState();
+  const { data: live } = ExecutionHooks.useLiveExecutionState(isExecuting);
 
   const executionId = engine?.executionId ?? 0;
   const flowId = engine?.flowId ?? 0;
 
   // Under the feed's key, so whatever refreshes the feed refreshes this.
   const { data: execution } = useQuery({
-    queryKey: [...executionKeys.feeds(), "live", executionId],
+    queryKey: [...ExecutionHooks.keys.feeds(), "live", executionId],
     queryFn: async () => {
-      const page = await backendApiService.Execution.getFeed({ flowId, beforeId: executionId + 1, statuses: [] });
+      const page = await BackendApiService.Execution.getFeed({ flowId, beforeId: executionId + 1, statuses: [] });
       return page.find((x) => x.id === executionId) ?? null;
     },
     enabled: isExecuting && executionId > 0,
   });
 
   useEffect(() => {
-    return ElectronApiService.backendApi.OnBroadcast((message) => {
+    return ElectronApiService.BackendApi.onBroadcast((message) => {
       if (message.type !== BroadcastTypeEnum.EXECUTION_EVENT) return;
       if ((message.payload as ExecutionEventDto).type !== ExecutionEventTypeEnum.RUN_ENDED) return;
 
-      queryClient.invalidateQueries({ queryKey: executionKeys.feeds() });
-      queryClient.invalidateQueries({ queryKey: executionKeys.allStats() });
-      queryClient.invalidateQueries({ queryKey: executionKeys.flowSummaries() });
+      queryClient.invalidateQueries({ queryKey: ExecutionHooks.keys.feeds() });
+      queryClient.invalidateQueries({ queryKey: ExecutionHooks.keys.allStats() });
+      queryClient.invalidateQueries({ queryKey: ExecutionHooks.keys.flowSummaries() });
     });
   }, [queryClient]);
 

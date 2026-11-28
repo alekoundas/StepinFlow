@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
 /** Long enough that a double click cannot send twice, short enough to not feel broken. */
 const COOLDOWN_MS = 2000;
@@ -49,7 +49,7 @@ export default function DiscordBotTestButtonComponent({ isDisabled = false }: Pr
     setResult(null);
 
     try {
-      await backendApiService.DiscordBot.test({
+      await BackendApiService.DiscordBot.test({
         webhookUrl: getValues("webhookUrl"),
         botName: getValues("botName") ?? "",
         avatarUrl: getValues("avatarUrl") ?? "",

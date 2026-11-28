@@ -9,13 +9,14 @@ import ExecutionFlowTreeComponent from "@/features/execution/components/Executio
 import ExecutionStepListComponent from "@/features/execution/components/ExecutionStepListComponent";
 import ExecutionStepDetailComponent from "@/features/execution/components/ExecutionStepDetailComponent";
 import ExecutionPanelComponent from "@/features/execution/components/templates/ExecutionPanelComponent";
-import { findKeptStep, useExecutionStore } from "@/features/execution/store/execution-store";
+import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useExecutionEvents } from "@/features/execution/hooks/use-execution-events";
-import { useExecution, useExecutionState } from "@/features/execution/hooks/use-execution";
-import { MUTED } from "@/features/execution/execution-format";
-import { useFlow } from "@/features/flow/hooks/use-flow";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import type { ExecutionDto } from "@/shared/models/database/execution-dto";
+import { ExecutionList } from "@/features/execution/execution-list";
 
 export default function ExecutionPage() {
   const { id } = useParams<{
@@ -29,11 +30,11 @@ export default function ExecutionPage() {
 
   const overview = useExecutionStore((x) => x.overview);
   const selectedStep = useExecutionStore((x) =>
-    x.selectedSequence !== undefined ? findKeptStep(x, x.selectedSequence) : undefined,
+    x.selectedSequence !== undefined ? ExecutionList.findKeptStep(x, x.selectedSequence) : undefined,
   );
   const parentStep = useExecutionStore((x) =>
     selectedStep?.parentSequence !== null && selectedStep?.parentSequence !== undefined
-      ? findKeptStep(x, selectedStep.parentSequence)
+      ? ExecutionList.findKeptStep(x, selectedStep.parentSequence)
       : undefined,
   );
   const runState = useExecutionStore((x) => x.runState);
@@ -55,10 +56,10 @@ export default function ExecutionPage() {
     isLoading: isRequestedExecutionLoading,
     isError: isRequestedExecutionError,
     error: requestedExecutionError,
-  } = useExecution(requestedExecutionId ? +requestedExecutionId : null);
+  } = ExecutionHooks.useExecution(requestedExecutionId ? +requestedExecutionId : null);
 
-  const { data: flow } = useFlow(flowId > 0 ? flowId : null);
-  const { data: engineState } = useExecutionState();
+  const { data: flow } = FlowHooks.useFlow(flowId > 0 ? flowId : null);
+  const { data: engineState } = ExecutionHooks.useExecutionState();
 
   useExecutionEvents(flowId);
 
@@ -133,7 +134,7 @@ export default function ExecutionPage() {
             actions={
               <span
                 className="text-xs"
-                style={MUTED}
+                style={ExecutionFormat.MUTED}
               >
                 times executed
               </span>

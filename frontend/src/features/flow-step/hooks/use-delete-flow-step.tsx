@@ -1,7 +1,7 @@
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { useFlowStepMutations } from "@/features/flow-step/hooks/use-flow-step";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { FlowStepHooks } from "@/features/flow-step/hooks/use-flow-step";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 
 /**
@@ -13,12 +13,12 @@ import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
  */
 export function useDeleteFlowStep() {
   const { openConfirm } = useDialogStore();
-  const { deleteFlowStepMutation } = useFlowStepMutations();
+  const { deleteFlowStepMutation } = FlowStepHooks.useFlowStepMutations();
 
   return async (node: TreeNodeDto, onDeleted: () => void) => {
     // A failed count must not block the delete, so it falls back to the direct children the tree
     // already knows about.
-    const impact = await backendApiService.FlowStep.getDeleteImpact(
+    const impact = await BackendApiService.FlowStep.getDeleteImpact(
       node.entityId,
     ).catch(() => null);
 

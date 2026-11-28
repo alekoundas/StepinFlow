@@ -6,10 +6,10 @@ import { Message } from "primereact/message";
 import { OverlayPanel } from "primereact/overlaypanel";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import type { RepositoryBranchDto } from "@/shared/models/repository-dtos";
 import BranchSwitchDialogComponent from "@/features/repository/components/BranchSwitchDialogComponent";
-import { useCreateBranch, useRepositoryBranches, useSwitchBranch } from "@/features/repository/hooks/use-repository";
-import { MONO, formatWhen, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
+import type { RepositoryBranchDto } from "@/shared/models/repository/repository-branch-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -30,9 +30,9 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
   const [name, setName] = useState("");
   const [switchingTo, setSwitchingTo] = useState<string | null>(null);
 
-  const { data: branches, error } = useRepositoryBranches(isOpen);
-  const create = useCreateBranch();
-  const switchBranch = useSwitchBranch(flowId);
+  const { data: branches, error } = RepositoryHooks.useRepositoryBranches(isOpen);
+  const create = RepositoryHooks.useCreateBranch();
+  const switchBranch = RepositoryHooks.useSwitchBranch(flowId);
 
   const pick = (target: RepositoryBranchDto) => {
     if (target.isCurrent || changeCount > 0) return;
@@ -72,7 +72,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
         text
         size="small"
         className="gap-2 px-3"
-        style={{ color: "var(--text-color)", fontFamily: MONO }}
+        style={{ color: "var(--text-color)", fontFamily: RepositoryFormat.MONO }}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={`Branch ${branch}`}
@@ -107,7 +107,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
           {changeCount > 0 && (
             <Message
               severity="warn"
-              text={`Commit or discard the ${plural(changeCount, "change")} to switch branch.`}
+              text={`Commit or discard the ${RepositoryFormat.plural(changeCount, "change")} to switch branch.`}
               className="mb-1"
             />
           )}
@@ -144,7 +144,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
                 className="text-xs"
                 style={MUTED}
               >
-                New branch from <span style={{ fontFamily: MONO }}>{branch}</span>
+                New branch from <span style={{ fontFamily: RepositoryFormat.MONO }}>{branch}</span>
               </label>
               <div className="flex gap-2">
                 <InputText
@@ -153,7 +153,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
                   onChange={(event) => setName(event.target.value)}
                   autoFocus
                   className="flex-1 p-inputtext-sm"
-                  style={{ fontFamily: MONO }}
+                  style={{ fontFamily: RepositoryFormat.MONO }}
                 />
                 <Button
                   type="submit"
@@ -183,7 +183,7 @@ export default function BranchMenuComponent({ flowId, branch, commitCount, chang
                 aria-hidden="true"
               />
               <span className="text-sm">
-                New branch from <span style={{ fontFamily: MONO }}>{branch}</span>
+                New branch from <span style={{ fontFamily: RepositoryFormat.MONO }}>{branch}</span>
               </span>
             </button>
           )}
@@ -252,7 +252,7 @@ function BranchRowComponent({ branch, commitCount, isLocked, onPick }: RowProps)
       </span>
       <span
         className="flex-1 text-sm"
-        style={{ fontFamily: MONO }}
+        style={{ fontFamily: RepositoryFormat.MONO }}
       >
         {branch.name}
       </span>
@@ -267,9 +267,9 @@ function BranchRowComponent({ branch, commitCount, isLocked, onPick }: RowProps)
 }
 
 const noteOf = (branch: RepositoryBranchDto, commitCount: number): string => {
-  if (branch.isCurrent) return plural(commitCount, "commit");
+  if (branch.isCurrent) return RepositoryFormat.plural(commitCount, "commit");
   if (branch.isRemoteOnly) return "on the remote";
-  return formatWhen(branch.lastCommitAt);
+  return RepositoryFormat.formatWhen(branch.lastCommitAt);
 };
 
 // PrimeIcons has no branch.

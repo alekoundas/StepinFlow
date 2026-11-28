@@ -7,19 +7,13 @@ import { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
 import type { ExecutionFeedItemDto } from "@/shared/models/database/execution-feed-item-dto";
 import type { ExecutionStatsDto } from "@/shared/models/database/execution-stats-dto";
-import { toTook } from "@/shared/utils/clock";
+import { Clock } from "@/shared/utils/clock";
 import ExecutedVersionComponent from "@/features/repository/components/ExecutedVersionComponent";
-import { useAiStatus } from "@/features/ai/hooks/use-ai";
-import { useAskAi } from "@/features/ai/hooks/use-ai-chat";
-import { MONO, MUTED } from "@/features/execution/execution-format";
-import { useExecutionFeed, useExecutionStats } from "@/features/execution/hooks/use-execution";
-import {
-  SURFACE,
-  dayLabelOf,
-  outcomeLookOf,
-  stepsText,
-  timeOf,
-} from "@/features/execution/components/executions/executions-format";
+import { AiHooks } from "@/features/ai/hooks/use-ai";
+import { AiChatHooks } from "@/features/ai/hooks/use-ai-chat";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 
 type Filter = "all" | "failed" | "completed" | "stopped" | "inconclusive";
 
@@ -48,8 +42,8 @@ interface Props {
 /** Executions newest first, by day, filtered by how they ended. Older ones come a page at a time. */
 export default function ExecutionFeedComponent({ flowId, live, showsFlowName, onOpen, onDelete }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
-  const { data: counts } = useExecutionStats(flowId, null);
-  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useExecutionFeed(flowId, STATUSES[filter]);
+  const { data: counts } = ExecutionHooks.useExecutionStats(flowId, null);
+  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = ExecutionHooks.useExecutionFeed(flowId, STATUSES[filter]);
 
   const executions = data?.pages.flat() ?? [];
 
@@ -89,7 +83,7 @@ export default function ExecutionFeedComponent({ flowId, live, showsFlowName, on
       {!isPending && executions.length === 0 && (
         <span
           className="text-sm p-3"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           {emptyMessage}
         </span>
@@ -98,7 +92,7 @@ export default function ExecutionFeedComponent({ flowId, live, showsFlowName, on
       {executions.length > 0 && (
         <div
           className="border-1 border-round-xl overflow-hidden"
-          style={SURFACE}
+          style={ExecutionsFormat.SURFACE}
         >
           {daysOf(executions).map((day) => (
             <section
@@ -107,7 +101,7 @@ export default function ExecutionFeedComponent({ flowId, live, showsFlowName, on
             >
               <div
                 className="flex align-items-center gap-2 px-3 pt-3 pb-1 text-xs font-semibold uppercase"
-                style={{ ...MUTED, letterSpacing: "0.08em" }}
+                style={{ ...ExecutionFormat.MUTED, letterSpacing: "0.08em" }}
               >
                 {day.label}
                 <span
@@ -165,7 +159,7 @@ const daysOf = (executions: ExecutionFeedItemDto[]): { label: string; executions
   const days: { label: string; executions: ExecutionFeedItemDto[] }[] = [];
 
   for (const execution of executions) {
-    const label = dayLabelOf(execution.createdOn);
+    const label = ExecutionsFormat.dayLabelOf(execution.createdOn);
     const last = days[days.length - 1];
 
     if (last?.label === label) last.executions.push(execution);
@@ -188,18 +182,18 @@ interface RowProps {
 
 function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTopLine, onOpen, onDelete }: RowProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const look = outcomeLookOf(execution.status, execution.errorStepName);
+  const look = ExecutionsFormat.outcomeLookOf(execution.status, execution.errorStepName);
 
   const isLive = liveStepCount !== null;
   const isNotKept = execution.historyLevel === ExecutionHistoryLevelEnum.NONE && execution.stepCount === 0;
 
   let took = "—";
   if (execution.completedAt)
-    took = toTook(new Date(execution.completedAt).getTime() - new Date(execution.createdOn).getTime());
+    took = Clock.toTook(new Date(execution.completedAt).getTime() - new Date(execution.createdOn).getTime());
 
-  let steps = stepsText(execution.stepCount);
+  let steps = ExecutionsFormat.stepsText(execution.stepCount);
   if (isNotKept) steps = "—";
-  if (isLive) steps = stepsText(liveStepCount);
+  if (isLive) steps = ExecutionsFormat.stepsText(liveStepCount);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
@@ -241,7 +235,7 @@ function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTop
 
       <span
         className="text-xs"
-        style={{ ...MUTED, fontFamily: MONO }}
+        style={{ ...ExecutionFormat.MUTED, fontFamily: ExecutionFormat.MONO }}
       >
         #{execution.id}
       </span>
@@ -265,19 +259,19 @@ function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTop
 
       <span
         className="text-right"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
-        {timeOf(execution.createdOn)}
+        {ExecutionsFormat.timeOf(execution.createdOn)}
       </span>
       <span
         className="text-right"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         {took}
       </span>
       <span
         className="text-right white-space-nowrap"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
       >
         {steps}
       </span>
@@ -295,7 +289,7 @@ function ExecutionRowComponent({ execution, showsFlowName, liveStepCount, hasTop
 
       <i
         className="pi pi-angle-right text-xs"
-        style={MUTED}
+        style={ExecutionFormat.MUTED}
         aria-hidden="true"
       />
 
@@ -311,7 +305,7 @@ function KeptComponent({ execution }: { execution: ExecutionFeedItemDto }) {
   if (path) {
     const open = (event: MouseEvent) => {
       event.stopPropagation();
-      void ElectronApiService.files.showInFolder(path);
+      void ElectronApiService.Files.showInFolder(path);
     };
 
     return (
@@ -321,7 +315,7 @@ function KeptComponent({ execution }: { execution: ExecutionFeedItemDto }) {
         title="Steps and screenshots kept. Opens their folder."
         aria-label="Open the screenshots folder"
         className="flex align-items-center justify-content-center p-0 border-none cursor-pointer"
-        style={{ background: "transparent", ...MUTED }}
+        style={{ background: "transparent", ...ExecutionFormat.MUTED }}
       >
         <i
           className="pi pi-camera text-sm"
@@ -341,7 +335,7 @@ function KeptComponent({ execution }: { execution: ExecutionFeedItemDto }) {
   return (
     <i
       className={`${icon} text-sm`}
-      style={{ ...MUTED, opacity: 0.7 }}
+      style={{ ...ExecutionFormat.MUTED, opacity: 0.7 }}
       title={title}
       aria-label={title}
     />
@@ -362,7 +356,7 @@ function DeleteComponent({ onDelete }: { onDelete: () => void }) {
       title="Delete this execution"
       aria-label="Delete this execution"
       className="flex align-items-center justify-content-center p-0 border-none cursor-pointer"
-      style={{ background: "transparent", ...MUTED }}
+      style={{ background: "transparent", ...ExecutionFormat.MUTED }}
     >
       <i
         className="pi pi-trash text-sm"
@@ -374,10 +368,10 @@ function DeleteComponent({ onDelete }: { onDelete: () => void }) {
 
 /** What ended it, under the row, with Explain when the AI is on. */
 function WhyComponent({ execution }: { execution: ExecutionFeedItemDto }) {
-  const { data: isAiOn } = useAiStatus();
-  const { askInNewConversation } = useAskAi();
+  const { data: isAiOn } = AiHooks.useAiStatus();
+  const { askInNewConversation } = AiChatHooks.useAskAi();
 
-  const look = outcomeLookOf(execution.status, execution.errorStepName);
+  const look = ExecutionsFormat.outcomeLookOf(execution.status, execution.errorStepName);
 
   const explain = (event: MouseEvent) => {
     event.stopPropagation();

@@ -1,6 +1,6 @@
 import type { ExecutionStatusEnum } from "@/shared/enums/backend/execution/execution-status-enum";
-import { executionStatusText } from "@/shared/utils/execution-status";
-import { outcomeLookOf } from "@/features/execution/components/executions/executions-format";
+import { ExecutionStatus } from "@/shared/utils/execution-status";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 
 /**
  * The last few executions as a row of bars, oldest first. A flow that has started failing looks
@@ -14,12 +14,12 @@ export default function OutcomeStripComponent({ outcomes }: { outcomes: Executio
       aria-hidden="true"
     >
       {outcomes.map((outcome, index) => {
-        const look = outcomeLookOf(outcome);
+        const look = ExecutionsFormat.outcomeLookOf(outcome);
 
         return (
           <span
             key={index}
-            title={executionStatusText(outcome)}
+            title={ExecutionStatus.executionStatusText(outcome)}
             style={{
               width: 5,
               height: look.isWithoutVerdict ? 8 : 14,

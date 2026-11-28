@@ -3,7 +3,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 
 import { SearchByEnum } from "@/shared/enums/backend/search-by-enum";
 import DiscordBotPickerComponent from "@/features/recording/gesture/DiscordBotPickerComponent";
-import { type GestureFields, notifyLabels } from "@/features/recording/gesture/gesture";
+import { Gesture, type GestureFields } from "@/features/recording/gesture/gesture";
 
 interface Props {
   fields: GestureFields;
@@ -16,7 +16,7 @@ interface Props {
  * through one bot. The check's result goes with each, so there is nothing to pick for it.
  */
 export default function CheckNotifyFieldsComponent({ fields, onChange, onNewBot }: Props) {
-  const labels = notifyLabels(fields.choice);
+  const labels = Gesture.notifyLabels(fields.choice);
   const isNotifying = fields.notifyOnSuccess || fields.notifyOnFailure;
 
   let found = "what it found and how close it came";

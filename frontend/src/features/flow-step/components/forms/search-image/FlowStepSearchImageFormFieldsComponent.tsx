@@ -6,11 +6,8 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
-import {
-  SEARCH_IMAGE_MODES,
-  isWaitingMode,
-} from "@/features/flow-step/components/forms/shared/search-modes";
-import { MATCH_MODES } from "@/features/flow-step/components/forms/shared/match-modes";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
+import { MatchModes } from "@/features/flow-step/components/forms/shared/match-modes";
 import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
 
 interface Props {
@@ -27,7 +24,7 @@ export default function FlowStepSearchImageFormFieldsComponent({
   const mode = useWatch({ control, name: "searchMode" });
   const matchMode = useWatch({ control, name: "templateMatchMode" });
 
-  const isWaiting = isWaitingMode(mode);
+  const isWaiting = SearchModes.isWaitingMode(mode);
   const isFindAll = mode === SearchModeEnum.FIND_ALL;
   const isStill = mode === SearchModeEnum.WAIT_UNTIL_STILL;
   const isWaitingFound = isStill || mode === SearchModeEnum.WAIT_UNTIL_FOUND;
@@ -45,13 +42,13 @@ export default function FlowStepSearchImageFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="searchMode"
         labelText="Mode"
-        options={SEARCH_IMAGE_MODES.map((x) => ({
+        options={SearchModes.SEARCH_IMAGE_MODES.map((x) => ({
           label: x.label,
           value: buttonValue(x.value, mode),
         }))}
         isDisabled={isDisabled}
         isRequired={true}
-        hintText={SEARCH_IMAGE_MODES.find((x) => x.value === picked)?.description}
+        hintText={SearchModes.SEARCH_IMAGE_MODES.find((x) => x.value === picked)?.description}
       />
 
       <FlowStepAreaFieldComponent
@@ -122,13 +119,13 @@ export default function FlowStepSearchImageFormFieldsComponent({
       <FormSelectButtonComponent
         fieldName="templateMatchMode"
         labelText="Compare"
-        options={MATCH_MODES.map((x) => ({
+        options={MatchModes.MATCH_MODES.map((x) => ({
           label: x.label,
           value: x.value,
         }))}
         isRequired={true}
         isDisabled={isDisabled}
-        hintText={MATCH_MODES.find((x) => x.value === matchMode)?.description}
+        hintText={MatchModes.MATCH_MODES.find((x) => x.value === matchMode)?.description}
       />
     </>
   );

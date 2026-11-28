@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
 
 import { GitChangeKindEnum } from "@/shared/enums/backend/git-change-kind-enum";
-import type { RepositoryImageChangeDto } from "@/shared/models/repository-dtos";
 import ChangeKindBadgeComponent from "@/features/repository/components/ChangeKindBadgeComponent";
-import { MONO, imageSource } from "@/features/repository/repository-format";
+import { RepositoryFormat } from "@/features/repository/repository-format";
+import type { RepositoryImageChangeDto } from "@/shared/models/repository/repository-image-change-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -40,7 +40,7 @@ export default function TemplateImageChangesComponent({ images }: Props) {
               <ChangeKindBadgeComponent kind={image.kind} />
               <span
                 className="text-sm white-space-nowrap overflow-hidden text-overflow-ellipsis"
-                style={{ fontFamily: MONO }}
+                style={{ fontFamily: RepositoryFormat.MONO }}
               >
                 {image.name}
               </span>
@@ -50,7 +50,7 @@ export default function TemplateImageChangesComponent({ images }: Props) {
               {image.before && (
                 <figure className="m-0 flex-1 flex flex-column gap-1">
                   <img
-                    src={imageSource(image.name, image.before)}
+                    src={RepositoryFormat.imageSource(image.name, image.before)}
                     alt={`${image.name} at the last commit`}
                     className="w-full border-round"
                     style={{ ...PICTURE, opacity: image.kind === GitChangeKindEnum.DELETED ? 0.5 : 0.8 }}
@@ -75,7 +75,7 @@ export default function TemplateImageChangesComponent({ images }: Props) {
               {image.after && (
                 <figure className="m-0 flex-1 flex flex-column gap-1">
                   <img
-                    src={imageSource(image.name, image.after)}
+                    src={RepositoryFormat.imageSource(image.name, image.after)}
                     alt={`${image.name} now`}
                     className="w-full border-round"
                     style={PICTURE}

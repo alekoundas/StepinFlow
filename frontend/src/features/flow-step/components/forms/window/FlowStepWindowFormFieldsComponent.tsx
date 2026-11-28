@@ -8,17 +8,14 @@ import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumb
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import FlowStepAreaFieldComponent from "@/features/flow-step/components/forms/shared/FlowStepAreaFieldComponent";
-import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import {
-  followsWindowStepName,
-  windowStepName,
-} from "@/features/flow-step/components/forms/window/window-modes";
+import type { FlowStepWindowZod } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import { WindowModes } from "@/features/flow-step/components/forms/window/window-modes";
 
-type WindowForm = z.infer<typeof FlowStepWindowSchema>;
+type WindowForm = z.infer<typeof FlowStepWindowZod.FlowStepWindowSchema>;
 
 interface IdOption {
   label: string;
@@ -44,7 +41,7 @@ export default function FlowStepWindowFormFieldsComponent({
   const isClose = flowStepType === FlowStepTypeEnum.WINDOW_CLOSE;
 
   // The name follows the settings until someone types their own.
-  const settingsName = windowStepName(flowStepType, windowWidth, windowHeight, isCloseForced);
+  const settingsName = WindowModes.windowStepName(flowStepType, windowWidth, windowHeight, isCloseForced);
   const lastSettingsName = useRef(settingsName);
 
   useEffect(() => {
@@ -52,7 +49,7 @@ export default function FlowStepWindowFormFieldsComponent({
     if (last === settingsName) return;
 
     lastSettingsName.current = settingsName;
-    if (followsWindowStepName(getValues("name") ?? "", last))
+    if (WindowModes.followsWindowStepName(getValues("name") ?? "", last))
       setValue("name", settingsName, { shouldValidate: true, shouldDirty: true });
   }, [settingsName, getValues, setValue]);
 
@@ -61,7 +58,7 @@ export default function FlowStepWindowFormFieldsComponent({
   const { data: areaTypes = {} } = useQuery({
     queryKey: ["lookup", "flowArea", "types", flowId],
     queryFn: () =>
-      backendApiService.Lookup.flowArea({ flowId }).then((res) =>
+      BackendApiService.Lookup.flowArea({ flowId }).then((res) =>
         Object.fromEntries(res.data.map((item) => [Number(item.value), item.description])),
       ),
     enabled: !!flowId && isClose,
@@ -73,7 +70,7 @@ export default function FlowStepWindowFormFieldsComponent({
   }, [isTab, isCloseForced, setValue]);
 
   const loadLocations = (filter?: string): Promise<IdOption[]> =>
-    backendApiService.Lookup.flowPoint({ searchText: filter, flowId }).then(
+    BackendApiService.Lookup.flowPoint({ searchText: filter, flowId }).then(
       (res) =>
         res.data.map((item) => ({
           label: item.label,

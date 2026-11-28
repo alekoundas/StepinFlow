@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { CARD } from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 
 interface Props {
   title: ReactNode;
@@ -19,7 +19,7 @@ export default function ExecutionPanelComponent({ title, actions, toolbar, child
   return (
     <section
       className="flex flex-column h-full border-1 border-round-xl"
-      style={{ ...CARD, overflow: "hidden", minHeight: 0 }}
+      style={{ ...ExecutionFormat.CARD, overflow: "hidden", minHeight: 0 }}
     >
       <header
         className="flex flex-column gap-2 px-3 py-2 border-bottom-1"

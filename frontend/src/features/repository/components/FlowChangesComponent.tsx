@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import LabelComponent from "@/shared/components/LabelComponent";
 import ScriptViewComponent from "@/shared/components/script-view/ScriptViewComponent";
 import TemplateImageChangesComponent from "@/features/repository/components/TemplateImageChangesComponent";
-import { useFlowRepositoryChanges } from "@/features/repository/hooks/use-repository";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -13,7 +13,7 @@ interface Props {
 
 /** The flow's file against the last commit, its unchanged lines folded away, and its images. */
 export default function FlowChangesComponent({ flowId }: Props) {
-  const { data: changes, isLoading, error } = useFlowRepositoryChanges(flowId);
+  const { data: changes, isLoading, error } = RepositoryHooks.useFlowRepositoryChanges(flowId);
 
   if (isLoading)
     return (

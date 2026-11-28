@@ -8,7 +8,7 @@ import { classNames } from "primereact/utils";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import type { WindowMatchDto } from "@/shared/models/window-match-dto";
 
@@ -93,7 +93,7 @@ export default function WindowMatchFieldsComponent({
   // picks; the titles go under the app, to say which one it is.
   const loadApps = async (filter?: string): Promise<AppOption[]> => {
     const electronProcessId = await window.electronApi.electronProcess.getId();
-    const res = await backendApiService.Lookup.window({ searchText: filter });
+    const res = await BackendApiService.Lookup.window({ searchText: filter });
 
     const apps = new Map<string, AppOption>();
     for (const item of res.data) {
@@ -124,7 +124,7 @@ export default function WindowMatchFieldsComponent({
     setMatches(null);
 
     try {
-      const result = await backendApiService.Lookup.testWindowMatch({
+      const result = await BackendApiService.Lookup.testWindowMatch({
         processName: (getValues("processName") as string) ?? "",
         titlePattern: (getValues("titlePattern") as string) ?? "",
         titleMatchMode: getValues("titleMatchMode") as TitleMatchModeEnum,

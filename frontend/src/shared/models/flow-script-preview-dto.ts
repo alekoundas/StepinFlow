@@ -1,22 +1,6 @@
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
-
-/** An input as a script declares it. A secret has no value in the file. */
-export interface FlowScriptInputDto {
-  name: string;
-  defaultValue: string;
-  isSecret: boolean;
-}
-
-/** What an import meets: the flow with the file's Id, and whether another flow has its name. */
-export interface FlowScriptImportTargetDto {
-  /** Null when the file is a new flow. */
-  flowId: number | null;
-  flowName: string;
-  executionCount: number;
-
-  /** Why the name cannot be used. Null when it is free. */
-  nameTaken: string | null;
-}
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
+import type { FlowScriptInputDto } from "@/shared/models/flow-script-input-dto";
+import type { FlowScriptImportTargetDto } from "@/shared/models/flow-script-import-target-dto";
 
 /** What importing a .sflw file would do, with nothing saved. */
 export interface FlowScriptPreviewDto {

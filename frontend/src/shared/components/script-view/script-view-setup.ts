@@ -4,7 +4,7 @@ import { EditorState, type Extension, type Text } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 
 import { flowScript } from "@/shared/components/script-view/flow-script-language";
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 const MONO = "ui-monospace, Consolas, monospace";
 
@@ -13,7 +13,7 @@ const MONO = "ui-monospace, Consolas, monospace";
  * wanted. The colours are the theme's variables, so the view follows the app rather than CodeMirror.
  * Without a height it grows with the script, as each side of a merge view does inside its scroller.
  */
-export function scriptViewSetup(maxHeight: number | null): Extension {
+function scriptViewSetup(maxHeight: number | null): Extension {
   return [
     flowScript(),
     lineNumbers(),
@@ -27,7 +27,7 @@ export function scriptViewSetup(maxHeight: number | null): Extension {
 }
 
 /** What the import or the model's refusal said, at its line and column. */
-export function diagnosticsOf(doc: Text, errors: FlowScriptErrorDto[]): Diagnostic[] {
+function diagnosticsOf(doc: Text, errors: FlowScriptErrorDto[]): Diagnostic[] {
   return errors
     .filter((x) => x.line >= 1 && x.line <= doc.lines)
     .map((x) => {
@@ -98,3 +98,8 @@ function scriptViewTheme(maxHeight: number | null): Extension {
     { dark: true },
   );
 }
+
+export const ScriptViewSetup = {
+  scriptViewSetup,
+  diagnosticsOf,
+};

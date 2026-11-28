@@ -2,14 +2,15 @@ import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
 import { SearchModeEnum } from "@/shared/enums/backend/search-mode-enum";
 import { ShellCommandModeEnum } from "@/shared/enums/backend/shell/shell-command-mode-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
-import type { TreeNodeDetailDto, TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
+import type { TreeNodeDetailDto } from "@/shared/models/tree-node-detail-dto";
 
-export interface TreeNodeChip {
+interface TreeNodeChip {
   text: string;
   isMuted?: boolean;
 }
 
-export interface FlowStepTreeDetail {
+interface FlowStepTreeDetail {
   // One short line under the name. Truncates before the chips do.
   text?: string;
   chips: TreeNodeChip[];

@@ -8,9 +8,9 @@ import LabelComponent from "@/shared/components/LabelComponent";
 import { ActionsMenuComponent } from "@/shared/components/ActionsMenuComponent";
 import { FlowStepTemplateDto } from "@/shared/models/database/flow-step-template-dto";
 import type { FlowTemplateDto } from "@/shared/models/database/flow-template-dto";
-import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-result-dto";
 import { MatchRefusalEnum } from "@/shared/enums/backend/match-refusal-enum";
-import { refusedOf } from "@/features/flow-step/components/forms/search-image/image-search-test";
+import { ImageSearchTest } from "@/features/flow-step/components/forms/search-image/image-search-test";
+import type { ImageSearchTestImageDto } from "@/shared/models/database/image-search-test-image-dto";
 
 interface Props {
   images: FlowStepTemplateDto[];
@@ -211,7 +211,7 @@ export function FlowStepTemplateListComponent({
 
 // Found, the right shape refused for its colour, or not found, with the score that says how close.
 function ResultTag({ result }: { result: ImageSearchTestImageDto }) {
-  const refused = refusedOf(result);
+  const refused = ImageSearchTest.refusedOf(result);
 
   if (result.isFound)
     return (

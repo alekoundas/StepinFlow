@@ -1,7 +1,7 @@
 import { KeyboardInputTypeEnum } from "@/shared/enums/backend/keyboard-input-type-enum";
 import { KeyboardKeyActionTypeEnum } from "@/shared/enums/backend/keyboard-key-action-type-enum";
 
-export interface KeyboardMode {
+interface KeyboardMode {
   value: KeyboardInputTypeEnum;
   label: string;
   description: string;
@@ -11,7 +11,7 @@ export interface KeyboardMode {
  * The two are not the same thing said differently: "Ctrl+V" typed as text puts six characters into
  * whatever has focus, where pressed as keys it pastes.
  */
-export const KEYBOARD_MODES: KeyboardMode[] = [
+const KEYBOARD_MODES: KeyboardMode[] = [
   {
     value: KeyboardInputTypeEnum.TEXT,
     label: "Type text",
@@ -25,12 +25,12 @@ export const KEYBOARD_MODES: KeyboardMode[] = [
   },
 ];
 
-export const KEYBOARD_MODE_VALUES = KEYBOARD_MODES.map((x) => x.value) as [
+const KEYBOARD_MODE_VALUES = KEYBOARD_MODES.map((x) => x.value) as [
   KeyboardInputTypeEnum,
   ...KeyboardInputTypeEnum[],
 ];
 
-export interface KeyAction {
+interface KeyAction {
   value: KeyboardKeyActionTypeEnum;
   label: string;
   description: string;
@@ -40,7 +40,7 @@ export interface KeyAction {
  * What Send keys does with its keys. Hold and Release are two halves of one gesture, the way a
  * click's are: whatever runs between them happens with the keys down.
  */
-export const KEY_ACTIONS: KeyAction[] = [
+const KEY_ACTIONS: KeyAction[] = [
   {
     value: KeyboardKeyActionTypeEnum.PRESS,
     label: "Press",
@@ -59,7 +59,14 @@ export const KEY_ACTIONS: KeyAction[] = [
   },
 ];
 
-export const KEY_ACTION_VALUES = KEY_ACTIONS.map((x) => x.value) as [
+const KEY_ACTION_VALUES = KEY_ACTIONS.map((x) => x.value) as [
   KeyboardKeyActionTypeEnum,
   ...KeyboardKeyActionTypeEnum[],
 ];
+
+export const KeyboardModes = {
+  KEYBOARD_MODES,
+  KEYBOARD_MODE_VALUES,
+  KEY_ACTIONS,
+  KEY_ACTION_VALUES,
+};

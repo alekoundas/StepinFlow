@@ -2,15 +2,9 @@ import { useState, type CSSProperties, type KeyboardEvent } from "react";
 import { InputText } from "primereact/inputtext";
 
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import {
-  FLOW_STEP_CATALOG,
-  FlowStepGroupEnum,
-  flowStepAccent,
-  hasBranches,
-  tint,
-  type FlowStepCatalogEntry,
-} from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog, type FlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
+import { FlowStepGroupEnum } from "@/shared/enums/flow-step-group-enum";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -44,7 +38,7 @@ const SECTIONS: { group: FlowStepGroupEnum; title: string; subtitle: string }[] 
 ];
 
 // Success and Failure come with the step that has them.
-const PICKABLE = FLOW_STEP_CATALOG.filter((x) => x.group !== FlowStepGroupEnum.BRANCH);
+const PICKABLE = FlowStepCatalog.FLOW_STEP_CATALOG.filter((x) => x.group !== FlowStepGroupEnum.BRANCH);
 
 const isMatch = (entry: FlowStepCatalogEntry, words: string[]): boolean => {
   const text = `${entry.label} ${entry.description} ${entry.searchWords}`.toLowerCase();
@@ -185,7 +179,7 @@ export default function FlowStepPickerComponent() {
         const entries = shown.filter((x) => x.group === section.group);
         if (entries.length === 0) return null;
 
-        const accent = flowStepAccent(entries[0].flowStepType);
+        const accent = FlowStepCatalog.flowStepAccent(entries[0].flowStepType);
 
         return (
           <section
@@ -248,7 +242,7 @@ interface EntryProps {
 
 /** Wears what its row in the tree will: the left edge, the tint and the icon's square. */
 function EntryComponent({ entry, isMarked, onMark, onPick }: EntryProps) {
-  const accent = flowStepAccent(entry.flowStepType);
+  const accent = FlowStepCatalog.flowStepAccent(entry.flowStepType);
 
   return (
     <button
@@ -260,7 +254,7 @@ function EntryComponent({ entry, isMarked, onMark, onPick }: EntryProps) {
       style={{
         border: 0,
         borderLeft: `3px solid ${accent}`,
-        background: tint(accent, isMarked ? 16 : 9),
+        background: FlowStepCatalog.tint(accent, isMarked ? 16 : 9),
         outline: isMarked ? "2px solid var(--primary-color)" : "none",
         outlineOffset: 1,
         color: "var(--text-color)",
@@ -270,7 +264,7 @@ function EntryComponent({ entry, isMarked, onMark, onPick }: EntryProps) {
     >
       <span
         className="flex align-items-center justify-content-center flex-none border-round-md"
-        style={{ width: 28, height: 28, color: accent, background: tint(accent, 18) }}
+        style={{ width: 28, height: 28, color: accent, background: FlowStepCatalog.tint(accent, 18) }}
       >
         <i
           className={`pi pi-${entry.iconName} text-sm`}
@@ -281,7 +275,7 @@ function EntryComponent({ entry, isMarked, onMark, onPick }: EntryProps) {
       <span className="flex flex-column gap-1 min-w-0">
         <span className="flex align-items-center flex-wrap gap-2 text-sm font-semibold">
           {entry.label}
-          {hasBranches(entry.flowStepType) && <BranchesMarkComponent />}
+          {FlowStepCatalog.hasBranches(entry.flowStepType) && <BranchesMarkComponent />}
         </span>
         <span
           className="text-xs line-height-3"
@@ -303,11 +297,11 @@ function BranchesMarkComponent() {
     >
       <span
         className="border-circle"
-        style={{ width: 6, height: 6, background: flowStepAccent(FlowStepTypeEnum.SUCCESS) }}
+        style={{ width: 6, height: 6, background: FlowStepCatalog.flowStepAccent(FlowStepTypeEnum.SUCCESS) }}
       />
       <span
         className="border-circle"
-        style={{ width: 6, height: 6, background: flowStepAccent(FlowStepTypeEnum.FAILURE) }}
+        style={{ width: 6, height: 6, background: FlowStepCatalog.flowStepAccent(FlowStepTypeEnum.FAILURE) }}
       />
       branches
     </span>
@@ -315,7 +309,7 @@ function BranchesMarkComponent() {
 }
 
 function RecentChipComponent({ entry, onPick }: { entry: FlowStepCatalogEntry; onPick: () => void }) {
-  const accent = flowStepAccent(entry.flowStepType);
+  const accent = FlowStepCatalog.flowStepAccent(entry.flowStepType);
 
   return (
     <button
@@ -325,8 +319,8 @@ function RecentChipComponent({ entry, onPick }: { entry: FlowStepCatalogEntry; o
       style={{
         padding: "3px 10px",
         borderRadius: 99,
-        border: `1px solid ${tint(accent, 45)}`,
-        background: tint(accent, 8),
+        border: `1px solid ${FlowStepCatalog.tint(accent, 45)}`,
+        background: FlowStepCatalog.tint(accent, 8),
         color: "var(--text-color)",
         font: "inherit",
       }}

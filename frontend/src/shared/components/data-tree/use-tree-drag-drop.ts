@@ -3,9 +3,9 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { TreeNodeDto } from "@/shared/models/tree-node-dto";
 import type { FlowStepMoveDto } from "@/shared/models/flow-step-move.dto";
 
-export type TreeDropPosition = "before" | "inside" | "after";
+type TreeDropPosition = "before" | "inside" | "after";
 
-export interface TreeDropTarget {
+interface TreeDropTarget {
   key: string;
   position: TreeDropPosition;
   isValid: boolean;

@@ -9,7 +9,7 @@ export interface WindowMode {
 }
 
 // Four FlowStepTypes, one form. Same shape as the cursor modes.
-export const WINDOW_MODES: WindowMode[] = [
+const WINDOW_MODES: WindowMode[] = [
   {
     flowStepType: FlowStepTypeEnum.WINDOW_FOCUS,
     label: "Focus",
@@ -39,7 +39,7 @@ export const WINDOW_MODES: WindowMode[] = [
 ];
 
 /** What a window step is called until someone types their own. Mirrors FlowStepNameHelper.NameOf. */
-export const windowStepName = (
+const windowStepName = (
   flowStepType: WindowFlowStepType,
   windowWidth: number | null | undefined,
   windowHeight: number | null | undefined,
@@ -58,10 +58,16 @@ export const windowStepName = (
 };
 
 /** Nothing typed: empty, that name, or that name with the number a clash gave it. */
-export const followsWindowStepName = (name: string, settingsName: string): boolean => {
+const followsWindowStepName = (name: string, settingsName: string): boolean => {
   const typed = name.trim();
   if (typed.length === 0 || typed === settingsName) return true;
   if (!typed.startsWith(`${settingsName} `)) return false;
 
   return /^(\d+|\(\d+\))$/.test(typed.slice(settingsName.length + 1));
+};
+
+export const WindowModes = {
+  WINDOW_MODES,
+  windowStepName,
+  followsWindowStepName,
 };

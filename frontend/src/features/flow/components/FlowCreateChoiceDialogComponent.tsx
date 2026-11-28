@@ -3,7 +3,7 @@ import { Dialog } from "primereact/dialog";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { ChoiceCardComponent } from "@/shared/components/ChoiceCardComponent";
 
-export interface IFlowCreateChoiceDialogProps {
+interface IFlowCreateChoiceDialogProps {
   onManual: () => void;
   onRecord: () => void;
 

@@ -5,7 +5,7 @@ import { Button } from "primereact/button";
 
 import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCheckboxComponent";
 import { FormInputNumberComponent } from "@/shared/components/form/FormInputNumberComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
 import type { WindowMatchDto } from "@/shared/models/window-match-dto";
 import type { RecordingSetupForm } from "@/features/recording/components/recording-setup.zod";
@@ -49,7 +49,7 @@ export default function RecordingWindowSizeComponent() {
     setError(null);
 
     try {
-      const result = await backendApiService.Lookup.testWindowMatch({
+      const result = await BackendApiService.Lookup.testWindowMatch({
         processName,
         titlePattern: isWebsite ? "" : titlePattern,
         titleMatchMode: getValues("titleMatchMode"),

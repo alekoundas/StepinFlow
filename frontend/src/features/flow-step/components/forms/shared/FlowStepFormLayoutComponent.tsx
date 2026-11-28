@@ -10,11 +10,7 @@ import ScriptViewComponent from "@/shared/components/script-view/ScriptViewCompo
 import { FormInputTextAreaComponent } from "@/shared/components/form/FormInputTextAreaComponent";
 import { FormMode } from "@/shared/enums/form-mode-enum";
 import { FlowStepDto } from "@/shared/models/database/flow-step-dto";
-import {
-  flowStepAccent,
-  getFlowStepCatalogEntry,
-  tint,
-} from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import { describeFlowStep } from "@/features/flow-step/components/forms/shared/flow-step-description";
 import { useFlowStepScriptLine } from "@/features/flow-step/hooks/use-flow-step-script-line";
 import { useSetFlowStepDisabled } from "@/features/flow-step/hooks/use-set-flow-step-disabled";
@@ -72,8 +68,8 @@ export function FlowStepFormLayoutComponent({
   const { data: line, isError } = useFlowStepScriptLine(dto);
   const description = describeFlowStep(dto, line);
 
-  const accent = flowStepAccent(dto.flowStepType);
-  const entry = getFlowStepCatalogEntry(dto.flowStepType);
+  const accent = FlowStepCatalog.flowStepAccent(dto.flowStepType);
+  const entry = FlowStepCatalog.getFlowStepCatalogEntry(dto.flowStepType);
   const shownMode = mode ?? description.mode;
   const shownSummary = summary ?? description.summary;
   const isEditing = formMode === FormMode.ADD || formMode === FormMode.EDIT;
@@ -83,7 +79,7 @@ export function FlowStepFormLayoutComponent({
       <div className="flex align-items-center gap-3 pb-3 mb-3 border-bottom-1 surface-border">
         <span
           className="flex align-items-center justify-content-center flex-shrink-0 w-3rem h-3rem border-round-lg"
-          style={{ color: accent, background: tint(accent, 18) }}
+          style={{ color: accent, background: FlowStepCatalog.tint(accent, 18) }}
         >
           <IconComponent name={entry?.iconName ?? "circle"} />
         </span>
@@ -99,7 +95,7 @@ export function FlowStepFormLayoutComponent({
           <Tag
             value={shownMode}
             className="flex-shrink-0 font-normal"
-            style={{ color: accent, background: tint(accent, 15) }}
+            style={{ color: accent, background: FlowStepCatalog.tint(accent, 15) }}
           />
         )}
 

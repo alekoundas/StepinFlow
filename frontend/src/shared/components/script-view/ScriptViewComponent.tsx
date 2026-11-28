@@ -5,8 +5,8 @@ import { EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 import { changeGutter } from "@/shared/components/script-view/change-gutter";
-import { diagnosticsOf, scriptViewSetup } from "@/shared/components/script-view/script-view-setup";
-import type { FlowScriptErrorDto } from "@/shared/models/flow-script-import-result-dto";
+import { ScriptViewSetup } from "@/shared/components/script-view/script-view-setup";
+import type { FlowScriptErrorDto } from "@/shared/models/flow-script-error-dto";
 
 interface Props {
   script: string;
@@ -42,7 +42,7 @@ export default function ScriptViewComponent({ script, original, collapseUnchange
     // Before the setup, so its bar sits left of the line numbers.
     const extensions: Extension[] = [];
     if (marksFrom !== undefined) extensions.push(changeGutter(marksFrom, script));
-    extensions.push(scriptViewSetup(maxHeight));
+    extensions.push(ScriptViewSetup.scriptViewSetup(maxHeight));
     // An empty original is a file that is all new, every line of it added.
     if (original !== undefined) {
       extensions.push(
@@ -60,7 +60,7 @@ export default function ScriptViewComponent({ script, original, collapseUnchange
       state: EditorState.create({ doc: script, extensions }),
     });
 
-    const marks = diagnosticsOf(view.state.doc, diagnostics ?? []);
+    const marks = ScriptViewSetup.diagnosticsOf(view.state.doc, diagnostics ?? []);
     view.dispatch(setDiagnostics(view.state, marks));
 
     return () => view.destroy();

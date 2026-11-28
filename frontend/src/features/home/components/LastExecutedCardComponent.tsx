@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 
 import StatusPillComponent from "@/shared/components/StatusPillComponent";
 import type { FlowExecutionSummaryDto } from "@/shared/models/database/flow-execution-summary-dto";
-import { dayAndTime } from "@/shared/utils/day-and-time";
+import { DayAndTime } from "@/shared/utils/day-and-time";
 import HomeHeroComponent from "@/features/home/components/HomeHeroComponent";
 
 interface Props {
@@ -32,7 +32,7 @@ export default function LastExecutedCardComponent({ flow, isExecuting }: Props) 
     );
 
   let eyebrow = <>Last executed</>;
-  if (flow.lastRunOn) eyebrow = <>Last executed · {dayAndTime(flow.lastRunOn)}</>;
+  if (flow.lastRunOn) eyebrow = <>Last executed · {DayAndTime.dayAndTime(flow.lastRunOn)}</>;
   if (isExecuting)
     eyebrow = (
       <StatusPillComponent

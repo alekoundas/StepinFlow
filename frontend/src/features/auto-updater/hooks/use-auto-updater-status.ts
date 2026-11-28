@@ -8,8 +8,8 @@ export function useAutoUpdaterStatus(): AutoUpdaterStatus | null {
   const [status, setStatus] = useState<AutoUpdaterStatus | null>(null);
 
   useEffect(() => {
-    const unsubscribe = ElectronApiService.autoUpdater.onStatusChange(setStatus);
-    void ElectronApiService.autoUpdater.getStatus().then(setStatus);
+    const unsubscribe = ElectronApiService.AutoUpdater.onStatusChange(setStatus);
+    void ElectronApiService.AutoUpdater.getStatus().then(setStatus);
 
     return unsubscribe;
   }, []);

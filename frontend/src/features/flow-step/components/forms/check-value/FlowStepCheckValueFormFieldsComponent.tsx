@@ -3,15 +3,10 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 import { StepResultKindEnum } from "@/shared/enums/backend/step-result-kind-enum";
-import {
-  conditionOptions,
-  isLength,
-  needsSecondValue,
-  needsValue,
-} from "@/features/flow-step/components/forms/shared/condition-types";
+import { ConditionTypes } from "@/features/flow-step/components/forms/shared/condition-types";
 import { FlowStepCheckValueSchema } from "@/features/flow-step/components/forms/check-value/flow-step-check-value.zod";
 
 type CheckValueForm = z.infer<typeof FlowStepCheckValueSchema>;
@@ -40,11 +35,11 @@ export default function FlowStepCheckValueFormFieldsComponent({
   const conditionType = useWatch({ control, name: "conditionType" });
 
   let valueLabel = "Value";
-  if (needsSecondValue(conditionType)) valueLabel = "From";
-  if (isLength(conditionType)) valueLabel = "Characters";
+  if (ConditionTypes.needsSecondValue(conditionType)) valueLabel = "From";
+  if (ConditionTypes.isLength(conditionType)) valueLabel = "Characters";
 
   const loadStepReferences = (filter?: string): Promise<StepOption[]> =>
-    backendApiService.Lookup.flowStep({
+    BackendApiService.Lookup.flowStep({
       searchText: filter,
       flowStepId: parentFlowStepId,
       resultKind: StepResultKindEnum.VALUE,
@@ -84,25 +79,25 @@ export default function FlowStepCheckValueFormFieldsComponent({
         fieldName="conditionType"
         labelText="Condition"
         mode="local"
-        options={conditionOptions(Object.values(ConditionTypeEnum))}
+        options={ConditionTypes.conditionOptions(Object.values(ConditionTypeEnum))}
         optionLabel="label"
         optionValue="value"
         isRequired={true}
         isDisabled={isDisabled}
       />
 
-      {needsValue(conditionType) && (
+      {ConditionTypes.needsValue(conditionType) && (
         <div className="flex gap-3">
           <FormInputTextComponent
             fieldName="conditionText"
             label={valueLabel}
-            hintText={isLength(conditionType) ? "Counted without the spaces at either end." : undefined}
+            hintText={ConditionTypes.isLength(conditionType) ? "Counted without the spaces at either end." : undefined}
             isRequired={true}
             isDisabled={isDisabled}
             className="flex-1"
           />
 
-          {needsSecondValue(conditionType) && (
+          {ConditionTypes.needsSecondValue(conditionType) && (
             <FormInputTextComponent
               fieldName="conditionTextEnd"
               label="To"

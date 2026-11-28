@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { ScreenPointDto } from "@/shared/models/screen-point.dto";
 import type {
   IpcBroadcastMessage,
@@ -42,14 +42,14 @@ export function useCapturePoint(): Props {
         teardownRef.current = null;
 
         unsubscribe?.();
-        backendApiService.System.inputRecordPointCaptureStop().catch(() => {});
+        BackendApiService.System.inputRecordPointCaptureStop().catch(() => {});
         setIsCapturing(false);
         resolve(point);
       };
 
       teardownRef.current = () => finish(null);
 
-      unsubscribe = backendApiService.OnBroadcast(
+      unsubscribe = BackendApiService.onBroadcast(
         (event: IpcBroadcastMessage<RecordedInput>) => {
           if (event.type !== "POINT_CAPTURE_EVENT") return;
 
@@ -72,7 +72,7 @@ export function useCapturePoint(): Props {
         },
       );
 
-      backendApiService.System.inputRecordPointCaptureStart().catch(() =>
+      BackendApiService.System.inputRecordPointCaptureStart().catch(() =>
         finish(null),
       );
     });

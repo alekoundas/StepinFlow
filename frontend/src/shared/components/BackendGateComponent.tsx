@@ -19,8 +19,8 @@ export default function BackendGateComponent({ children }: { children: ReactNode
   const [status, setStatus] = useState(STARTING);
 
   useEffect(() => {
-    const unsubscribe = ElectronApiService.backendApi.OnStatusChange(setStatus);
-    void ElectronApiService.backendApi.GetStatus().then(setStatus);
+    const unsubscribe = ElectronApiService.BackendApi.onStatusChange(setStatus);
+    void ElectronApiService.BackendApi.getStatus().then(setStatus);
 
     return unsubscribe;
   }, []);
@@ -112,14 +112,14 @@ function BackendStoppedComponent({ status }: { status: BackendStatus }) {
           <Button
             label="Try again"
             icon="pi pi-refresh"
-            onClick={() => void ElectronApiService.electronProcess.relaunch()}
+            onClick={() => void ElectronApiService.ElectronProcess.relaunch()}
           />
           <Button
             label="Show log"
             icon="pi pi-folder-open"
             severity="secondary"
             outlined
-            onClick={() => void ElectronApiService.files.showInFolder(status.logPath)}
+            onClick={() => void ElectronApiService.Files.showInFolder(status.logPath)}
           />
         </div>
       </div>

@@ -1,4 +1,7 @@
 export class DiscordBotDto {
+  static readonly RATE_LIMIT_MIN_SECONDS = 2;
+  static readonly RATE_LIMIT_MAX_SECONDS = 300;
+
   id: number = 0;
 
   name: string = "";
@@ -14,6 +17,3 @@ export class DiscordBotDto {
     Object.assign(this, { ...data });
   }
 }
-
-export const RATE_LIMIT_MIN_SECONDS = 2;
-export const RATE_LIMIT_MAX_SECONDS = 300;

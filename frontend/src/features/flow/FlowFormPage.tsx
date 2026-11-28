@@ -2,7 +2,7 @@ import { FormMode } from "@/shared/enums/form-mode-enum";
 import { Button } from "primereact/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { FlowFormComponent } from "@/features/flow/components/form/FlowFormComponent";
-import { useFlowMutations } from "@/features/flow/hooks/use-flow";
+import { FlowHooks } from "@/features/flow/hooks/use-flow";
 import { FlowDto } from "@/shared/models/database/flow-dto";
 import PageComponent from "@/shared/components/PageComponent";
 
@@ -12,7 +12,7 @@ export default function FlowFormPage() {
     formMode: FormMode;
   }>();
   const navigate = useNavigate();
-  const { createFlowMutation, updateFlowMutation } = useFlowMutations();
+  const { createFlowMutation, updateFlowMutation } = FlowHooks.useFlowMutations();
   const flow = null;
 
   const handleSubmit = async (data: FlowDto) => {

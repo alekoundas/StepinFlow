@@ -5,8 +5,8 @@ import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 
 import { useWorkflowStore } from "@/features/workflow/store/workflow-store";
-import { MONO } from "@/features/execution/execution-format";
-import type { AiChatStepReferenceDto } from "@/shared/models/ai-chat-dtos";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import type { AiChatStepReferenceDto } from "@/shared/models/ai-chat/ai-chat-step-reference-dto";
 
 const StepsContext = createContext<Map<string, AiChatStepReferenceDto | null>>(new Map());
 
@@ -64,7 +64,7 @@ function Code({ children }: { children?: ReactNode }) {
   const step = steps.get(keyOf(text));
 
   // A fenced block always ends in a line break, and its pre already frames it.
-  if (text.includes("\n")) return <code style={{ fontFamily: MONO }}>{children}</code>;
+  if (text.includes("\n")) return <code style={{ fontFamily: ExecutionFormat.MONO }}>{children}</code>;
 
   if (step) return <StepLink step={step}>{children}</StepLink>;
 
@@ -74,7 +74,7 @@ function Code({ children }: { children?: ReactNode }) {
       style={{
         padding: "1px 5px",
         background: "color-mix(in srgb, var(--text-color) 9%, transparent)",
-        fontFamily: MONO,
+        fontFamily: ExecutionFormat.MONO,
         fontSize: "0.88em",
       }}
     >

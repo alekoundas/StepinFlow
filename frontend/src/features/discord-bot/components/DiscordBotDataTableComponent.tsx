@@ -9,7 +9,7 @@ import { DataTableComponent } from "@/shared/components/data-table/DataTableComp
 import { UsageCountTagComponent } from "@/shared/components/UsageCountTagComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 import DiscordBotFormComponent from "@/features/discord-bot/components/form/DiscordBotFormComponent";
 import { useDiscordBotMutations } from "@/features/discord-bot/hooks/use-discord-bot";
@@ -170,7 +170,7 @@ export function DiscordBotDataTableComponent({
       <DataTableComponent
         columns={columns}
         queryKey={["discordBots", "list"]}
-        queryFn={(dto) => backendApiService.DiscordBot.getLazy(dto)}
+        queryFn={(dto) => BackendApiService.DiscordBot.getLazy(dto)}
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 import { FormInputTextComponent } from "@/shared/components/form/FormInputTextComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepSubFlowSchema } from "@/features/flow-step/components/forms/sub-flow/flow-step-sub-flow.zod";
 import SubFlowPreviewComponent from "@/features/flow-step/components/forms/sub-flow/SubFlowPreviewComponent";
 
@@ -24,7 +24,7 @@ export default function FlowStepSubFlowFormFieldsComponent({ isDisabled = false 
   const subFlowId = useWatch({ control, name: "subFlowId" });
 
   const loadSubFlows = (filter?: string): Promise<FlowOption[]> =>
-    backendApiService.Lookup.subFlow({ searchText: filter }).then((res) =>
+    BackendApiService.Lookup.subFlow({ searchText: filter }).then((res) =>
       res.data.map((item) => ({
         label: item.label,
         value: Number(item.value),

@@ -1,6 +1,6 @@
 import { RecordedActionKindEnum } from "@/shared/enums/backend/recorded-action-kind-enum";
 import type { RecordingLiveActionDto } from "@/shared/models/recording-live-action-dto";
-import { toClock } from "@/shared/utils/clock";
+import { Clock } from "@/shared/utils/clock";
 
 interface Props {
   actions: RecordingLiveActionDto[];
@@ -41,7 +41,7 @@ export default function RecordingLiveListComponent({ actions }: Props) {
             className="text-xs"
             style={{ color: "var(--text-color-secondary)", fontVariantNumeric: "tabular-nums" }}
           >
-            {toClock(action.elapsedMilliseconds)}
+            {Clock.toClock(action.elapsedMilliseconds)}
           </span>
         </div>
       ))}

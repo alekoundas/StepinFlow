@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 import { AiChatEventTypeEnum } from "@/shared/enums/backend/ai/ai-chat-event-type-enum";
-import type { AiChatEventDto, AiChatStepReferenceDto } from "@/shared/models/ai-chat-dtos";
+import type { AiChatEventDto } from "@/shared/models/ai-chat/ai-chat-event-dto";
+import type { AiChatStepReferenceDto } from "@/shared/models/ai-chat/ai-chat-step-reference-dto";
 
 export interface AiChatContext {
   flowId?: number;
@@ -108,25 +109,6 @@ const newAnswer = (id: string): AiChatAnswer => ({
   error: "",
   errorDetail: "",
   startedAt: Date.now(),
-});
-
-/** An event this page decided on itself: it stopped the answer, or could not start it. */
-export const localChatEvent = (
-  answerId: string,
-  type: AiChatEventTypeEnum,
-  error = "",
-  errorDetail = "",
-): AiChatEventDto => ({
-  answerId: answerId,
-  type: type,
-  model: "",
-  images: [],
-  activityId: "",
-  activity: "",
-  steps: [],
-  text: "",
-  error: error,
-  errorDetail: errorDetail,
 });
 
 const endActivities = (activities: AiChatActivity[]): AiChatActivity[] =>

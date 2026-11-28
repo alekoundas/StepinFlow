@@ -1,10 +1,7 @@
 import type { FlowInputDto } from "@/shared/models/database/flow-input-dto";
 import type { FlowStepUseDto } from "@/shared/models/flow-step-use-dto";
-import { typesInput } from "@/features/workflow/hooks/use-flow-parts";
-import {
-  WorkflowPartListComponent,
-  type WorkflowPartSelection,
-} from "@/features/workflow/components/WorkflowPartListComponent";
+import { WorkflowPartListComponent, type WorkflowPartSelection } from "@/features/workflow/components/WorkflowPartListComponent";
+import { FlowParts } from "@/features/workflow/flow-parts";
 
 interface Props {
   inputs: FlowInputDto[];
@@ -20,7 +17,7 @@ export function FlowInputListComponent({ inputs, uses, selected, onSelect }: Pro
     icon: input.isSecret ? "lock" : "pencil",
     name: input.name,
     detail: detailOf(input),
-    usedCount: (uses ?? []).filter((x) => typesInput(x, input.name)).length,
+    usedCount: (uses ?? []).filter((x) => FlowParts.typesInput(x, input.name)).length,
   }));
 
   return (

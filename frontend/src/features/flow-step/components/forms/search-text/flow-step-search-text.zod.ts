@@ -1,12 +1,6 @@
 import { z } from "zod";
-import {
-  isLength,
-  isLengthValue,
-  needsSecondValue,
-  needsValue,
-  SEARCH_TEXT_CONDITION_TYPES,
-} from "@/features/flow-step/components/forms/shared/condition-types";
-import { SEARCH_TEXT_MODE_VALUES } from "@/features/flow-step/components/forms/shared/search-modes";
+import { ConditionTypes } from "@/features/flow-step/components/forms/shared/condition-types";
+import { SearchModes } from "@/features/flow-step/components/forms/shared/search-modes";
 import { CODE_COMMENT_SCHEMA } from "@/features/flow-step/components/forms/shared/code-comment.zod";
 
 export const FlowStepSearchTextSchema = z
@@ -27,9 +21,9 @@ export const FlowStepSearchTextSchema = z
     conditionTextEnd: z
       .string()
       .refine((text) => !text.includes("<[") && !text.includes("]>"), "Can't contain <[ or ]>"),
-    conditionType: z.enum(SEARCH_TEXT_CONDITION_TYPES),
+    conditionType: z.enum(ConditionTypes.SEARCH_TEXT_CONDITION_TYPES),
 
-    searchMode: z.enum(SEARCH_TEXT_MODE_VALUES),
+    searchMode: z.enum(SearchModes.SEARCH_TEXT_MODE_VALUES),
     pollIntervalMilliseconds: z.number().int().min(50),
     timeoutMilliseconds: z.number().int().min(0),
 
@@ -48,13 +42,13 @@ export const FlowStepSearchTextSchema = z
 
     // Every mode decides now, so the condition is never optional. Only the two that compare
     // against nothing - is empty, is not empty - have no value to ask for.
-    if (needsValue(data.conditionType) && data.conditionText.trim().length === 0) {
+    if (ConditionTypes.needsValue(data.conditionType) && data.conditionText.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
         message: "Type what has to be true of the text",
         path: ["conditionText"],
       });
-    } else if (isLength(data.conditionType) && !isLengthValue(data.conditionText)) {
+    } else if (ConditionTypes.isLength(data.conditionType) && !ConditionTypes.isLengthValue(data.conditionText)) {
       ctx.addIssue({
         code: "custom",
         message: "Type a whole number of characters",
@@ -62,7 +56,7 @@ export const FlowStepSearchTextSchema = z
       });
     }
 
-    if (needsSecondValue(data.conditionType) && data.conditionTextEnd.trim().length === 0) {
+    if (ConditionTypes.needsSecondValue(data.conditionType) && data.conditionTextEnd.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
         message: "Type the upper bound",

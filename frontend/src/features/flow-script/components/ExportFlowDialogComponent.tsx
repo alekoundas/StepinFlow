@@ -6,11 +6,11 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { ValidationSeverityEnum } from "@/shared/models/database/flow-validation-result-dto";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useFlowValidation } from "@/features/flow/hooks/use-flow-validation";
 import { ElectronApiService } from "@/shared/services/electron-api-service";
-import type { FlowScriptExportResultDto } from "@/shared/models/flow-script-export-dtos";
+import { ValidationSeverityEnum } from "@/shared/enums/backend/validation-severity-enum";
+import type { FlowScriptExportResultDto } from "@/shared/models/flow-script-export/flow-script-export-result-dto";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 const MONO: CSSProperties = { fontFamily: "ui-monospace, Consolas, monospace" };
@@ -34,7 +34,7 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
 
   const { data: exportFolder } = useQuery({
     queryKey: ["flowScript", "exportFolder"],
-    queryFn: () => backendApiService.FlowScript.getExportFolder(),
+    queryFn: () => BackendApiService.FlowScript.getExportFolder(),
     enabled: visible,
   });
 
@@ -47,7 +47,7 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
     .map((x) => x.flowStepName);
 
   const browse = async () => {
-    const picked = await ElectronApiService.files.chooseFolder(folder || undefined);
+    const picked = await ElectronApiService.Files.chooseFolder(folder || undefined);
     if (picked) setChosen(picked);
   };
 
@@ -56,7 +56,7 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
     setError(null);
 
     try {
-      setExported(await backendApiService.FlowScript.export(flowId, folder.trim()));
+      setExported(await BackendApiService.FlowScript.export(flowId, folder.trim()));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -99,7 +99,7 @@ export default function ExportFlowDialogComponent({ flowId, flowName, visible, o
           type="button"
           label="Show in folder"
           icon="pi pi-folder-open"
-          onClick={() => void ElectronApiService.files.showInFolder(exported.scriptPath)}
+          onClick={() => void ElectronApiService.Files.showInFolder(exported.scriptPath)}
           severity="secondary"
           outlined
         />

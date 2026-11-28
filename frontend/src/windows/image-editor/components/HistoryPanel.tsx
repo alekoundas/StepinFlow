@@ -5,7 +5,7 @@
 
 import { ScrollPanel } from "primereact/scrollpanel";
 import { classNames } from "primereact/utils";
-import type { HistoryEntry } from "@/windows/image-editor/types";
+import type { HistoryEntry } from "@/windows/image-editor/types/history-entry";
 
 const THUMBNAIL_STYLE: React.CSSProperties = {
   width: "3.5rem",

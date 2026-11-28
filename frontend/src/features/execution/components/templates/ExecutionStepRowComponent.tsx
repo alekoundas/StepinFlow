@@ -2,18 +2,10 @@ import { memo, useState } from "react";
 
 import { StepOutcomeEnum } from "@/shared/enums/backend/execution/step-outcome-enum";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { tint } from "@/shared/models/flow-step-catalog";
-import {
-  chipStyle,
-  DONE_COLOR,
-  FATAL_COLOR,
-  FOUND_COLOR,
-  HANDLED_COLOR,
-  MONO,
-  MUTED,
-} from "@/features/execution/execution-format";
-import { isCheckStep, isServedHit } from "@/features/execution/execution-overview";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import type { ExecutionStepDto } from "@/shared/models/database/execution-step-dto";
+import { ExecutionStepKind } from "@/features/execution/execution-step-kind";
 
 const NEUTRAL_COLOR = "var(--text-color-secondary)";
 
@@ -52,21 +44,21 @@ function ExecutionStepRowComponent({
 
   const isFailure = executionStep.outcome === StepOutcomeEnum.FAILURE;
   const isLoop = executionStep.flowStepType === FlowStepTypeEnum.LOOP;
-  const isFound = isCheckStep(executionStep) && !isFailure;
-  const isServed = isServedHit(executionStep);
+  const isFound = ExecutionStepKind.isCheckStep(executionStep) && !isFailure;
+  const isServed = ExecutionStepKind.isServedHit(executionStep);
 
   let icon = "pi-check";
-  let iconColor = DONE_COLOR;
+  let iconColor = ExecutionFormat.DONE_COLOR;
   if (isLoop) {
     icon = "pi-sync";
     iconColor = NEUTRAL_COLOR;
   } else if (isFailure) {
     icon = "pi-times";
-    iconColor = isFatal ? FATAL_COLOR : HANDLED_COLOR;
+    iconColor = isFatal ? ExecutionFormat.FATAL_COLOR : ExecutionFormat.HANDLED_COLOR;
   }
 
   let background: string | undefined;
-  if (isSelected) background = tint(FOUND_COLOR, 12);
+  if (isSelected) background = FlowStepCatalog.tint(ExecutionFormat.FOUND_COLOR, 12);
   else if (isHovered) background = "var(--surface-hover)";
 
   return (
@@ -89,14 +81,14 @@ function ExecutionStepRowComponent({
         boxSizing: "border-box",
         padding: "0 10px",
         whiteSpace: "nowrap",
-        border: `1px solid ${isSelected ? tint(FOUND_COLOR, 55) : "transparent"}`,
+        border: `1px solid ${isSelected ? FlowStepCatalog.tint(ExecutionFormat.FOUND_COLOR, 55) : "transparent"}`,
         background,
         fontSize: "0.8rem",
         opacity: isServed ? 0.62 : 1,
       }}
     >
       <span
-        style={{ ...MUTED, width: 48, flex: "none", textAlign: "right", fontFamily: MONO, fontSize: 11 }}
+        style={{ ...ExecutionFormat.MUTED, width: 48, flex: "none", textAlign: "right", fontFamily: ExecutionFormat.MONO, fontSize: 11 }}
       >
         {executionStep.sequence.toLocaleString()}
       </span>
@@ -134,27 +126,27 @@ function ExecutionStepRowComponent({
       </span>
 
       {isFound && executionStep.bestScore !== null && executionStep.bestScore !== undefined ? (
-        <span style={{ ...chipStyle(FOUND_COLOR), flex: "none" }}>
+        <span style={{ ...ExecutionFormat.chipStyle(ExecutionFormat.FOUND_COLOR), flex: "none" }}>
           found {executionStep.bestScore.toFixed(2)}
         </span>
       ) : null}
 
       {executionStep.matchCount ? (
-        <span style={{ ...chipStyle(FOUND_COLOR), flex: "none" }}>
+        <span style={{ ...ExecutionFormat.chipStyle(ExecutionFormat.FOUND_COLOR), flex: "none" }}>
           hit {(executionStep.matchIndex ?? 0) + 1} of {executionStep.matchCount}
         </span>
       ) : null}
 
       {isFailure && !isFatal ? (
-        <span style={{ ...chipStyle(HANDLED_COLOR), flex: "none" }}>handled</span>
+        <span style={{ ...ExecutionFormat.chipStyle(ExecutionFormat.HANDLED_COLOR), flex: "none" }}>handled</span>
       ) : null}
 
       {isFatal ? (
-        <span style={{ ...chipStyle(FATAL_COLOR), flex: "none" }}>ended the execution</span>
+        <span style={{ ...ExecutionFormat.chipStyle(ExecutionFormat.FATAL_COLOR), flex: "none" }}>ended the execution</span>
       ) : null}
 
       {executionStep.loopPass !== null && executionStep.loopPass !== undefined ? (
-        <span style={{ ...chipStyle(NEUTRAL_COLOR), flex: "none" }}>
+        <span style={{ ...ExecutionFormat.chipStyle(NEUTRAL_COLOR), flex: "none" }}>
           pass {(executionStep.loopPass + 1).toLocaleString()}
         </span>
       ) : null}
@@ -162,7 +154,7 @@ function ExecutionStepRowComponent({
       {/* What a Break left, so the execution reads without opening the flow. */}
       {executionStep.flowStepType === FlowStepTypeEnum.BREAK && executionStep.message ? (
         <span
-          style={{ ...chipStyle(NEUTRAL_COLOR), flex: "0 1 auto", minWidth: 0, maxWidth: 220 }}
+          style={{ ...ExecutionFormat.chipStyle(NEUTRAL_COLOR), flex: "0 1 auto", minWidth: 0, maxWidth: 220 }}
           title={executionStep.message}
         >
           {executionStep.message}
@@ -189,18 +181,18 @@ function ExecutionStepRowComponent({
               maxDurationMilliseconds > 0
                 ? `${(executionStep.durationMilliseconds / maxDurationMilliseconds) * 100}%`
                 : "0%",
-            background: isFatal ? FATAL_COLOR : "var(--surface-400)",
+            background: isFatal ? ExecutionFormat.FATAL_COLOR : "var(--surface-400)",
           }}
         />
       </span>
 
       <span
         style={{
-          ...MUTED,
+          ...ExecutionFormat.MUTED,
           flex: "none",
           width: 58,
           textAlign: "right",
-          fontFamily: MONO,
+          fontFamily: ExecutionFormat.MONO,
           fontSize: 11,
           fontVariantNumeric: "tabular-nums",
         }}

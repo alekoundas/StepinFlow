@@ -1,11 +1,11 @@
 import { Skeleton } from "primereact/skeleton";
 
-import { dayAndTime } from "@/shared/utils/day-and-time";
-import { toTook } from "@/shared/utils/clock";
+import { DayAndTime } from "@/shared/utils/day-and-time";
+import { Clock } from "@/shared/utils/clock";
 import type { ExecutionStatsDto } from "@/shared/models/database/execution-stats-dto";
-import { useExecutionStats } from "@/features/execution/hooks/use-execution";
-import { MUTED } from "@/features/execution/execution-format";
-import { completedPercentOf, dayOf } from "@/features/execution/components/executions/executions-format";
+import { ExecutionHooks } from "@/features/execution/hooks/use-execution";
+import { ExecutionFormat } from "@/features/execution/execution-format";
+import { ExecutionsFormat } from "@/features/execution/components/executions/executions-format";
 
 const DAYS = 7;
 
@@ -22,7 +22,7 @@ interface Tile {
  * failed say more than the last two.
  */
 export default function ExecutionStatTilesComponent({ flowId }: { flowId: number | null }) {
-  const { data: stats } = useExecutionStats(flowId, DAYS);
+  const { data: stats } = ExecutionHooks.useExecutionStats(flowId, DAYS);
 
   if (!stats)
     return (
@@ -52,7 +52,7 @@ export default function ExecutionStatTilesComponent({ flowId }: { flowId: number
           </span>
           <span
             className="flex align-items-center gap-2 text-xs white-space-nowrap"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             {tile.dotColor && (
               <span
@@ -76,7 +76,7 @@ export default function ExecutionStatTilesComponent({ flowId }: { flowId: number
 
 const completedTile = (stats: ExecutionStatsDto): Tile => {
   const failed = stats.failed + stats.errored;
-  const percent = completedPercentOf(stats.completed, failed);
+  const percent = ExecutionsFormat.completedPercentOf(stats.completed, failed);
 
   return {
     value: percent === null ? "—" : `${percent}%`,
@@ -90,7 +90,7 @@ const allFlowsTiles = (stats: ExecutionStatsDto): Tile[] => {
   const stopped = stats.stopped + stats.abandoned;
 
   let lastFailure = "none failed";
-  if (stats.lastFailureOn) lastFailure = `last on ${dayAndTime(stats.lastFailureOn)}`;
+  if (stats.lastFailureOn) lastFailure = `last on ${DayAndTime.dayAndTime(stats.lastFailureOn)}`;
 
   let abandoned = "none abandoned";
   if (stats.abandoned > 0) abandoned = `${stats.abandoned} of them abandoned`;
@@ -105,15 +105,15 @@ const allFlowsTiles = (stats: ExecutionStatsDto): Tile[] => {
 
 const oneFlowTiles = (stats: ExecutionStatsDto): Tile[] => {
   let usual = "—";
-  if (stats.usualDurationMilliseconds != null) usual = toTook(stats.usualDurationMilliseconds);
+  if (stats.usualDurationMilliseconds != null) usual = Clock.toTook(stats.usualDurationMilliseconds);
 
   let lastFailure = "—";
-  if (stats.lastFailureOn) lastFailure = dayOf(stats.lastFailureOn);
+  if (stats.lastFailureOn) lastFailure = ExecutionsFormat.dayOf(stats.lastFailureOn);
 
   return [
     { value: stats.total.toLocaleString(), label: "Executions", note: `in the last ${DAYS} days` },
     completedTile(stats),
     { value: usual, label: "Usually takes", note: "when it completes" },
-    { value: lastFailure, label: "Last failure", note: stats.lastFailureOn ? dayAndTime(stats.lastFailureOn) : "none in that week" },
+    { value: lastFailure, label: "Last failure", note: stats.lastFailureOn ? DayAndTime.dayAndTime(stats.lastFailureOn) : "none in that week" },
   ];
 };

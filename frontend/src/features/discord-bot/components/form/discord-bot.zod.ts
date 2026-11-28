@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  RATE_LIMIT_MAX_SECONDS,
-  RATE_LIMIT_MIN_SECONDS,
-} from "@/shared/models/database/discord-bot-dto";
+import { DiscordBotDto } from "@/shared/models/database/discord-bot-dto";
 
 /** Discord's own webhook host. Anything else is a pasted mistake rather than a webhook. */
 const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/.+/;
@@ -31,6 +28,6 @@ export const DiscordBotSchema = z.object({
   rateLimitSeconds: z
     .number()
     .int()
-    .min(RATE_LIMIT_MIN_SECONDS, `At least ${RATE_LIMIT_MIN_SECONDS} seconds`)
-    .max(RATE_LIMIT_MAX_SECONDS, `At most ${RATE_LIMIT_MAX_SECONDS} seconds`),
+    .min(DiscordBotDto.RATE_LIMIT_MIN_SECONDS, `At least ${DiscordBotDto.RATE_LIMIT_MIN_SECONDS} seconds`)
+    .max(DiscordBotDto.RATE_LIMIT_MAX_SECONDS, `At most ${DiscordBotDto.RATE_LIMIT_MAX_SECONDS} seconds`),
 });

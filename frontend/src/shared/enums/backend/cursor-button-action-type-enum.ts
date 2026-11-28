@@ -1,4 +1,4 @@
-export const cursorButtonActionTypeEnum = {
+export const CursorButtonActionTypeEnum = {
   SINGLE_CLICK: "SINGLE_CLICK",
   DOUBLE_CLICK: "DOUBLE_CLICK",
   HOLD_CLICK: "HOLD_CLICK",
@@ -6,4 +6,4 @@ export const cursorButtonActionTypeEnum = {
 } as const;
 
 export type CursorButtonActionTypeEnum =
-  (typeof cursorButtonActionTypeEnum)[keyof typeof cursorButtonActionTypeEnum];
+  (typeof CursorButtonActionTypeEnum)[keyof typeof CursorButtonActionTypeEnum];

@@ -10,18 +10,11 @@ import { RecordedWindowEnum } from "../../../../../electron/shared/types";
 import { ReviewChoiceEnum } from "@/shared/enums/backend/review-choice-enum";
 import type { RecordedActionDto } from "@/shared/models/database/recorded-action-dto";
 import type { RecordingResultDto } from "@/shared/models/recording-result-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
-import { toClock } from "@/shared/utils/clock";
+import { BackendApiService } from "@/shared/services/backend-api-service";
+import { Clock } from "@/shared/utils/clock";
 import ReviewActionDetailComponent from "@/features/recording/review/ReviewActionDetailComponent";
 import ReviewActionListComponent from "@/features/recording/review/ReviewActionListComponent";
-import {
-  type ActionReview,
-  elementOf,
-  initialReviews,
-  keepingChoice,
-  listedActions,
-  optionsFor,
-} from "@/features/recording/review/review";
+import { Review, type ActionReview } from "@/features/recording/review/review";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -57,9 +50,9 @@ export default function RecordingReviewComponent({
   onContinue,
   onGenerate,
 }: Props) {
-  const listed = listedActions(result);
+  const listed = Review.listedActions(result);
 
-  const [reviews, setReviews] = useState<Record<number, ActionReview>>(() => initialReviews(result));
+  const [reviews, setReviews] = useState<Record<number, ActionReview>>(() => Review.initialReviews(result));
   const [selectedIndex, setSelectedIndex] = useState(listed[0]?.index ?? 0);
 
   const selected = listed.find((x) => x.index === selectedIndex) ?? listed[0];
@@ -69,17 +62,17 @@ export default function RecordingReviewComponent({
 
   const toggle = (action: RecordedActionDto) => {
     const review = reviews[action.index];
-    const options = optionsFor(action, elementOf(result, action), isQaTest);
+    const options = Review.optionsFor(action, Review.elementOf(result, action), isQaTest);
 
     let choice: ReviewChoiceEnum = ReviewChoiceEnum.LEAVE_OUT;
-    if (review.choice === ReviewChoiceEnum.LEAVE_OUT) choice = keepingChoice(options);
+    if (review.choice === ReviewChoiceEnum.LEAVE_OUT) choice = Review.keepingChoice(options);
 
     change(action.index, { ...review, choice });
   };
 
   const windowTitle = result.actions.find((x) => x.window === RecordedWindowEnum.MAIN_AREA)?.windowTitle;
 
-  let summary = `${listed.length} actions in ${toClock(elapsedMilliseconds)}`;
+  let summary = `${listed.length} actions in ${Clock.toClock(elapsedMilliseconds)}`;
   if (windowTitle) summary += `, in ${windowTitle}`;
 
   return (
@@ -171,7 +164,7 @@ function DescriptionComponent({ flowId }: { flowId: number }) {
   const queryClient = useQueryClient();
   const { data: flow } = useQuery({
     queryKey: ["flows", "recording-description", flowId],
-    queryFn: () => backendApiService.Flow.get(flowId),
+    queryFn: () => BackendApiService.Flow.get(flowId),
   });
 
   const [draft, setDraft] = useState<string | null>(null);
@@ -182,7 +175,7 @@ function DescriptionComponent({ flowId }: { flowId: number }) {
 
     setIsSaving(true);
     try {
-      await backendApiService.Flow.update({ ...flow, description: draft });
+      await BackendApiService.Flow.update({ ...flow, description: draft });
       await queryClient.invalidateQueries({ queryKey: ["flows"] });
       setDraft(null);
     } finally {

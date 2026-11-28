@@ -9,14 +9,11 @@ import { Button } from "primereact/button";
 import { SelectButton } from "primereact/selectbutton";
 
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { FlowStepCursorSchema } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
-import {
-  CURSOR_MODES,
-  type CursorMode,
-} from "@/features/flow-step/components/forms/cursor/cursor-modes";
+import { FlowStepCursorZod } from "@/features/flow-step/components/forms/cursor/flow-step-cursor.zod";
+import { CursorModes, type CursorMode } from "@/features/flow-step/components/forms/cursor/cursor-modes";
 import FlowStepCursorFormFieldsComponent from "@/features/flow-step/components/forms/cursor/FlowStepCursorFormFieldsComponent";
 
 interface Props {
@@ -34,8 +31,8 @@ export default function FlowStepCursorFormComponent({
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepCursorSchema>>({
-    resolver: zodResolver(FlowStepCursorSchema),
+  const form = useForm<z.infer<typeof FlowStepCursorZod.FlowStepCursorSchema>>({
+    resolver: zodResolver(FlowStepCursorZod.FlowStepCursorSchema),
     mode: "onChange",
     // Form state only: the saved step says which source it uses by which id is set. A new step
     // starts on a step's result, the usual source: move onto what a search above found.
@@ -55,8 +52,8 @@ export default function FlowStepCursorFormComponent({
 
   const flowStepType = useWatch({ control, name: "flowStepType" });
   const activeMode =
-    CURSOR_MODES.find((x) => x.flowStepType === flowStepType) ??
-    CURSOR_MODES[0];
+    CursorModes.CURSOR_MODES.find((x) => x.flowStepType === flowStepType) ??
+    CursorModes.CURSOR_MODES[0];
 
   const isPointCustom = useWatch({ control, name: "isPointCustom" });
   const flowPointId = useWatch({ control, name: "flowPointId" });
@@ -98,7 +95,7 @@ export default function FlowStepCursorFormComponent({
   // Fields belonging to the other modes are cleared here rather than left as stale rows in the
   // database, so a step only ever carries the values its type actually uses. The script line under
   // the form is printed from the same step.
-  const toDto = (data: z.infer<typeof FlowStepCursorSchema>): FlowStepDto => {
+  const toDto = (data: z.infer<typeof FlowStepCursorZod.FlowStepCursorSchema>): FlowStepDto => {
     const isClick = data.flowStepType === FlowStepTypeEnum.CURSOR_CLICK;
     const isDrag = data.flowStepType === FlowStepTypeEnum.CURSOR_DRAG;
     const isScroll = data.flowStepType === FlowStepTypeEnum.CURSOR_SCROLL;
@@ -145,7 +142,7 @@ export default function FlowStepCursorFormComponent({
     setTestError(null);
 
     try {
-      await backendApiService.FlowStep.testCursor(toDto(form.getValues()));
+      await BackendApiService.FlowStep.testCursor(toDto(form.getValues()));
     } catch (err) {
       setTestError(err instanceof Error ? err.message : "The test did not complete.");
     } finally {
@@ -167,7 +164,7 @@ export default function FlowStepCursorFormComponent({
           onEdit={onEdit}
           onCancel={onCancel}
           baseValues={defaultValues}
-          toDto={(values) => toDto(values as z.infer<typeof FlowStepCursorSchema>)}
+          toDto={(values) => toDto(values as z.infer<typeof FlowStepCursorZod.FlowStepCursorSchema>)}
           testAction={
             (isMove || isDrag) && (
               <Button
@@ -192,10 +189,10 @@ export default function FlowStepCursorFormComponent({
             />
             <SelectButton
               value={activeMode.flowStepType}
-              options={CURSOR_MODES.map((x) => ({ label: x.label, value: x.flowStepType }))}
+              options={CursorModes.CURSOR_MODES.map((x) => ({ label: x.label, value: x.flowStepType }))}
               disabled={formMode === "VIEW"}
               onChange={(e) => {
-                const mode = CURSOR_MODES.find((x) => x.flowStepType === e.value);
+                const mode = CursorModes.CURSOR_MODES.find((x) => x.flowStepType === e.value);
                 if (mode) handleModeChange(mode);
               }}
             />

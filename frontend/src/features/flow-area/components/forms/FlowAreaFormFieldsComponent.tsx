@@ -10,7 +10,7 @@ import { FormInputCheckboxComponent } from "@/shared/components/form/FormInputCh
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
 import { FormSelectButtonComponent } from "@/shared/components/form/FormSelectButtonComponent";
 import LabelComponent from "@/shared/components/LabelComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import type { LookupItemDto } from "@/shared/models/lazy-data/lookup-item.dto";
 import type { FlowAreaDto } from "@/shared/models/database/flow-area-dto";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
@@ -79,7 +79,7 @@ export default function FlowAreaFormFieldsComponent({
     const current = (getValues("launchCommand") as string) ?? "";
     if (current.length > 0 && !isAnotherApp) return;
 
-    const command = await backendApiService.Lookup.launchCommand(processId);
+    const command = await BackendApiService.Lookup.launchCommand(processId);
     setValue("launchCommand", command, { shouldValidate: true, shouldDirty: true });
   };
 
@@ -164,7 +164,7 @@ export default function FlowAreaFormFieldsComponent({
     // Resolved before the overlay opens, not after: the overlay needs these bounds to confine
     // the drag, and a parent that cannot be found is a reason not to open it at all. Writing the
     // raw screen rect as an offset would look like it worked and put the region elsewhere.
-    const preview = await backendApiService.FlowArea.getPreview(parentId);
+    const preview = await BackendApiService.FlowArea.getPreview(parentId);
     if (!preview.isResolved) {
       setCaptureError(
         preview.errorMessage ??
@@ -449,7 +449,7 @@ export default function FlowAreaFormFieldsComponent({
           mode="remote"
           queryKey={["lookup", "monitor"]}
           queryFn={() =>
-            backendApiService.Lookup.monitor({}).then((res) => res.data)
+            BackendApiService.Lookup.monitor({}).then((res) => res.data)
           }
           optionLabel="label"
           optionValue="value"

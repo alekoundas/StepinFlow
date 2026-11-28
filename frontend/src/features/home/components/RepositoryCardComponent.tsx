@@ -2,22 +2,22 @@ import { useState } from "react";
 import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 
-import { dayAndTime } from "@/shared/utils/day-and-time";
+import { DayAndTime } from "@/shared/utils/day-and-time";
 import BranchMenuComponent from "@/features/repository/components/BranchMenuComponent";
 import CommitDialogComponent from "@/features/repository/components/CommitDialogComponent";
-import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import { UNCOMMITTED_COLOR } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 import HomeCardComponent from "@/features/home/components/HomeCardComponent";
 import HomeLinkComponent from "@/features/home/components/HomeLinkComponent";
 import StatTileComponent from "@/features/home/components/StatTileComponent";
-import { MUTED } from "@/features/home/home-format";
+import { HomeFormat } from "@/features/home/home-format";
 
 const ICON = "history";
 const TITLE = "Repository";
 
 /** The branch and its menu, and what is waiting to go anywhere. A change stops a switch, so Commit is here too. */
 export default function RepositoryCardComponent() {
-  const { data: status, isPending } = useRepositoryStatus();
+  const { data: status, isPending } = RepositoryHooks.useRepositoryStatus();
   const [isCommitting, setIsCommitting] = useState(false);
 
   if (!status)
@@ -31,7 +31,7 @@ export default function RepositoryCardComponent() {
         ) : (
           <span
             className="text-sm"
-            style={MUTED}
+            style={HomeFormat.MUTED}
           >
             No repository yet. It is made when the app starts, and may still be writing the flows.
           </span>
@@ -61,7 +61,7 @@ export default function RepositoryCardComponent() {
         <StatTileComponent
           value={status.changeCount}
           label="Not committed"
-          dotColor={status.changeCount > 0 ? UNCOMMITTED_COLOR : undefined}
+          dotColor={status.changeCount > 0 ? RepositoryFormat.UNCOMMITTED_COLOR : undefined}
         />
 
         {status.remoteUrl ? (
@@ -86,9 +86,9 @@ export default function RepositoryCardComponent() {
       <div className="flex align-items-center justify-content-between gap-2">
         <span
           className="text-xs min-w-0"
-          style={MUTED}
+          style={HomeFormat.MUTED}
         >
-          {status.lastCommitAt ? `Last commit ${dayAndTime(status.lastCommitAt)}` : "Nothing committed yet"}
+          {status.lastCommitAt ? `Last commit ${DayAndTime.dayAndTime(status.lastCommitAt)}` : "Nothing committed yet"}
         </span>
 
         <div className="flex align-items-center flex-none gap-1">

@@ -9,11 +9,8 @@ import { SelectButton } from "primereact/selectbutton";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { FlowStepWindowSchema } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
-import {
-  WINDOW_MODES,
-  type WindowMode,
-} from "@/features/flow-step/components/forms/window/window-modes";
+import { FlowStepWindowZod } from "@/features/flow-step/components/forms/window/flow-step-window.zod";
+import { WindowModes, type WindowMode } from "@/features/flow-step/components/forms/window/window-modes";
 import FlowStepWindowFormFieldsComponent from "@/features/flow-step/components/forms/window/FlowStepWindowFormFieldsComponent";
 import { FlowStepFormLayoutComponent } from "@/features/flow-step/components/forms/shared/FlowStepFormLayoutComponent";
 
@@ -32,8 +29,8 @@ export default function FlowStepWindowFormComponent({
   onCancel,
   onEdit,
 }: Props) {
-  const form = useForm<z.infer<typeof FlowStepWindowSchema>>({
-    resolver: zodResolver(FlowStepWindowSchema),
+  const form = useForm<z.infer<typeof FlowStepWindowZod.FlowStepWindowSchema>>({
+    resolver: zodResolver(FlowStepWindowZod.FlowStepWindowSchema),
     mode: "onChange",
     defaultValues: { ...defaultValues } as never,
   });
@@ -47,7 +44,7 @@ export default function FlowStepWindowFormComponent({
 
   const flowStepType = useWatch({ control, name: "flowStepType" });
   const activeMode =
-    WINDOW_MODES.find((x) => x.flowStepType === flowStepType) ?? WINDOW_MODES[0];
+    WindowModes.WINDOW_MODES.find((x) => x.flowStepType === flowStepType) ?? WindowModes.WINDOW_MODES[0];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,7 +64,7 @@ export default function FlowStepWindowFormComponent({
 
   // Fields belonging to the other modes are cleared so a focus step never carries a stale size.
   // The script line under the form is printed from the same step.
-  const toDto = (data: z.infer<typeof FlowStepWindowSchema>): FlowStepDto => {
+  const toDto = (data: z.infer<typeof FlowStepWindowZod.FlowStepWindowSchema>): FlowStepDto => {
     const isResize = data.flowStepType === FlowStepTypeEnum.WINDOW_RESIZE;
     const isRelocate = data.flowStepType === FlowStepTypeEnum.WINDOW_RELOCATE;
     const isClose = data.flowStepType === FlowStepTypeEnum.WINDOW_CLOSE;
@@ -100,7 +97,7 @@ export default function FlowStepWindowFormComponent({
           onEdit={onEdit}
           onCancel={onCancel}
           baseValues={defaultValues}
-          toDto={(values) => toDto(values as z.infer<typeof FlowStepWindowSchema>)}
+          toDto={(values) => toDto(values as z.infer<typeof FlowStepWindowZod.FlowStepWindowSchema>)}
         >
           {/* Each mode is its own FlowStepType, the form just switches between them. */}
           <div className="field">
@@ -110,10 +107,10 @@ export default function FlowStepWindowFormComponent({
             />
             <SelectButton
               value={activeMode.flowStepType}
-              options={WINDOW_MODES.map((x) => ({ label: x.label, value: x.flowStepType }))}
+              options={WindowModes.WINDOW_MODES.map((x) => ({ label: x.label, value: x.flowStepType }))}
               disabled={formMode === "VIEW"}
               onChange={(e) => {
-                const mode = WINDOW_MODES.find((x) => x.flowStepType === e.value);
+                const mode = WindowModes.WINDOW_MODES.find((x) => x.flowStepType === e.value);
                 if (mode) handleModeChange(mode);
               }}
             />

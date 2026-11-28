@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { useDialogStore } from "@/shared/components/modal-component/store/dialog-store";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 
 /**
  * Turn a flow into a sub-flow, which is how sub-flows come to exist.
@@ -32,7 +32,7 @@ export function usePromoteFlow() {
       ),
       onConfirm: async () => {
         try {
-          await backendApiService.Flow.promoteToSubFlow(flowId);
+          await BackendApiService.Flow.promoteToSubFlow(flowId);
           await queryClient.invalidateQueries({ queryKey: ["flow"] });
           await queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
         } catch (err) {

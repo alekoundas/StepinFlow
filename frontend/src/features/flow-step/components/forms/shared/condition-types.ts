@@ -1,6 +1,6 @@
 import { ConditionTypeEnum } from "@/shared/enums/backend/condition-type-enum";
 
-export const CONDITION_LABELS: Record<ConditionTypeEnum, string> = {
+const CONDITION_LABELS: Record<ConditionTypeEnum, string> = {
   [ConditionTypeEnum.EQUALS]: "Is exactly",
   [ConditionTypeEnum.NOT_EQUALS]: "Is not",
   [ConditionTypeEnum.CONTAINS]: "Contains",
@@ -27,16 +27,16 @@ const LENGTHS: ConditionTypeEnum[] = [
   ConditionTypeEnum.LENGTH_LESS_THAN,
 ];
 
-export const needsValue = (condition: ConditionTypeEnum): boolean =>
+const needsValue = (condition: ConditionTypeEnum): boolean =>
   !WITHOUT_VALUE.includes(condition);
 
-export const needsSecondValue = (condition: ConditionTypeEnum): boolean =>
+const needsSecondValue = (condition: ConditionTypeEnum): boolean =>
   condition === ConditionTypeEnum.BETWEEN;
 
-export const isLength = (condition: ConditionTypeEnum): boolean => LENGTHS.includes(condition);
+const isLength = (condition: ConditionTypeEnum): boolean => LENGTHS.includes(condition);
 
 /** A count of characters, or a {{variable}} that will be one by the time the step executes. */
-export const isLengthValue = (text: string): boolean =>
+const isLengthValue = (text: string): boolean =>
   /^\s*\d+\s*$/.test(text) || text.includes("{{");
 
 /**
@@ -44,7 +44,7 @@ export const isLengthValue = (text: string): boolean =>
  * compared is the captured group rather than the whole block - which is what makes "the total is
  * over 100" a sensible thing to ask of a screen.
  */
-export const SEARCH_TEXT_CONDITION_TYPES = [
+const SEARCH_TEXT_CONDITION_TYPES = [
   ConditionTypeEnum.CONTAINS,
   ConditionTypeEnum.NOT_CONTAINS,
   ConditionTypeEnum.EQUALS,
@@ -60,5 +60,15 @@ export const SEARCH_TEXT_CONDITION_TYPES = [
   ConditionTypeEnum.LENGTH_LESS_THAN,
 ] as const;
 
-export const conditionOptions = (types: readonly ConditionTypeEnum[]) =>
+const conditionOptions = (types: readonly ConditionTypeEnum[]) =>
   types.map((value) => ({ label: CONDITION_LABELS[value], value }));
+
+export const ConditionTypes = {
+  CONDITION_LABELS,
+  needsValue,
+  needsSecondValue,
+  isLength,
+  isLengthValue,
+  SEARCH_TEXT_CONDITION_TYPES,
+  conditionOptions,
+};

@@ -4,8 +4,8 @@ import { Button } from "primereact/button";
 
 import BranchMenuComponent from "@/features/repository/components/BranchMenuComponent";
 import CommitDialogComponent from "@/features/repository/components/CommitDialogComponent";
-import { useRepositoryStatus } from "@/features/repository/hooks/use-repository";
-import { UNCOMMITTED_COLOR, plural } from "@/features/repository/repository-format";
+import { RepositoryHooks } from "@/features/repository/hooks/use-repository";
+import { RepositoryFormat } from "@/features/repository/repository-format";
 
 const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
@@ -21,7 +21,7 @@ interface Props {
  * the last commit, and Commit. Saving writes the flow's files; committing is always this button.
  */
 export default function RepositoryChipComponent({ flowId, onShowChanges }: Props) {
-  const { data: status, isError } = useRepositoryStatus();
+  const { data: status, isError } = RepositoryHooks.useRepositoryStatus();
   const [isCommitting, setIsCommitting] = useState(false);
 
   if (!status) {
@@ -65,15 +65,15 @@ export default function RepositoryChipComponent({ flowId, onShowChanges }: Props
             text
             size="small"
             className="gap-2 px-3"
-            style={{ color: UNCOMMITTED_COLOR }}
+            style={{ color: RepositoryFormat.UNCOMMITTED_COLOR }}
             tooltip="What changed since the last commit"
             tooltipOptions={{ position: "bottom" }}
           >
             <span
               className="border-circle"
-              style={{ width: 7, height: 7, background: UNCOMMITTED_COLOR }}
+              style={{ width: 7, height: 7, background: RepositoryFormat.UNCOMMITTED_COLOR }}
             />
-            {plural(count, "change")}
+            {RepositoryFormat.plural(count, "change")}
           </Button>
         ) : (
           <span

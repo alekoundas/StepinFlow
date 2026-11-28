@@ -5,9 +5,9 @@ import { Message } from "primereact/message";
 
 import LabelComponent from "@/shared/components/LabelComponent";
 import { FormDropdownComponent } from "@/shared/components/form/FormDropdownComponent";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { FlowStepTypeEnum } from "@/shared/enums/backend/flow-step-types-enum";
-import { getFlowStepCatalogEntry } from "@/shared/models/flow-step-catalog";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
 import type { FlowStepDto } from "@/shared/models/database/flow-step-dto";
 
 interface TargetOption {
@@ -34,7 +34,7 @@ export default function FlowStepBreakFormFieldsComponent({
   const { data: targets, isFetched } = useQuery({
     queryKey: ["lookup", "break", rootId, parentFlowStepId],
     queryFn: () =>
-      backendApiService.Lookup.break({
+      BackendApiService.Lookup.break({
         flowId: rootId,
         flowStepId: parentFlowStepId,
       }).then((res) =>
@@ -45,7 +45,7 @@ export default function FlowStepBreakFormFieldsComponent({
             label: item.label,
             value: Number(item.value),
             type,
-            description: getFlowStepCatalogEntry(type)?.label ?? item.description,
+            description: FlowStepCatalog.getFlowStepCatalogEntry(type)?.label ?? item.description,
           };
         }),
       ),

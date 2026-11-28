@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import type { CSSProperties, PointerEvent } from "react";
-
 import type { ElementRectangle } from "@/features/recording/review/review";
 
 // Annotations over a screenshot of any application, so fixed colours rather than the theme's.

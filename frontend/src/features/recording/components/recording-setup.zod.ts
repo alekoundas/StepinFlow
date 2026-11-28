@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FlowSchema } from "@/features/flow/components/form/flow.zod";
+import { FlowZod } from "@/features/flow/components/form/flow.zod";
 import { ScalesWithEnum } from "@/shared/enums/backend/area/scales-with-enum";
 import { TitleMatchModeEnum } from "@/shared/enums/backend/area/title-match-mode-enum";
 import { FlowAreaTypeEnum } from "@/shared/enums/backend/flow-area-type.enum";
@@ -63,12 +63,12 @@ function refineWindow(
   }
 }
 
-export const RecordingWindowSchema = z.object(WINDOW_SHAPE).superRefine(refineWindow);
+const RecordingWindowSchema = z.object(WINDOW_SHAPE).superRefine(refineWindow);
 
-export const RecordingSetupSchema = z
+const RecordingSetupSchema = z
   .object({
-    name: FlowSchema.shape.name,
-    description: FlowSchema.shape.description,
+    name: FlowZod.FlowSchema.shape.name,
+    description: FlowZod.FlowSchema.shape.description,
     isQaTest: z.boolean(),
     ...WINDOW_SHAPE,
     addsLaunchStep: z.boolean(),
@@ -92,3 +92,8 @@ export const RecordingSetupSchema = z
 
 export type RecordingWindowForm = z.infer<typeof RecordingWindowSchema>;
 export type RecordingSetupForm = z.infer<typeof RecordingSetupSchema>;
+
+export const RecordingSetupZod = {
+  RecordingWindowSchema,
+  RecordingSetupSchema,
+};

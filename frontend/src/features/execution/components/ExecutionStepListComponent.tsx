@@ -12,24 +12,14 @@ import ExecutionStepRowComponent from "@/features/execution/components/templates
 import ExecutionFoldRowComponent from "@/features/execution/components/templates/ExecutionFoldRowComponent";
 import { RunStateEnum } from "@/shared/enums/backend/execution/run-state-enum";
 import { ExecutionHistoryLevelEnum } from "@/shared/enums/backend/execution/execution-history-level-enum";
-import { tint } from "@/shared/models/flow-step-catalog";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { FlowStepCatalog } from "@/shared/models/flow-step-catalog";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
-import {
-  chipStyle,
-  FOUND_COLOR,
-  HANDLED_COLOR,
-  MUTED,
-} from "@/features/execution/execution-format";
+import { ExecutionFormat } from "@/features/execution/execution-format";
 import { useExecutionStore } from "@/features/execution/store/execution-store";
 import { useDebuggerKeys } from "@/features/execution/hooks/use-debugger-keys";
+import { ExecutionList, type ExecutionListFilter, type ExecutionListItem } from "@/features/execution/execution-list";
 import type { ExecutionOverview } from "@/features/execution/execution-overview";
-import {
-  filterSteps,
-  foldQuietPasses,
-  type ExecutionListFilter,
-  type ExecutionListItem,
-} from "@/features/execution/execution-list";
 
 type EmptyReason = "idle" | "loading" | "error" | "noHistory";
 
@@ -134,8 +124,8 @@ function ExecutionStepListComponent({
   const isHistoryKept = historyLevel !== ExecutionHistoryLevelEnum.NONE;
 
   const items = useMemo(() => {
-    if (isFiltered) return filterSteps(executionSteps, filter, query);
-    return foldQuietPasses(
+    if (isFiltered) return ExecutionList.filterSteps(executionSteps, filter, query);
+    return ExecutionList.foldQuietPasses(
       { executionSteps, quietRuns, released },
       openFolds,
       foldRows,
@@ -216,7 +206,7 @@ function ExecutionStepListComponent({
 
     setReadingFolds((reading) => new Set(reading).add(firstSequence));
     try {
-      const steps = await backendApiService.Execution.getSteps({
+      const steps = await BackendApiService.Execution.getSteps({
         executionId,
         firstSequence,
         lastSequence,
@@ -262,7 +252,7 @@ function ExecutionStepListComponent({
       <span
         role="status"
         className="flex align-items-center gap-2 px-2 text-xs font-medium border-round-3xl"
-        style={{ height: 24, color: FOUND_COLOR, background: tint(FOUND_COLOR, 14) }}
+        style={{ height: 24, color: ExecutionFormat.FOUND_COLOR, background: FlowStepCatalog.tint(ExecutionFormat.FOUND_COLOR, 14) }}
       >
         <i
           className="status-pill-pulse"
@@ -279,7 +269,7 @@ function ExecutionStepListComponent({
           Execution{" "}
           <span
             className="font-normal"
-            style={MUTED}
+            style={ExecutionFormat.MUTED}
           >
             · newest first
           </span>
@@ -361,7 +351,7 @@ function ExecutionStepListComponent({
           {isFiltered && isAnyLetGo ? (
             <div
               className="px-3 pb-1 text-xs"
-              style={MUTED}
+              style={ExecutionFormat.MUTED}
             >
               Looking through the steps kept here: the newest, and every pass that found something.
             </div>
@@ -374,7 +364,7 @@ function ExecutionStepListComponent({
             onScroll={(e) => handleScroll(e.currentTarget.scrollTop)}
           >
             {items.length === 0 ? (
-              <div className="p-4 text-center text-sm" style={MUTED}>
+              <div className="p-4 text-center text-sm" style={ExecutionFormat.MUTED}>
                 No step matches.
               </div>
             ) : (
@@ -514,7 +504,7 @@ function ReleasedRow({ stepCount, isHistoryKept }: ReleasedRowProps) {
   return (
     <div
       className="flex align-items-center gap-2 border-round-lg text-sm"
-      style={{ ...MUTED, height: ROW_HEIGHT, padding: "0 10px", whiteSpace: "nowrap" }}
+      style={{ ...ExecutionFormat.MUTED, height: ROW_HEIGHT, padding: "0 10px", whiteSpace: "nowrap" }}
     >
       <span style={{ width: 48, flex: "none" }} />
       <i
@@ -537,7 +527,7 @@ function ColumnHeadings() {
       aria-hidden="true"
       className="flex align-items-center gap-2 text-xs"
       style={{
-        ...MUTED,
+        ...ExecutionFormat.MUTED,
         padding: "8px 18px 4px",
         letterSpacing: "0.04em",
         textTransform: "uppercase",
@@ -568,20 +558,20 @@ function PausedBanner({ stepName }: PausedBannerProps) {
     <div
       role="status"
       className="flex flex-wrap align-items-center gap-2 mx-3 mt-2 px-3 py-2 border-1 border-round-lg text-sm"
-      style={{ borderColor: tint(HANDLED_COLOR, 35), background: tint(HANDLED_COLOR, 8) }}
+      style={{ borderColor: FlowStepCatalog.tint(ExecutionFormat.HANDLED_COLOR, 35), background: FlowStepCatalog.tint(ExecutionFormat.HANDLED_COLOR, 8) }}
     >
       <i
         className="pi pi-pause"
-        style={{ color: HANDLED_COLOR }}
+        style={{ color: ExecutionFormat.HANDLED_COLOR }}
       />
       <span className="flex-1">
-        Paused before <strong style={{ color: HANDLED_COLOR }}>{stepName}</strong>. It has not
+        Paused before <strong style={{ color: ExecutionFormat.HANDLED_COLOR }}>{stepName}</strong>. It has not
         executed yet.
       </span>
       {hints.length > 0 ? (
         <span
           className="text-xs"
-          style={MUTED}
+          style={ExecutionFormat.MUTED}
         >
           {hints.join(" · ")}
         </span>
@@ -597,7 +587,7 @@ interface ExecutingRowProps {
 
 /** The step under way has no row until it finishes, so it is drawn above them. */
 function ExecutingRow({ name, isPaused }: ExecutingRowProps) {
-  const color = isPaused ? HANDLED_COLOR : FOUND_COLOR;
+  const color = isPaused ? ExecutionFormat.HANDLED_COLOR : ExecutionFormat.FOUND_COLOR;
 
   return (
     <div
@@ -607,7 +597,7 @@ function ExecutingRow({ name, isPaused }: ExecutingRowProps) {
         padding: "0 10px",
         whiteSpace: "nowrap",
         fontSize: "0.8rem",
-        background: tint(color, 8),
+        background: FlowStepCatalog.tint(color, 8),
       }}
     >
       <span style={{ width: 48, flex: "none" }} />
@@ -621,9 +611,9 @@ function ExecutingRow({ name, isPaused }: ExecutingRowProps) {
       >
         {name}
       </span>
-      <span style={{ ...chipStyle(color), flex: "none" }}>{isPaused ? "next" : "executing"}</span>
+      <span style={{ ...ExecutionFormat.chipStyle(color), flex: "none" }}>{isPaused ? "next" : "executing"}</span>
       <span
-        style={{ ...MUTED, marginLeft: "auto", width: 58, textAlign: "right", flex: "none" }}
+        style={{ ...ExecutionFormat.MUTED, marginLeft: "auto", width: 58, textAlign: "right", flex: "none" }}
       >
         …
       </span>

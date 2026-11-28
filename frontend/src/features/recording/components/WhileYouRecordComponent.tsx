@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import { useAppSettings } from "@/features/settings/hooks/use-app-settings";
+import { AppSettingHooks } from "@/features/settings/hooks/use-app-settings";
 import { AppSettingKeyEnum } from "@/shared/enums/backend/app-setting-key-enum";
 import { toHotkeyDisplay } from "@/shared/utils/hotkey";
 
@@ -9,7 +9,7 @@ const MUTED: CSSProperties = { color: "var(--text-color-secondary)" };
 
 /** What happens once Record now is pressed. The keys are the ones in Settings, so what this says is what works. */
 export default function WhileYouRecordComponent() {
-  const { data: settings = [] } = useAppSettings();
+  const { data: settings = [] } = AppSettingHooks.useAppSettings();
 
   const pauseKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_PAUSE)?.value;
   const stopKeys = settings.find((x) => x.key === AppSettingKeyEnum.RECORDING_HOTKEY_STOP)?.value;

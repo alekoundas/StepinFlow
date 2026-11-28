@@ -1,26 +1,26 @@
 import type { FlowDto } from "@/shared/models/database/flow-dto";
-import { backendApiService } from "@/shared/services/backend-api-service";
+import { BackendApiService } from "@/shared/services/backend-api-service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const flowKeys = {
+const flowKeys = {
   detail: (id: number) => ["flow", "detail", id] as const,
 } as const;
 
-export function useFlow(id: number | null) {
+function useFlow(id: number | null) {
   return useQuery({
     queryKey: id ? flowKeys.detail(id) : ["flow", "detail", "disabled"],
-    queryFn: () => backendApiService.Flow.get(id!),
+    queryFn: () => BackendApiService.Flow.get(id!),
     enabled: !!id,
     // staleTime: 5 * 60 * 1000,         // override from global if needed
   });
 }
 
 // Mutation CRUD
-export function useFlowMutations() {
+function useFlowMutations() {
   const queryClient = useQueryClient();
 
   const createFlowMutation = useMutation({
-    mutationFn: (dto: FlowDto) => backendApiService.Flow.create(dto),
+    mutationFn: (dto: FlowDto) => BackendApiService.Flow.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
       // Search area / location usage counts are computed server side.
@@ -33,7 +33,7 @@ export function useFlowMutations() {
 
   // Awaited, so a save resolves once the form can start again from what was saved.
   const updateFlowMutation = useMutation({
-    mutationFn: (dto: FlowDto) => backendApiService.Flow.update(dto),
+    mutationFn: (dto: FlowDto) => BackendApiService.Flow.update(dto),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["flows", "list"] }),
@@ -46,7 +46,7 @@ export function useFlowMutations() {
   });
 
   const deleteFlowMutation = useMutation({
-    mutationFn: (id: number) => backendApiService.Flow.delete(id),
+    mutationFn: (id: number) => BackendApiService.Flow.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flows", "list"] });
       // Its executions went with it.
@@ -61,3 +61,9 @@ export function useFlowMutations() {
 
   return { createFlowMutation, updateFlowMutation, deleteFlowMutation };
 }
+
+export const FlowHooks = {
+  keys: flowKeys,
+  useFlow,
+  useFlowMutations,
+};

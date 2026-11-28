@@ -1,25 +1,4 @@
-export const ValidationSeverityEnum = {
-  ERROR: "ERROR",
-  WARNING: "WARNING",
-  INFO: "INFO", // Runs as meant, but worth knowing, quieter than a warning
-} as const;
-
-export type ValidationSeverityEnum =
-  (typeof ValidationSeverityEnum)[keyof typeof ValidationSeverityEnum];
-
-export interface FlowValidationIssueDto {
-  // Null for a problem with the flow itself rather than one of its steps.
-  flowStepId?: number | null;
-  flowStepName: string;
-
-  // The steps above it, from the top down, and their names. Empty for a step at the top of the flow.
-  parentFlowStepIds: number[];
-  path: string[];
-
-  severity: ValidationSeverityEnum;
-  code: string;
-  message: string;
-}
+import type { FlowValidationIssueDto } from "@/shared/models/database/flow-validation-issue-dto";
 
 export interface FlowValidationResultDto {
   hasErrors: boolean;
