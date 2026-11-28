@@ -188,8 +188,8 @@ namespace Business.Ai
         {
             try
             {
-                string path = Path.Combine(PathHelper.GetExecutionHistoryDataPath(), folderName, fileName);
-                if (!File.Exists(path))
+                string? path = PathHelper.GetExecutionScreenshotPath(PathHelper.GetExecutionHistoryDataPath(), folderName, fileName);
+                if (path == null || !File.Exists(path))
                     return null;
 
                 return _openCvService.Downscale(File.ReadAllBytes(path), _maxEdge, _quality);
