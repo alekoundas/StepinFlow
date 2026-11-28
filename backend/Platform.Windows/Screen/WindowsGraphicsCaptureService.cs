@@ -54,6 +54,7 @@ namespace Platform.Windows.Screen
         private readonly IntPtr _devicePtr;             // raw ID3D11Device*
         private readonly IntPtr _contextPtr;            // raw ID3D11DeviceContext*
         private readonly IDirect3DDevice _wrtDevice;    // WinRT wrapper (for WGC screenshot pool)
+        private readonly Lock _lockObj = new Lock();    // One capture at a time: the device context is not safe to share between threads.
         private bool _disposed;
 
 
@@ -157,61 +158,70 @@ namespace Platform.Windows.Screen
             width = item.Size.Width;
             height = item.Size.Height;
 
-            // CreateFreeThreaded is important: FrameArrived fires on a thread-pool thread,
-            // not the UI thread, which avoids deadlocks in a console/service app like yours.
-            using Direct3D11CaptureFramePool framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
-                _wrtDevice,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                numberOfBuffers: 1,
-                item.Size);
-
-            using GraphicsCaptureSession session = framePool.CreateCaptureSession(item);
-
-            // Suppress the yellow capture border (requires Windows 11 22H2+, safe to ignore on older)
-            try { session.IsBorderRequired = false; } catch { }
-            // Hide the system cursor from the capture
-            try { session.IsCursorCaptureEnabled = false; } catch { }
-
-            Direct3D11CaptureFrame? capturedFrame = null;
-            using ManualResetEventSlim frameReady = new ManualResetEventSlim(false);
-
-            TypedEventHandler<Direct3D11CaptureFramePool, object> onFrame = (pool, _) =>
+            lock (_lockObj)
             {
-                // TryGetNextFrame() dequeues from the pool — we own it and must Dispose it.
-                capturedFrame = pool.TryGetNextFrame();
-                frameReady.Set();
-            };
+                if (_disposed)
+                    return null;
 
-            framePool.FrameArrived += onFrame;
-            session.StartCapture();
+                // CreateFreeThreaded is important: FrameArrived fires on a thread-pool thread,
+                // not the UI thread, which avoids deadlocks in a console/service app like yours.
+                using Direct3D11CaptureFramePool framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+                    _wrtDevice,
+                    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    numberOfBuffers: 1,
+                    item.Size);
 
-            bool gotFrame = frameReady.Wait(millisecondsTimeout: 3000);
-            framePool.FrameArrived -= onFrame;
-            session.Dispose(); // stop capture immediately — we only need 1 screenshot
+                using GraphicsCaptureSession session = framePool.CreateCaptureSession(item);
 
-            if (!gotFrame || capturedFrame is null)
-            {
-                Console.Error.WriteLine("[WGC] Timeout waiting for screenshot.");
-                return null;
-            }
+                // Suppress the yellow capture border (requires Windows 11 22H2+, safe to ignore on older)
+                try { session.IsBorderRequired = false; } catch { }
+                // Hide the system cursor from the capture
+                try { session.IsCursorCaptureEnabled = false; } catch { }
 
-            using (capturedFrame)
-            {
-                return Direct3D11Interop.ReadStagingBytes(capturedFrame.Surface, _devicePtr, _contextPtr, width, height);
+                Direct3D11CaptureFrame? capturedFrame = null;
+                using ManualResetEventSlim frameReady = new ManualResetEventSlim(false);
+
+                TypedEventHandler<Direct3D11CaptureFramePool, object> onFrame = (pool, _) =>
+                {
+                    // TryGetNextFrame() dequeues from the pool — we own it and must Dispose it.
+                    capturedFrame = pool.TryGetNextFrame();
+                    frameReady.Set();
+                };
+
+                framePool.FrameArrived += onFrame;
+                session.StartCapture();
+
+                bool gotFrame = frameReady.Wait(millisecondsTimeout: 3000);
+                framePool.FrameArrived -= onFrame;
+                session.Dispose(); // stop capture immediately — we only need 1 screenshot
+
+                if (!gotFrame || capturedFrame is null)
+                {
+                    Console.Error.WriteLine("[WGC] Timeout waiting for screenshot.");
+                    return null;
+                }
+
+                using (capturedFrame)
+                {
+                    return Direct3D11Interop.ReadStagingBytes(capturedFrame.Surface, _devicePtr, _contextPtr, width, height);
+                }
             }
         }
 
 
         // ================================================================
-        // Dispose 
+        // Dispose
         // ================================================================
         public void Dispose()
         {
-            if (_disposed) return;
-            _disposed = true;
+            lock (_lockObj)
+            {
+                if (_disposed) return;
+                _disposed = true;
 
-            if (_contextPtr != IntPtr.Zero) Marshal.Release(_contextPtr);
-            if (_devicePtr != IntPtr.Zero) Marshal.Release(_devicePtr);
+                if (_contextPtr != IntPtr.Zero) Marshal.Release(_contextPtr);
+                if (_devicePtr != IntPtr.Zero) Marshal.Release(_devicePtr);
+            }
         }
     }
 }
