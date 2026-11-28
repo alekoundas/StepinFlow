@@ -202,7 +202,7 @@ namespace App
             // IPC
             builder.Services.AddSingleton<IpcRequestPipe>();
             builder.Services.AddSingleton<IpcBroadcastPipe>();
-            builder.Services.AddSingleton<IpcDispatcher>();
+            builder.Services.AddSingleton<IIpcDispatcher, IpcDispatcher>();
             builder.Services.AddSingleton<IIpcBroadcastService, IpcBroadcastService>();
 
             // IPC handlers.
