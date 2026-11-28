@@ -78,7 +78,7 @@ namespace App
 
 
             // DB context factory. 
-            builder.Services.AddCustomDbContextFactory();
+            AppDbContextInitialize.AddCustomDbContextFactory(builder.Services);
 
 
             // TimeProvider offers an abstraction over the DateTime.UtcNow. That means the methods are easy to unit test.
@@ -129,6 +129,7 @@ namespace App
             builder.Services.AddSingleton<FlowInputDataService>();
             builder.Services.AddSingleton<FlowTemplateDataService>();
             builder.Services.AddSingleton<DiscordBotDataService>();
+            builder.Services.AddSingleton<ExecutionDataService>();
             builder.Services.AddSingleton<DataService>();
 
             // Flow script
@@ -145,7 +146,7 @@ namespace App
             builder.Services.AddSingleton<IFlowRestoreService, FlowRestoreService>();
             builder.Services.AddSingleton<IBranchSwitchService, BranchSwitchService>();
 
-            builder.Services.AddExecutionEngine();
+            ExecutionServiceRegistration.AddExecutionEngine(builder.Services);
 
             // AI.
             // Singletons: they hold nothing between calls, and the recording's generation and the chat's answers, both singletons, ask them.
@@ -368,7 +369,7 @@ namespace App
 
 
             // On launch: the database first, then the rest side by side.
-            builder.Services.AddHostedService<HostedStartupService>();         // The database, before anything else starts.
+            builder.Services.AddHostedService(x => ActivatorUtilities.CreateInstance<HostedLifecycleService>(x, Console.OpenStandardInput())); // The database before anything starts; stops when Electron closes stdin, the engine first.
             builder.Services.AddHostedService<HostedRequestPipeListener>();    // Requests from Electron.
             builder.Services.AddHostedService<HostedBroadcastPipeListener>();  // Events to Electron.
             builder.Services.AddHostedService<HostedGitRepositoryService>();   // The repository folder, kept a copy of the flows.
@@ -471,19 +472,32 @@ namespace App
 
 
 
-    // Database
-    // the host waits for every StartingAsync before it starts any hosted service.
-    internal sealed class HostedStartupService : IHostedLifecycleService
+    // The app's start and stop.
+    // The host waits for every StartingAsync before it starts any hosted service, and for every StoppingAsync before it stops one.
+    // Start: the database. Stop: when the stdin closes, gracefully everything.
+    internal sealed class HostedLifecycleService : BackgroundService, IHostedLifecycleService
     {
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
         private readonly TimeProvider _timeProvider;
-        private readonly ILogger<HostedStartupService> _logger;
+        private readonly ILogger<HostedLifecycleService> _logger;
+        private readonly IHostApplicationLifetime _lifetime;
+        private readonly IExecutionEngine _executionEngine;
+        private readonly Stream _stdin;
 
-        public HostedStartupService(IDbContextFactory<AppDbContext> dbContextFactory, TimeProvider timeProvider, ILogger<HostedStartupService> logger)
+        public HostedLifecycleService(
+            IDbContextFactory<AppDbContext> dbContextFactory,
+            TimeProvider timeProvider,
+            ILogger<HostedLifecycleService> logger,
+            IHostApplicationLifetime lifetime,
+            IExecutionEngine executionEngine,
+            Stream stdin)
         {
             _dbContextFactory = dbContextFactory;
             _timeProvider = timeProvider;
             _logger = logger;
+            _lifetime = lifetime;
+            _executionEngine = executionEngine;
+            _stdin = stdin;
         }
 
         public async Task StartingAsync(CancellationToken cancellationToken)
@@ -491,56 +505,12 @@ namespace App
             // Run migrations and seed data.
             await using AppDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
             dbContext.Database.Migrate();
-            dbContext.Database.UseWriteAheadLog();
+            AppDbContextInitialize.SetWALMode(dbContext);
 
-            if (!dbContext.Database.UseIncrementalVacuum())
+            if (!AppDbContextInitialize.SetVacuumMode(dbContext))
                 _logger.LogWarning("The database could not switch on incremental vacuum, so deleting keeps the file at its size.");
 
-            await dbContext.AbandonUnfinishedExecutionsAsync(_timeProvider);
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StartedAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StoppingAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StoppedAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-    }
-
-
-
-
-
-    // Shutdown gracefully everything when the stdin closes.
-    internal sealed class HostedShutdownService : BackgroundService, IHostedLifecycleService
-    {
-        private readonly IHostApplicationLifetime _lifetime;
-        private readonly IExecutionEngine _executionEngine;
-        private readonly Stream _stdin;
-
-        public HostedShutdownService(IHostApplicationLifetime lifetime, IExecutionEngine executionEngine, Stream stdin)
-        {
-            _lifetime = lifetime;
-            _executionEngine = executionEngine;
-            _stdin = stdin;
+            await AppDbContextInitialize.AbandonUnfinishedExecutionsAsync(dbContext, _timeProvider);
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -562,11 +532,6 @@ namespace App
                 _executionEngine.Stop();
 
             await _executionEngine.Completion.WaitAsync(cancellationToken);
-        }
-
-        public Task StartingAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
 
         public Task StartedAsync(CancellationToken cancellationToken)

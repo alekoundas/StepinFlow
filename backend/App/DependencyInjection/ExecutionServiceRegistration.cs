@@ -19,7 +19,7 @@ namespace App.DependencyInjection
     /// </summary>
     public static class ExecutionServiceRegistration
     {
-        public static IServiceCollection AddExecutionEngine(this IServiceCollection services)
+        public static void AddExecutionEngine(IServiceCollection services)
         {
             services.AddSingleton<PassThroughStepWorker>();
             services.AddSingleton<WaitStepWorker>();
@@ -67,10 +67,7 @@ namespace App.DependencyInjection
             services.AddSingleton<IExecutionCacheService, ExecutionCacheService>();
             services.AddSingleton<IExecutionHistoryService>(x => ActivatorUtilities.CreateInstance<ExecutionHistoryService>(x, PathHelper.GetExecutionHistoryDataPath()));
             services.AddSingleton<IExecutionEngine, ExecutionEngine>();
-            services.AddSingleton<IExecutionDeleteService>(x => ActivatorUtilities.CreateInstance<ExecutionDeleteService>(x, PathHelper.GetExecutionHistoryDataPath()));
             services.AddSingleton<IDebuggerHotkeyService, DebuggerHotkeyService>();
-
-            return services;
         }
     }
 }
